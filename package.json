@@ -1,0 +1,25 @@
+{
+  "name": "scaffold",
+  "module": "index.ts",
+  "type": "module",
+  "workspaces": [
+    "backend",
+    "frontend",
+    "shared"
+  ],
+  "scripts": {
+    "backend": "cd backend && bun run api",
+    "frontend": "cd frontend && bun run dev",
+    "start": "concurrently \"bun run backend\" \"bun run frontend\""
+  },
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
