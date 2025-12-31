@@ -1,0 +1,1 @@
+ROOM=$(bun create_test_game.js | grep "Room Code:" | awk '{print $NF}') && echo "Testing 2-player game: $ROOM" && bun bots_play.js "$ROOM"

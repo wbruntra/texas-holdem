@@ -13,8 +13,8 @@ app.use(express.urlencoded({ extended: false }))
 
 app.use(
   cookieSession({
-    name: 'example-session',
-    keys: ['key1'],
+    name: 'holdem',
+    keys: ['hackedescape'],
   }),
 )
 

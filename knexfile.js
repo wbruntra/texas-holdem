@@ -1,21 +1,24 @@
 // Update with your config settings.
+const path = require('path');
 
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
  */
-module.exports = {
+const config = {
   development: {
     client: 'sqlite3',
     connection: {
-      filename: './montys.sqlite3',
+      filename: path.join(__dirname, 'holdem.sqlite3'),
     },
     useNullAsDefault: true,
   },
   test: {
     client: 'sqlite3',
     connection: {
-      filename: './montys_test.sqlite3',
+      filename: path.join(__dirname, 'holdem-test.sqlite3'),
     },
     useNullAsDefault: true,
   },
 }
+
+module.exports = config

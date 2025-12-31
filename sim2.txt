@@ -1,0 +1,39 @@
+🎮 Aggressive Betting Simulation
+Strategy: P0 always bets $50, P1 always calls
+Starting: $1000 each
+
+Hand 1: P0=$995 P1=$990 Pot=$15 (total=$2000)
+  Showdown: P0=$790 (bet=210) P1=$790 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Two Pair)
+Hand 2: P0=$780 P1=$1205 Pot=$15 (total=$2000)
+  Showdown: P0=$580 (bet=210) P1=$1000 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Three of a Kind)
+Hand 3: P0=$575 P1=$1410 Pot=$15 (total=$2000)
+  Showdown: P0=$370 (bet=210) P1=$1210 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P0 (Pair vs High Card)
+Hand 4: P0=$780 P1=$1205 Pot=$15 (total=$2000)
+  Showdown: P0=$580 (bet=210) P1=$1000 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Straight)
+Hand 5: P0=$575 P1=$1410 Pot=$15 (total=$2000)
+  Showdown: P0=$370 (bet=210) P1=$1210 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Pair)
+Hand 6: P0=$360 P1=$1625 Pot=$15 (total=$2000)
+  Showdown: P0=$160 (bet=210) P1=$1420 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (High Card vs Pair)
+Hand 7: P0=$155 P1=$1830 Pot=$15 (total=$2000)
+
+🎯 Game completed at start of hand 8 - only one player has chips
+
+🎯 GAME OVER!
+Final state - P0: $0, P1: $1730, Pot: $270
+
+✅ SIMULATION COMPLETE
+Hands played: 8
+Final: P0=$0 P1=$1730
+Total: $2000 (should be $2000)

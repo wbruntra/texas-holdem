@@ -1,0 +1,99 @@
+🎮 Aggressive Betting Simulation
+Strategy: P0 always bets $50, P1 always calls
+Starting: $1000 each
+
+Hand 1: P0=$995 P1=$990 Pot=$15 (total=$2000)
+  Showdown: P0=$790 (bet=210) P1=$790 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P0 (Two Pair vs Pair)
+Hand 2: P0=$1200 P1=$785 Pot=$15 (total=$2000)
+  Showdown: P0=$1000 (bet=210) P1=$580 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Three of a Kind)
+Hand 3: P0=$995 P1=$990 Pot=$15 (total=$2000)
+  Showdown: P0=$790 (bet=210) P1=$790 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P0 (High Card vs High Card)
+Hand 4: P0=$1200 P1=$785 Pot=$15 (total=$2000)
+  Showdown: P0=$1000 (bet=210) P1=$580 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P0 (Two Pair vs Two Pair)
+Hand 5: P0=$1415 P1=$570 Pot=$15 (total=$2000)
+  Showdown: P0=$1210 (bet=210) P1=$370 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P0 (Two Pair vs Two Pair)
+Hand 6: P0=$1410 P1=$575 Pot=$15 (total=$2000)
+  Showdown: P0=$1210 (bet=210) P1=$370 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Pair)
+Hand 7: P0=$1205 P1=$780 Pot=$15 (total=$2000)
+  Showdown: P0=$1000 (bet=210) P1=$580 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Pair)
+Hand 8: P0=$990 P1=$995 Pot=$15 (total=$2000)
+  Showdown: P0=$790 (bet=210) P1=$790 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Two Pair)
+Hand 9: P0=$785 P1=$1200 Pot=$15 (total=$2000)
+  Showdown: P0=$580 (bet=210) P1=$1000 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P0 (Flush vs Pair)
+Hand 10: P0=$990 P1=$995 Pot=$15 (total=$2000)
+  Showdown: P0=$790 (bet=210) P1=$790 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Straight)
+[10 hands] P0=$790 P1=$1210
+Hand 11: P0=$785 P1=$1200 Pot=$15 (total=$2000)
+  Showdown: P0=$580 (bet=210) P1=$1000 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P0 (Straight vs Pair)
+Hand 12: P0=$990 P1=$995 Pot=$15 (total=$2000)
+  Showdown: P0=$790 (bet=210) P1=$790 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Two Pair)
+Hand 13: P0=$785 P1=$1200 Pot=$15 (total=$2000)
+  Showdown: P0=$580 (bet=210) P1=$1000 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Straight)
+Hand 14: P0=$570 P1=$1415 Pot=$15 (total=$2000)
+  Showdown: P0=$370 (bet=210) P1=$1210 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P0 (Pair vs High Card)
+Hand 15: P0=$785 P1=$1200 Pot=$15 (total=$2000)
+  Showdown: P0=$580 (bet=210) P1=$1000 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Flush)
+Hand 16: P0=$570 P1=$1415 Pot=$15 (total=$2000)
+  Showdown: P0=$370 (bet=210) P1=$1210 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Two Pair)
+Hand 17: P0=$365 P1=$1620 Pot=$15 (total=$2000)
+  Showdown: P0=$160 (bet=210) P1=$1420 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P0 (Pair vs Pair)
+Hand 18: P0=$570 P1=$1415 Pot=$15 (total=$2000)
+  Showdown: P0=$370 (bet=210) P1=$1210 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (High Card vs Pair)
+Hand 19: P0=$365 P1=$1620 Pot=$15 (total=$2000)
+  Showdown: P0=$160 (bet=210) P1=$1420 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P0 (Pair vs High Card)
+Hand 20: P0=$570 P1=$1415 Pot=$15 (total=$2000)
+  Showdown: P0=$370 (bet=210) P1=$1210 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Two Pair)
+[20 hands] P0=$370 P1=$1630
+Hand 21: P0=$365 P1=$1620 Pot=$15 (total=$2000)
+  Showdown: P0=$160 (bet=210) P1=$1420 (bet=210) Pot=420
+  Pots calculated: $420
+  → Winner: P1 (Pair vs Two Pair)
+Hand 22: P0=$150 P1=$1835 Pot=$15 (total=$2000)
+
+🎯 GAME OVER!
+Final state - P0: $0, P1: $1730, Pot: $270
+
+✅ SIMULATION COMPLETE
+Hands played: 22
+Final: P0=$0 P1=$1730
+Total: $2000 (should be $2000)
