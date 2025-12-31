@@ -1,0 +1,2377 @@
+{
+  "meta": {
+    "generated_at": "2025-12-31T15:10:37.410Z",
+    "db_file": "/home/william/personal/texas-holdem/holdem.sqlite3"
+  },
+  "game": {
+    "id": "46e3d576-2417-4f37-880a-675cb888dbad",
+    "room_code": "PDPXYU",
+    "status": "completed",
+    "small_blind": 10,
+    "big_blind": 20,
+    "starting_chips": 1000,
+    "dealer_position": 1,
+    "current_round": "showdown",
+    "pot": 0,
+    "community_cards": [
+      {
+        "rank": "8",
+        "suit": "spades",
+        "value": 8
+      },
+      {
+        "rank": "4",
+        "suit": "diamonds",
+        "value": 4
+      },
+      {
+        "rank": "9",
+        "suit": "diamonds",
+        "value": 9
+      },
+      {
+        "rank": "4",
+        "suit": "spades",
+        "value": 4
+      },
+      {
+        "rank": "5",
+        "suit": "clubs",
+        "value": 5
+      }
+    ],
+    "current_bet": 0,
+    "current_player_position": null,
+    "hand_number": 16,
+    "last_raise": 0,
+    "created_at": "2025-12-31 14:35:40",
+    "updated_at": 1767193356448,
+    "deck": [
+      {
+        "rank": "6",
+        "suit": "spades",
+        "value": 6
+      },
+      {
+        "rank": "10",
+        "suit": "diamonds",
+        "value": 10
+      },
+      {
+        "rank": "A",
+        "suit": "hearts",
+        "value": 14
+      },
+      {
+        "rank": "4",
+        "suit": "clubs",
+        "value": 4
+      },
+      {
+        "rank": "6",
+        "suit": "diamonds",
+        "value": 6
+      },
+      {
+        "rank": "3",
+        "suit": "hearts",
+        "value": 3
+      },
+      {
+        "rank": "2",
+        "suit": "diamonds",
+        "value": 2
+      },
+      {
+        "rank": "A",
+        "suit": "diamonds",
+        "value": 14
+      },
+      {
+        "rank": "K",
+        "suit": "spades",
+        "value": 13
+      },
+      {
+        "rank": "8",
+        "suit": "hearts",
+        "value": 8
+      },
+      {
+        "rank": "Q",
+        "suit": "clubs",
+        "value": 12
+      },
+      {
+        "rank": "J",
+        "suit": "hearts",
+        "value": 11
+      },
+      {
+        "rank": "K",
+        "suit": "hearts",
+        "value": 13
+      },
+      {
+        "rank": "A",
+        "suit": "spades",
+        "value": 14
+      },
+      {
+        "rank": "2",
+        "suit": "clubs",
+        "value": 2
+      },
+      {
+        "rank": "5",
+        "suit": "diamonds",
+        "value": 5
+      },
+      {
+        "rank": "4",
+        "suit": "hearts",
+        "value": 4
+      },
+      {
+        "rank": "Q",
+        "suit": "diamonds",
+        "value": 12
+      },
+      {
+        "rank": "10",
+        "suit": "clubs",
+        "value": 10
+      },
+      {
+        "rank": "6",
+        "suit": "hearts",
+        "value": 6
+      },
+      {
+        "rank": "3",
+        "suit": "spades",
+        "value": 3
+      },
+      {
+        "rank": "J",
+        "suit": "diamonds",
+        "value": 11
+      },
+      {
+        "rank": "9",
+        "suit": "spades",
+        "value": 9
+      },
+      {
+        "rank": "K",
+        "suit": "diamonds",
+        "value": 13
+      },
+      {
+        "rank": "2",
+        "suit": "spades",
+        "value": 2
+      },
+      {
+        "rank": "6",
+        "suit": "clubs",
+        "value": 6
+      },
+      {
+        "rank": "5",
+        "suit": "hearts",
+        "value": 5
+      },
+      {
+        "rank": "K",
+        "suit": "clubs",
+        "value": 13
+      },
+      {
+        "rank": "3",
+        "suit": "diamonds",
+        "value": 3
+      },
+      {
+        "rank": "3",
+        "suit": "clubs",
+        "value": 3
+      },
+      {
+        "rank": "9",
+        "suit": "clubs",
+        "value": 9
+      },
+      {
+        "rank": "5",
+        "suit": "spades",
+        "value": 5
+      },
+      {
+        "rank": "Q",
+        "suit": "hearts",
+        "value": 12
+      },
+      {
+        "rank": "8",
+        "suit": "clubs",
+        "value": 8
+      },
+      {
+        "rank": "7",
+        "suit": "hearts",
+        "value": 7
+      }
+    ],
+    "winners": [0],
+    "pots": [
+      {
+        "amount": 1160,
+        "eligiblePlayers": [0, 1],
+        "winners": [0],
+        "winAmount": 1160,
+        "winningRankName": "Two Pair"
+      },
+      {
+        "amount": 91,
+        "eligiblePlayers": [0],
+        "winners": [0],
+        "winAmount": 91,
+        "winningRankName": "Two Pair"
+      }
+    ],
+    "total_bet": null
+  },
+  "players": [
+    {
+      "id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "name": "William",
+      "position": 0,
+      "chips": 2000,
+      "current_bet": 0,
+      "hole_cards": [
+        {
+          "rank": "7",
+          "suit": "clubs",
+          "value": 7
+        },
+        {
+          "rank": "9",
+          "suit": "hearts",
+          "value": 9
+        }
+      ],
+      "status": "active",
+      "is_dealer": 0,
+      "is_small_blind": 0,
+      "is_big_blind": 1,
+      "last_action": null,
+      "connected": 1,
+      "created_at": "2025-12-31 14:36:08",
+      "updated_at": 1767193356449,
+      "password_hash": "$2b$08$0bYD1qKBcyoNkPsYEzxn/eBhXONXTP2oirqyqpaZWbN5FaZLg/Uk6",
+      "total_bet": 671
+    },
+    {
+      "id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "name": "Maria",
+      "position": 1,
+      "chips": 0,
+      "current_bet": 0,
+      "hole_cards": [
+        {
+          "rank": "Q",
+          "suit": "spades",
+          "value": 12
+        },
+        {
+          "rank": "10",
+          "suit": "spades",
+          "value": 10
+        }
+      ],
+      "status": "all_in",
+      "is_dealer": 1,
+      "is_small_blind": 1,
+      "is_big_blind": 0,
+      "last_action": null,
+      "connected": 1,
+      "created_at": "2025-12-31 14:37:10",
+      "updated_at": 1767193356450,
+      "password_hash": "$2b$08$WG1.OMtwRbjT4.WlxmN6Zedr2vQRTjjqOMzAcVnZeo48yNoVSJ5bq",
+      "total_bet": 580
+    }
+  ],
+  "hands": [
+    {
+      "id": "33bd02d1-46ea-4632-a797-94b6a8339f6c",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 1,
+      "dealer_position": 0,
+      "winners": [0],
+      "pot_amount": 0,
+      "community_cards": [],
+      "completed_at": 1767191968376,
+      "created_at": "2025-12-31 14:39:28",
+      "updated_at": "2025-12-31 14:39:28"
+    },
+    {
+      "id": "41128233-fd80-457c-ae3d-ca8cea46727c",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 2,
+      "dealer_position": 1,
+      "winners": [1],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "7",
+          "suit": "hearts",
+          "value": 7
+        },
+        {
+          "rank": "7",
+          "suit": "clubs",
+          "value": 7
+        },
+        {
+          "rank": "3",
+          "suit": "clubs",
+          "value": 3
+        },
+        {
+          "rank": "Q",
+          "suit": "spades",
+          "value": 12
+        },
+        {
+          "rank": "Q",
+          "suit": "diamonds",
+          "value": 12
+        }
+      ],
+      "completed_at": 1767192138024,
+      "created_at": "2025-12-31 14:42:18",
+      "updated_at": "2025-12-31 14:42:18"
+    },
+    {
+      "id": "e7bb34e6-d955-42fe-af99-d5f62d3b4445",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 3,
+      "dealer_position": 0,
+      "winners": [0],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "K",
+          "suit": "diamonds",
+          "value": 13
+        },
+        {
+          "rank": "6",
+          "suit": "clubs",
+          "value": 6
+        },
+        {
+          "rank": "8",
+          "suit": "diamonds",
+          "value": 8
+        },
+        {
+          "rank": "9",
+          "suit": "spades",
+          "value": 9
+        },
+        {
+          "rank": "7",
+          "suit": "spades",
+          "value": 7
+        }
+      ],
+      "completed_at": 1767192260974,
+      "created_at": "2025-12-31 14:44:20",
+      "updated_at": "2025-12-31 14:44:20"
+    },
+    {
+      "id": "4706e388-64b6-457e-9094-c365fe484b78",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 4,
+      "dealer_position": 1,
+      "winners": [1],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "7",
+          "suit": "spades",
+          "value": 7
+        },
+        {
+          "rank": "Q",
+          "suit": "diamonds",
+          "value": 12
+        },
+        {
+          "rank": "6",
+          "suit": "spades",
+          "value": 6
+        },
+        {
+          "rank": "5",
+          "suit": "diamonds",
+          "value": 5
+        },
+        {
+          "rank": "K",
+          "suit": "spades",
+          "value": 13
+        }
+      ],
+      "completed_at": 1767192360951,
+      "created_at": "2025-12-31 14:46:00",
+      "updated_at": "2025-12-31 14:46:00"
+    },
+    {
+      "id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 5,
+      "dealer_position": 0,
+      "winners": [0],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "J",
+          "suit": "clubs",
+          "value": 11
+        },
+        {
+          "rank": "K",
+          "suit": "hearts",
+          "value": 13
+        },
+        {
+          "rank": "K",
+          "suit": "spades",
+          "value": 13
+        },
+        {
+          "rank": "4",
+          "suit": "spades",
+          "value": 4
+        },
+        {
+          "rank": "10",
+          "suit": "diamonds",
+          "value": 10
+        }
+      ],
+      "completed_at": 1767192467486,
+      "created_at": "2025-12-31 14:47:47",
+      "updated_at": "2025-12-31 14:47:47"
+    },
+    {
+      "id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 6,
+      "dealer_position": 1,
+      "winners": [1],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "5",
+          "suit": "spades",
+          "value": 5
+        },
+        {
+          "rank": "10",
+          "suit": "hearts",
+          "value": 10
+        },
+        {
+          "rank": "7",
+          "suit": "clubs",
+          "value": 7
+        },
+        {
+          "rank": "2",
+          "suit": "diamonds",
+          "value": 2
+        },
+        {
+          "rank": "3",
+          "suit": "hearts",
+          "value": 3
+        }
+      ],
+      "completed_at": 1767192556722,
+      "created_at": "2025-12-31 14:49:16",
+      "updated_at": "2025-12-31 14:49:16"
+    },
+    {
+      "id": "20a9279b-397e-494f-be3a-8d42a546747a",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 7,
+      "dealer_position": 0,
+      "winners": [0],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "2",
+          "suit": "diamonds",
+          "value": 2
+        },
+        {
+          "rank": "K",
+          "suit": "diamonds",
+          "value": 13
+        },
+        {
+          "rank": "Q",
+          "suit": "diamonds",
+          "value": 12
+        },
+        {
+          "rank": "4",
+          "suit": "spades",
+          "value": 4
+        },
+        {
+          "rank": "3",
+          "suit": "hearts",
+          "value": 3
+        }
+      ],
+      "completed_at": 1767192629262,
+      "created_at": "2025-12-31 14:50:29",
+      "updated_at": "2025-12-31 14:50:29"
+    },
+    {
+      "id": "7a00c75c-628c-4303-a3d4-6f36d8eaaae2",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 8,
+      "dealer_position": 1,
+      "winners": [1],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "7",
+          "suit": "diamonds",
+          "value": 7
+        },
+        {
+          "rank": "7",
+          "suit": "clubs",
+          "value": 7
+        },
+        {
+          "rank": "K",
+          "suit": "hearts",
+          "value": 13
+        },
+        {
+          "rank": "K",
+          "suit": "clubs",
+          "value": 13
+        },
+        {
+          "rank": "Q",
+          "suit": "clubs",
+          "value": 12
+        }
+      ],
+      "completed_at": 1767192698143,
+      "created_at": "2025-12-31 14:51:38",
+      "updated_at": "2025-12-31 14:51:38"
+    },
+    {
+      "id": "89c9f2b1-3b16-4f21-a463-6a1e57f4142d",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 9,
+      "dealer_position": 0,
+      "winners": [1],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "7",
+          "suit": "diamonds",
+          "value": 7
+        },
+        {
+          "rank": "3",
+          "suit": "hearts",
+          "value": 3
+        },
+        {
+          "rank": "J",
+          "suit": "hearts",
+          "value": 11
+        },
+        {
+          "rank": "2",
+          "suit": "spades",
+          "value": 2
+        },
+        {
+          "rank": "8",
+          "suit": "hearts",
+          "value": 8
+        }
+      ],
+      "completed_at": 1767192818590,
+      "created_at": "2025-12-31 14:53:38",
+      "updated_at": "2025-12-31 14:53:38"
+    },
+    {
+      "id": "f6fc99f8-0615-4430-923a-2b6bf8999c8e",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 10,
+      "dealer_position": 1,
+      "winners": [1],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "5",
+          "suit": "hearts",
+          "value": 5
+        },
+        {
+          "rank": "9",
+          "suit": "spades",
+          "value": 9
+        },
+        {
+          "rank": "9",
+          "suit": "hearts",
+          "value": 9
+        }
+      ],
+      "completed_at": 1767192859243,
+      "created_at": "2025-12-31 14:54:19",
+      "updated_at": "2025-12-31 14:54:19"
+    },
+    {
+      "id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 11,
+      "dealer_position": 0,
+      "winners": [0],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "K",
+          "suit": "spades",
+          "value": 13
+        },
+        {
+          "rank": "3",
+          "suit": "diamonds",
+          "value": 3
+        },
+        {
+          "rank": "8",
+          "suit": "spades",
+          "value": 8
+        },
+        {
+          "rank": "2",
+          "suit": "diamonds",
+          "value": 2
+        },
+        {
+          "rank": "6",
+          "suit": "hearts",
+          "value": 6
+        }
+      ],
+      "completed_at": 1767192927454,
+      "created_at": "2025-12-31 14:55:27",
+      "updated_at": "2025-12-31 14:55:27"
+    },
+    {
+      "id": "ea2871a9-0325-41be-80c0-24444de96a0f",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 12,
+      "dealer_position": 1,
+      "winners": [1],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "A",
+          "suit": "diamonds",
+          "value": 14
+        },
+        {
+          "rank": "7",
+          "suit": "clubs",
+          "value": 7
+        },
+        {
+          "rank": "3",
+          "suit": "hearts",
+          "value": 3
+        },
+        {
+          "rank": "2",
+          "suit": "spades",
+          "value": 2
+        },
+        {
+          "rank": "4",
+          "suit": "clubs",
+          "value": 4
+        }
+      ],
+      "completed_at": 1767192987567,
+      "created_at": "2025-12-31 14:56:27",
+      "updated_at": "2025-12-31 14:56:27"
+    },
+    {
+      "id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 13,
+      "dealer_position": 0,
+      "winners": [0],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "8",
+          "suit": "spades",
+          "value": 8
+        },
+        {
+          "rank": "5",
+          "suit": "hearts",
+          "value": 5
+        },
+        {
+          "rank": "7",
+          "suit": "diamonds",
+          "value": 7
+        },
+        {
+          "rank": "K",
+          "suit": "diamonds",
+          "value": 13
+        }
+      ],
+      "completed_at": 1767193077036,
+      "created_at": "2025-12-31 14:57:57",
+      "updated_at": "2025-12-31 14:57:57"
+    },
+    {
+      "id": "f4282785-fe37-4222-9ba1-a0b3b6fbbad2",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 14,
+      "dealer_position": 1,
+      "winners": [0],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "4",
+          "suit": "hearts",
+          "value": 4
+        },
+        {
+          "rank": "10",
+          "suit": "diamonds",
+          "value": 10
+        },
+        {
+          "rank": "4",
+          "suit": "clubs",
+          "value": 4
+        },
+        {
+          "rank": "J",
+          "suit": "spades",
+          "value": 11
+        },
+        {
+          "rank": "7",
+          "suit": "clubs",
+          "value": 7
+        }
+      ],
+      "completed_at": 1767193208110,
+      "created_at": "2025-12-31 15:00:08",
+      "updated_at": "2025-12-31 15:00:08"
+    },
+    {
+      "id": "2d29183c-e75b-4f8b-b785-ab8e0fa5e4f4",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 15,
+      "dealer_position": 0,
+      "winners": [0],
+      "pot_amount": 0,
+      "community_cards": [],
+      "completed_at": 1767193313530,
+      "created_at": "2025-12-31 15:01:53",
+      "updated_at": "2025-12-31 15:01:53"
+    },
+    {
+      "id": "eb63e29e-a589-424f-a94f-04c64cba7fc4",
+      "game_id": "46e3d576-2417-4f37-880a-675cb888dbad",
+      "hand_number": 16,
+      "dealer_position": 1,
+      "winners": [0],
+      "pot_amount": 0,
+      "community_cards": [
+        {
+          "rank": "8",
+          "suit": "spades",
+          "value": 8
+        },
+        {
+          "rank": "4",
+          "suit": "diamonds",
+          "value": 4
+        },
+        {
+          "rank": "9",
+          "suit": "diamonds",
+          "value": 9
+        },
+        {
+          "rank": "4",
+          "suit": "spades",
+          "value": 4
+        },
+        {
+          "rank": "5",
+          "suit": "clubs",
+          "value": 5
+        }
+      ],
+      "completed_at": 1767193356451,
+      "created_at": "2025-12-31 15:02:36",
+      "updated_at": "2025-12-31 15:02:36"
+    }
+  ],
+  "actions": [
+    {
+      "id": "c039f8f8-0e8f-4aaf-9a0d-30e486dc118b",
+      "hand_id": "33bd02d1-46ea-4632-a797-94b6a8339f6c",
+      "hand_number": 1,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:40:07",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "e505e5cb-3031-428f-83f4-877d042ab321",
+      "hand_id": "33bd02d1-46ea-4632-a797-94b6a8339f6c",
+      "hand_number": 1,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:40:12",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "27f83e2c-e4d7-4dba-b315-ccaf9bf2aa00",
+      "hand_id": "33bd02d1-46ea-4632-a797-94b6a8339f6c",
+      "hand_number": 1,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:40:54",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "427b6ba8-e461-4f3f-8766-be5dae7cfd3c",
+      "hand_id": "33bd02d1-46ea-4632-a797-94b6a8339f6c",
+      "hand_number": 1,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:41:43",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "26008b9a-38db-4551-bf42-0800d97dbd22",
+      "hand_id": "33bd02d1-46ea-4632-a797-94b6a8339f6c",
+      "hand_number": 1,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "turn",
+      "created_at": "2025-12-31 14:41:47",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "ad23f659-656a-4716-8b3f-31147104e200",
+      "hand_id": "33bd02d1-46ea-4632-a797-94b6a8339f6c",
+      "hand_number": 1,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "call",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:42:01",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "8f83c0b5-4e36-4b85-b719-86a3c94f81fc",
+      "hand_id": "33bd02d1-46ea-4632-a797-94b6a8339f6c",
+      "hand_number": 1,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:42:09",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "a23d0ad4-bf89-4b5d-9a2c-720f2c64f372",
+      "hand_id": "33bd02d1-46ea-4632-a797-94b6a8339f6c",
+      "hand_number": 1,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:42:18",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "5f7b782c-050d-4b62-b8ee-3cfd676aa640",
+      "hand_id": "41128233-fd80-457c-ae3d-ca8cea46727c",
+      "hand_number": 2,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:42:50",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "2bce7d90-3b45-451b-8cca-a23a4b511954",
+      "hand_id": "41128233-fd80-457c-ae3d-ca8cea46727c",
+      "hand_number": 2,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:43:10",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "4cd14c1f-9dc1-4c0a-b134-7a0fb1e6ff40",
+      "hand_id": "41128233-fd80-457c-ae3d-ca8cea46727c",
+      "hand_number": 2,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:43:34",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "5d4b42f4-0e41-4af7-a54c-f8f9fb102554",
+      "hand_id": "41128233-fd80-457c-ae3d-ca8cea46727c",
+      "hand_number": 2,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:43:38",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "73c8fd3e-25ed-4aca-b6e7-524d94d21e55",
+      "hand_id": "41128233-fd80-457c-ae3d-ca8cea46727c",
+      "hand_number": 2,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "turn",
+      "created_at": "2025-12-31 14:43:55",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "b0b354a3-649d-4e50-97fe-ca3e13299ded",
+      "hand_id": "41128233-fd80-457c-ae3d-ca8cea46727c",
+      "hand_number": 2,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:43:58",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "017b43c5-c8ea-4da5-bdbb-0af8c7baa4bd",
+      "hand_id": "41128233-fd80-457c-ae3d-ca8cea46727c",
+      "hand_number": 2,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:44:18",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "0dd763a5-6c65-481c-b3cc-eaa120592b81",
+      "hand_id": "41128233-fd80-457c-ae3d-ca8cea46727c",
+      "hand_number": 2,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:44:20",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "6a2d0828-2836-408a-b483-f0694840ae4b",
+      "hand_id": "e7bb34e6-d955-42fe-af99-d5f62d3b4445",
+      "hand_number": 3,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:45:19",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "d52a59fc-00c1-49c4-9919-58b5f01d6ee2",
+      "hand_id": "e7bb34e6-d955-42fe-af99-d5f62d3b4445",
+      "hand_number": 3,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:45:22",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "ead4416b-7b50-4ff1-8ee4-6edf6b3517f1",
+      "hand_id": "e7bb34e6-d955-42fe-af99-d5f62d3b4445",
+      "hand_number": 3,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "flop",
+      "created_at": "2025-12-31 14:45:27",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "a59c9784-46ba-4357-8369-061f771f3225",
+      "hand_id": "e7bb34e6-d955-42fe-af99-d5f62d3b4445",
+      "hand_number": 3,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 20,
+      "round": "flop",
+      "created_at": "2025-12-31 14:45:30",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "622968d0-5321-4fac-8b92-a61a64d8cdd4",
+      "hand_id": "e7bb34e6-d955-42fe-af99-d5f62d3b4445",
+      "hand_number": 3,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:45:33",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "b7192028-15ef-41aa-89f4-4f6287d8975c",
+      "hand_id": "e7bb34e6-d955-42fe-af99-d5f62d3b4445",
+      "hand_number": 3,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:45:41",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "6ead547a-7243-4084-acb3-cde7d7738663",
+      "hand_id": "e7bb34e6-d955-42fe-af99-d5f62d3b4445",
+      "hand_number": 3,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "turn",
+      "created_at": "2025-12-31 14:45:47",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "dd887281-cb7b-4f7a-ad97-adcc0c7b28cf",
+      "hand_id": "e7bb34e6-d955-42fe-af99-d5f62d3b4445",
+      "hand_number": 3,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:45:49",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "6f260adc-9fa0-47fd-884e-8e372ff8bfb3",
+      "hand_id": "e7bb34e6-d955-42fe-af99-d5f62d3b4445",
+      "hand_number": 3,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:45:55",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "0dde95c6-e50d-40f1-bb5d-78a93286a809",
+      "hand_id": "e7bb34e6-d955-42fe-af99-d5f62d3b4445",
+      "hand_number": 3,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:46:00",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "bc96608f-1b8f-4e36-a825-6638f5f1cc88",
+      "hand_id": "4706e388-64b6-457e-9094-c365fe484b78",
+      "hand_number": 4,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 20,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:46:13",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "03828937-c399-4d1d-8546-18f13be46549",
+      "hand_id": "4706e388-64b6-457e-9094-c365fe484b78",
+      "hand_number": 4,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 20,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:46:47",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "05ee865f-5c2d-4373-920a-66f77099dc9a",
+      "hand_id": "4706e388-64b6-457e-9094-c365fe484b78",
+      "hand_number": 4,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:46:52",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "7bacc4e0-e358-4652-bc46-03e9b0fb2fcf",
+      "hand_id": "4706e388-64b6-457e-9094-c365fe484b78",
+      "hand_number": 4,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "flop",
+      "created_at": "2025-12-31 14:47:07",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "b4b56ecc-0c35-433f-b398-b0e7350581e6",
+      "hand_id": "4706e388-64b6-457e-9094-c365fe484b78",
+      "hand_number": 4,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:47:10",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "c1e9cebc-2ee4-46c4-ae6d-145411b3e6f5",
+      "hand_id": "4706e388-64b6-457e-9094-c365fe484b78",
+      "hand_number": 4,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "turn",
+      "created_at": "2025-12-31 14:47:16",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "d7b41c2c-ceb5-489d-9ba7-51e0753ee047",
+      "hand_id": "4706e388-64b6-457e-9094-c365fe484b78",
+      "hand_number": 4,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:47:19",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "87cb19d1-6e09-48a2-9f2f-850b5216c64a",
+      "hand_id": "4706e388-64b6-457e-9094-c365fe484b78",
+      "hand_number": 4,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "river",
+      "created_at": "2025-12-31 14:47:39",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "d19e13b9-0a22-4b26-85ea-b6997a818847",
+      "hand_id": "4706e388-64b6-457e-9094-c365fe484b78",
+      "hand_number": 4,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 40,
+      "round": "river",
+      "created_at": "2025-12-31 14:47:43",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "f2902c60-7fe4-441e-8137-603c5ec4e1b1",
+      "hand_id": "4706e388-64b6-457e-9094-c365fe484b78",
+      "hand_number": 4,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "call",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:47:47",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "4575b8dc-80f3-4b06-b037-ee05d1476533",
+      "hand_id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "hand_number": 5,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:48:24",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "7186f962-4d93-4fe3-9bd5-444303444977",
+      "hand_id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "hand_number": 5,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 20,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:48:28",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "359e5e9f-79ad-4cfd-8ecb-d36a375f944a",
+      "hand_id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "hand_number": 5,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:48:35",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "95cd920f-e8d3-4af9-8115-0652b9487408",
+      "hand_id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "hand_number": 5,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "bet",
+      "amount": 60,
+      "round": "flop",
+      "created_at": "2025-12-31 14:48:40",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "0ed923ab-0125-41c7-8d09-2debeac1f78c",
+      "hand_id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "hand_number": 5,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 60,
+      "round": "flop",
+      "created_at": "2025-12-31 14:48:43",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "567f8240-446c-474f-a3b0-360aa1be11b1",
+      "hand_id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "hand_number": 5,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:48:48",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "67a3f7d1-c5a1-4769-b00b-9bddda371c7f",
+      "hand_id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "hand_number": 5,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:48:50",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "efa5a26a-caff-475e-bea8-fa3c36ba7fee",
+      "hand_id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "hand_number": 5,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "turn",
+      "created_at": "2025-12-31 14:49:05",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "a53eaacc-a9dc-4855-905e-b29dedcf50b7",
+      "hand_id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "hand_number": 5,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:49:08",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "1f9c4034-6bfd-4655-8ccf-220e1248cacd",
+      "hand_id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "hand_number": 5,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:49:14",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "2dc52689-e58b-4e30-8dbe-8552c33a72d3",
+      "hand_id": "aa174363-2e51-4c04-b15d-96b1836bd671",
+      "hand_number": 5,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:49:16",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "4838940f-06b8-455a-a159-9324e27de812",
+      "hand_id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "hand_number": 6,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 40,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:49:40",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "b7ded4e7-46b6-4d7e-bf36-d2d9ccfc3058",
+      "hand_id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "hand_number": 6,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 40,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:49:45",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "4e83ec9f-4cc1-49d7-9ae0-8bfbb44a3526",
+      "hand_id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "hand_number": 6,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:49:52",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "a64cb52c-a3c0-4ccd-97df-c9d9b93b1a4e",
+      "hand_id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "hand_number": 6,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "flop",
+      "created_at": "2025-12-31 14:49:58",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "3a58a3ef-74ab-4c37-9dde-0ac620c19780",
+      "hand_id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "hand_number": 6,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:50:00",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "a89d6118-e061-4956-9787-4a196d9d38a3",
+      "hand_id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "hand_number": 6,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:50:08",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "0f3fea14-9fa0-4c52-b9d4-a81d48c6b156",
+      "hand_id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "hand_number": 6,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:50:10",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "b4742e29-3333-4c34-83ce-47a16c5daebd",
+      "hand_id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "hand_number": 6,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "river",
+      "created_at": "2025-12-31 14:50:18",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "09e6242e-4f2b-40c7-931c-18efac7eb4c9",
+      "hand_id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "hand_number": 6,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 80,
+      "round": "river",
+      "created_at": "2025-12-31 14:50:22",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "d558f732-870a-4ee9-a97f-57522a194a79",
+      "hand_id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "hand_number": 6,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 80,
+      "round": "river",
+      "created_at": "2025-12-31 14:50:25",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "ccd83580-2652-4336-8a94-1d7ec2050d19",
+      "hand_id": "a16d5417-3094-4d29-8d99-3084d39f491a",
+      "hand_number": 6,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:50:29",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "43f9cf5c-2187-4efd-90c5-7704a2e6201e",
+      "hand_id": "20a9279b-397e-494f-be3a-8d42a546747a",
+      "hand_number": 7,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 20,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:50:56",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "90cc8638-55f2-4d30-a566-58a4d6d233c6",
+      "hand_id": "20a9279b-397e-494f-be3a-8d42a546747a",
+      "hand_number": 7,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:50:59",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "b63d19b9-91e4-4d85-9539-cb635977d69d",
+      "hand_id": "20a9279b-397e-494f-be3a-8d42a546747a",
+      "hand_number": 7,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:51:12",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "88899ba5-d722-421c-8f04-9a5b04f8a88f",
+      "hand_id": "20a9279b-397e-494f-be3a-8d42a546747a",
+      "hand_number": 7,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:51:18",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "9ed78403-662f-4cca-be03-2fc53220c703",
+      "hand_id": "20a9279b-397e-494f-be3a-8d42a546747a",
+      "hand_number": 7,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:51:23",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "8acff409-7e12-45b0-bfb7-684d89f9f822",
+      "hand_id": "20a9279b-397e-494f-be3a-8d42a546747a",
+      "hand_number": 7,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:51:28",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "df1142c4-dedc-4948-98d7-9175ca363727",
+      "hand_id": "20a9279b-397e-494f-be3a-8d42a546747a",
+      "hand_number": 7,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:51:31",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "d761395e-bcc7-41fb-9515-cecee536363a",
+      "hand_id": "20a9279b-397e-494f-be3a-8d42a546747a",
+      "hand_number": 7,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "river",
+      "created_at": "2025-12-31 14:51:35",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "23ff8e8f-0a84-4fb2-9ab3-576260a997b7",
+      "hand_id": "20a9279b-397e-494f-be3a-8d42a546747a",
+      "hand_number": 7,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:51:38",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "615820f8-4eea-40ff-9e85-3d64a9ed5b35",
+      "hand_id": "7a00c75c-628c-4303-a3d4-6f36d8eaaae2",
+      "hand_number": 8,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 20,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:52:58",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "c9363210-8dab-4881-a1ae-10ec16e69ec7",
+      "hand_id": "7a00c75c-628c-4303-a3d4-6f36d8eaaae2",
+      "hand_number": 8,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 20,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:53:01",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "1a67a9ab-37be-4674-b284-76d1ddfdd439",
+      "hand_id": "7a00c75c-628c-4303-a3d4-6f36d8eaaae2",
+      "hand_number": 8,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:53:04",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "84c5d07e-e64d-4f47-89a5-abdbbfb286ca",
+      "hand_id": "7a00c75c-628c-4303-a3d4-6f36d8eaaae2",
+      "hand_number": 8,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "flop",
+      "created_at": "2025-12-31 14:53:09",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "73ae904e-28b8-4362-bb53-efe5b1f85f44",
+      "hand_id": "7a00c75c-628c-4303-a3d4-6f36d8eaaae2",
+      "hand_number": 8,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:53:15",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "5652a522-5dc0-45a3-a6ff-40c7e05e6cab",
+      "hand_id": "7a00c75c-628c-4303-a3d4-6f36d8eaaae2",
+      "hand_number": 8,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "turn",
+      "created_at": "2025-12-31 14:53:28",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "f0f37299-b669-4714-8ce4-645421b1facc",
+      "hand_id": "7a00c75c-628c-4303-a3d4-6f36d8eaaae2",
+      "hand_number": 8,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:53:30",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "d8086002-7159-4c32-b1e6-a0a4d1348ab0",
+      "hand_id": "7a00c75c-628c-4303-a3d4-6f36d8eaaae2",
+      "hand_number": 8,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "river",
+      "created_at": "2025-12-31 14:53:36",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "2fe754f5-be48-4420-8127-cf7456295bfc",
+      "hand_id": "7a00c75c-628c-4303-a3d4-6f36d8eaaae2",
+      "hand_number": 8,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:53:38",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "5d56cba8-024f-416b-ba7a-495ea65d1fff",
+      "hand_id": "89c9f2b1-3b16-4f21-a463-6a1e57f4142d",
+      "hand_number": 9,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:53:59",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "54e02e3f-39e8-485c-aa0e-4de16f9abfbb",
+      "hand_id": "89c9f2b1-3b16-4f21-a463-6a1e57f4142d",
+      "hand_number": 9,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:54:01",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "eedea53d-e4d4-4ae3-9bfa-d6f5f2644ed3",
+      "hand_id": "89c9f2b1-3b16-4f21-a463-6a1e57f4142d",
+      "hand_number": 9,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:54:09",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "ec3cbf7d-25e1-4bf6-8516-64ceb278f7e3",
+      "hand_id": "89c9f2b1-3b16-4f21-a463-6a1e57f4142d",
+      "hand_number": 9,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 60,
+      "round": "flop",
+      "created_at": "2025-12-31 14:54:14",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "178b0252-6afc-4413-9df5-c40e1683ff61",
+      "hand_id": "89c9f2b1-3b16-4f21-a463-6a1e57f4142d",
+      "hand_number": 9,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "fold",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:54:19",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "37852e80-4e4f-4243-8b28-839e59a57c8c",
+      "hand_id": "f6fc99f8-0615-4430-923a-2b6bf8999c8e",
+      "hand_number": 10,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 20,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:54:45",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "efade816-1702-4472-af6c-ff14de1a158f",
+      "hand_id": "f6fc99f8-0615-4430-923a-2b6bf8999c8e",
+      "hand_number": 10,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 20,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:54:56",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "6844d1f8-fde7-4882-8057-0151ba016be2",
+      "hand_id": "f6fc99f8-0615-4430-923a-2b6bf8999c8e",
+      "hand_number": 10,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:55:00",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "5e8e7bf3-ed27-4784-a765-435180043ff4",
+      "hand_id": "f6fc99f8-0615-4430-923a-2b6bf8999c8e",
+      "hand_number": 10,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "flop",
+      "created_at": "2025-12-31 14:55:08",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "c0fff5af-de5a-49e2-97b9-755011cb4e5e",
+      "hand_id": "f6fc99f8-0615-4430-923a-2b6bf8999c8e",
+      "hand_number": 10,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:55:12",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "11a816c0-8f14-4f77-a001-e8e7df237ba4",
+      "hand_id": "f6fc99f8-0615-4430-923a-2b6bf8999c8e",
+      "hand_number": 10,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:55:20",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "a97ea7e9-4a5b-4ca9-913b-bc631d2bf79d",
+      "hand_id": "f6fc99f8-0615-4430-923a-2b6bf8999c8e",
+      "hand_number": 10,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:55:21",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "5a719df0-574a-4318-a39f-14dedfc78fb9",
+      "hand_id": "f6fc99f8-0615-4430-923a-2b6bf8999c8e",
+      "hand_number": 10,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:55:26",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "c8fefe35-4c18-4fbc-b776-3a8ddebc3000",
+      "hand_id": "f6fc99f8-0615-4430-923a-2b6bf8999c8e",
+      "hand_number": 10,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:55:27",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "97820861-34c8-4fde-ad85-e785fda4f648",
+      "hand_id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "hand_number": 11,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 20,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:55:40",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "1cd43bb1-05b1-4c34-8854-c0d852101046",
+      "hand_id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "hand_number": 11,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:55:43",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "75fe5dcc-c4fd-44f5-92c3-83ed982d9750",
+      "hand_id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "hand_number": 11,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:55:46",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "98b4cff4-aaba-4adb-ad76-f0a354517b96",
+      "hand_id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "hand_number": 11,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "flop",
+      "created_at": "2025-12-31 14:55:51",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "50316319-c8c9-4d84-ae8d-a84bdffb500d",
+      "hand_id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "hand_number": 11,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:55:57",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "d0b5e291-f967-401e-8c47-d2bb3b456082",
+      "hand_id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "hand_number": 11,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:56:01",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "254ad3ed-7e0e-4f86-be5e-73126ce8db17",
+      "hand_id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "hand_number": 11,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 60,
+      "round": "turn",
+      "created_at": "2025-12-31 14:56:07",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "a0616f1f-545f-4899-9c3c-1f0aeaaf7a20",
+      "hand_id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "hand_number": 11,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:56:11",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "cd22ef59-180a-4e4b-8c5d-654a41f2e177",
+      "hand_id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "hand_number": 11,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:56:14",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "be91888b-10f6-4304-9a89-2b12445e1efd",
+      "hand_id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "hand_number": 11,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 160,
+      "round": "river",
+      "created_at": "2025-12-31 14:56:21",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "ee4371f4-8d20-4716-be70-0bce9b836ec5",
+      "hand_id": "eba1b2a4-9c9c-4fa9-bbac-56809841021f",
+      "hand_number": 11,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "river",
+      "created_at": "2025-12-31 14:56:27",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "6f8b2948-15c1-4884-885a-3dc6206fe68c",
+      "hand_id": "ea2871a9-0325-41be-80c0-24444de96a0f",
+      "hand_number": 12,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 60,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:56:40",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "2a282fb0-5c44-4590-a28f-777f8b410255",
+      "hand_id": "ea2871a9-0325-41be-80c0-24444de96a0f",
+      "hand_number": 12,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:56:58",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "69c63c18-26ff-4fc6-b7ed-18537d5198d4",
+      "hand_id": "ea2871a9-0325-41be-80c0-24444de96a0f",
+      "hand_number": 12,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:57:02",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "7f7e5c7f-2e3c-43ad-8452-51c3a6dfaaff",
+      "hand_id": "ea2871a9-0325-41be-80c0-24444de96a0f",
+      "hand_number": 12,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "bet",
+      "amount": 80,
+      "round": "flop",
+      "created_at": "2025-12-31 14:57:11",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "abba51f7-f6f0-4faf-80dd-20379edcd491",
+      "hand_id": "ea2871a9-0325-41be-80c0-24444de96a0f",
+      "hand_number": 12,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "call",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:57:33",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "d0993858-50f4-4e42-b8aa-67b2b838ed48",
+      "hand_id": "ea2871a9-0325-41be-80c0-24444de96a0f",
+      "hand_number": 12,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "check",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:57:45",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "52404b4e-9d59-4c5a-8db5-2d857f9ba48f",
+      "hand_id": "ea2871a9-0325-41be-80c0-24444de96a0f",
+      "hand_number": 12,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "bet",
+      "amount": 120,
+      "round": "turn",
+      "created_at": "2025-12-31 14:57:50",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "f81e2dda-e963-436c-a272-eedab01d48ee",
+      "hand_id": "ea2871a9-0325-41be-80c0-24444de96a0f",
+      "hand_number": 12,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "fold",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:57:57",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "dd9d04b3-317f-4acf-8bbd-67f9b76866a4",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:58:56",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "72e05138-ebb6-4ef5-916a-2c99034e40ab",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 14:59:01",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "e8883a25-2f16-4128-8118-3d1e1ced546d",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:59:04",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "a9f3fa24-8805-413e-9913-15b972d51f07",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "flop",
+      "created_at": "2025-12-31 14:59:09",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "12e27dc6-22ab-4fbc-9423-5dbe19c3ed3e",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "flop",
+      "created_at": "2025-12-31 14:59:12",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "00202b5b-15dc-4d5b-b042-3a7c73c381fb",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "check",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:59:15",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "c74a1f73-b936-4952-b17a-c0f871e6d14a",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "bet",
+      "amount": 20,
+      "round": "turn",
+      "created_at": "2025-12-31 14:59:19",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "82019a7f-61b9-4c39-8ec9-c05f167e356a",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 80,
+      "round": "turn",
+      "created_at": "2025-12-31 14:59:24",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "66cec54c-730f-41bd-afd9-bde091c3dfab",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 80,
+      "round": "turn",
+      "created_at": "2025-12-31 14:59:31",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "6f15e0d0-1338-436a-a1ee-f164e79b602e",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "call",
+      "amount": 0,
+      "round": "turn",
+      "created_at": "2025-12-31 14:59:37",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "8e0dd81f-f2cd-49e2-bdcb-a9d340840e76",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "bet",
+      "amount": 100,
+      "round": "river",
+      "created_at": "2025-12-31 14:59:43",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "35990ec1-4454-483f-9b0e-dfcfb32ef885",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 100,
+      "round": "river",
+      "created_at": "2025-12-31 15:00:00",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "ee9b7550-21d7-43ae-b2f0-efb310b3fe24",
+      "hand_id": "8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982",
+      "hand_number": 13,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 560,
+      "round": "river",
+      "created_at": "2025-12-31 15:00:08",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "709dbe2c-f0d4-49e1-8a4e-2b5149716ad5",
+      "hand_id": "f4282785-fe37-4222-9ba1-a0b3b6fbbad2",
+      "hand_number": 14,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 641,
+      "round": "preflop",
+      "created_at": "2025-12-31 15:01:16",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "7bd6a228-dfbc-42f9-a926-6bb01a7f3ef9",
+      "hand_id": "f4282785-fe37-4222-9ba1-a0b3b6fbbad2",
+      "hand_number": 14,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "fold",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 15:01:53",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "0279b599-7227-4459-a7f1-7b8b44908ad2",
+      "hand_id": "2d29183c-e75b-4f8b-b785-ab8e0fa5e4f4",
+      "hand_number": 15,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "raise",
+      "amount": 20,
+      "round": "preflop",
+      "created_at": "2025-12-31 15:02:12",
+      "player_name": "Maria",
+      "player_position": 1
+    },
+    {
+      "id": "a2f46b93-bf88-48a2-9777-f2abdfa98c3b",
+      "hand_id": "2d29183c-e75b-4f8b-b785-ab8e0fa5e4f4",
+      "hand_number": 15,
+      "player_id": "57a8cf23-794a-4147-ac5f-5b38f11fed91",
+      "action_type": "raise",
+      "amount": 631,
+      "round": "preflop",
+      "created_at": "2025-12-31 15:02:27",
+      "player_name": "William",
+      "player_position": 0
+    },
+    {
+      "id": "f74a1f72-75fe-47da-bfe5-129d83e7d38b",
+      "hand_id": "2d29183c-e75b-4f8b-b785-ab8e0fa5e4f4",
+      "hand_number": 15,
+      "player_id": "447aadc1-3cc9-4aff-999a-ad9b310dcdf7",
+      "action_type": "call",
+      "amount": 0,
+      "round": "preflop",
+      "created_at": "2025-12-31 15:02:30",
+      "player_name": "Maria",
+      "player_position": 1
+    }
+  ],
+  "warnings": []
+}
