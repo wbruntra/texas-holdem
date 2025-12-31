@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import HorizontalSlider from '../components/HorizontalSlider';
+import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config';
 
 interface Player {
   id: string;
@@ -150,8 +151,10 @@ export default function PlayerView() {
 
     // WebSocket connection logic
     const connectWebSocket = () => {
+      // Connect directly to backend to ensure cookies are sent properly
+      // Vite proxy doesn't forward cookies on WebSocket upgrade
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const wsUrl = `${protocol}//localhost:${BACKEND_LOCAL_PORT}/ws`;
       
       console.log('[PlayerView] Connecting to WebSocket:', wsUrl);
       ws = new WebSocket(wsUrl);
@@ -163,12 +166,18 @@ export default function PlayerView() {
 
         // Subscribe to player stream
         if (ws && ws.readyState === WebSocket.OPEN) {
+          // Get stored playerId for authentication
+          const storedPlayerId = playerNameStorageKey 
+            ? localStorage.getItem(`${playerNameStorageKey}:playerId`)
+            : null;
+            
           ws.send(JSON.stringify({
             type: 'subscribe',
             payload: {
               roomCode,
               stream: 'player',
-              gameId // Include gameId as fallback auth
+              gameId,
+              playerId: storedPlayerId // Send playerId for auth
             }
           }));
         }
@@ -368,6 +377,15 @@ export default function PlayerView() {
       });
 
       setGame(stateResponse.data);
+      
+      // Store playerId in localStorage for WebSocket auth
+      const authenticatedPlayer = stateResponse.data.players.find(
+        (p: Player) => p.holeCards && p.holeCards.length > 0
+      );
+      if (authenticatedPlayer && playerNameStorageKey) {
+        localStorage.setItem(`${playerNameStorageKey}:playerId`, authenticatedPlayer.id);
+      }
+      
       setJoined(true);
       setError('');
     } catch (err: unknown) {

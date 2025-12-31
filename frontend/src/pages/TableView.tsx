@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config';
 
 interface Player {
   id: string;
@@ -59,8 +60,10 @@ export default function TableView() {
 
     // WebSocket connection logic
     const connectWebSocket = () => {
+      // Connect directly to backend to ensure cookies are sent properly
+      // Vite proxy doesn't forward cookies on WebSocket upgrade
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const wsUrl = `${protocol}//localhost:${BACKEND_LOCAL_PORT}/ws`;
       
       console.log('[TableView] Connecting to WebSocket:', wsUrl);
       ws = new WebSocket(wsUrl);

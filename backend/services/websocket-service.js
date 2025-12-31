@@ -111,7 +111,7 @@ class WebSocketService {
    * Handle subscription request
    */
   async handleSubscribe(ws, payload, requestId) {
-    const { roomCode, stream, gameId: clientGameId } = payload;
+    const { roomCode, stream, gameId: clientGameId, playerId: clientPlayerId } = payload;
 
     if (!roomCode || !stream) {
       return this.sendError(ws, 'roomCode and stream are required', requestId);
@@ -131,9 +131,9 @@ class WebSocketService {
 
       let playerId = null;
       
-      // For player stream, try session auth first, then fallback to gameId verification
+      // For player stream, try multiple auth methods
       if (stream === 'player') {
-        // Try session-based auth
+        // Method 1: Session-based auth (from cookies)
         if (ws.playerId) {
           const player = await playerService.getPlayerById(ws.playerId);
           
@@ -143,10 +143,21 @@ class WebSocketService {
           }
         }
         
-        // Fallback: if no session auth but gameId provided, allow subscription
-        // Use table sanitization (no hole cards) until cookie auth is fixed
+        // Method 2: Client-provided playerId (from localStorage)
+        if (!playerId && clientPlayerId) {
+          const player = await playerService.getPlayerById(clientPlayerId);
+          
+          if (player && player.gameId === game.id) {
+            playerId = player.id;
+            console.log('[WS] Player authenticated via playerId:', playerId);
+          } else {
+            console.warn('[WS] Invalid playerId provided:', clientPlayerId);
+          }
+        }
+        
+        // Method 3: Fallback to table view if gameId matches
         if (!playerId && clientGameId && clientGameId === game.id) {
-          console.warn('[WS] Player stream requested but no session auth - using table view sanitization');
+          console.warn('[WS] Player stream requested but no auth - using table view sanitization');
           // Keep playerId = null, will use table sanitization
         } else if (!playerId && !clientGameId) {
           return this.sendError(ws, 'Authentication required for player stream', requestId);
@@ -361,37 +372,36 @@ class WebSocketService {
       console.log('[WS] Parsed cookies:', Object.keys(cookies));
       
       const sessionCookie = cookies['holdem'];
+      const signatureCookie = cookies['holdem.sig'];
       
       if (!sessionCookie) {
         console.log('[WS] No holdem cookie found');
         return null;
       }
 
-      console.log('[WS] Session cookie length:', sessionCookie.length);
-
-      // Cookie value might be URL-encoded
-      const decodedCookie = decodeURIComponent(sessionCookie);
-      
-      // Cookie is in format: value.signature
-      const parts = decodedCookie.split('.');
-      if (parts.length !== 2) {
-        console.warn('[WS] Invalid cookie format, parts:', parts.length);
+      if (!signatureCookie) {
+        console.log('[WS] No holdem.sig cookie found');
         return null;
       }
 
-      const [value, signature] = parts;
+      console.log('[WS] Session cookie length:', sessionCookie.length);
+      console.log('[WS] Signature cookie length:', signatureCookie.length);
+
+      // Cookie value might be URL-encoded
+      const decodedValue = decodeURIComponent(sessionCookie);
+      const decodedSignature = decodeURIComponent(signatureCookie);
       
       // Verify signature
-      const expectedSignature = keygrip.sign(`holdem=${value}`);
-      if (signature !== expectedSignature) {
+      const expectedSignature = keygrip.sign(`holdem=${decodedValue}`);
+      if (decodedSignature !== expectedSignature) {
         console.warn('[WS] Invalid session signature');
         console.warn('[WS] Expected:', expectedSignature);
-        console.warn('[WS] Got:', signature);
+        console.warn('[WS] Got:', decodedSignature);
         return null;
       }
 
       // Decode Base64 session data
-      const sessionJson = Buffer.from(value, 'base64').toString('utf-8');
+      const sessionJson = Buffer.from(decodedValue, 'base64').toString('utf-8');
       const session = JSON.parse(sessionJson);
       
       console.log('[WS] Session parsed successfully, playerId:', session.playerId);
