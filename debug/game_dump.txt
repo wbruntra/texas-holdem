@@ -1,0 +1,151 @@
+DB: /home/william/personal/texas-holdem/holdem.sqlite3
+Game: id=46e3d576-2417-4f37-880a-675cb888dbad room_code=PDPXYU status=completed
+State: round=showdown hand_number=16 current_player_position=null current_bet=0 last_raise=0 pot=0
+Players:
+  pos=0 name=William id=57a8cf23-794a-4147-ac5f-5b38f11fed91 status=active chips=2000 current_bet=0 total_bet=671 last_action=null
+  pos=1 name=Maria id=447aadc1-3cc9-4aff-999a-ad9b310dcdf7 status=all_in chips=0 current_bet=0 total_bet=580 last_action=null
+Hands:
+  hand_number=1 id=33bd02d1-46ea-4632-a797-94b6a8339f6c pot_amount=0 completed_at=1767191968376
+  hand_number=2 id=41128233-fd80-457c-ae3d-ca8cea46727c pot_amount=0 completed_at=1767192138024
+  hand_number=3 id=e7bb34e6-d955-42fe-af99-d5f62d3b4445 pot_amount=0 completed_at=1767192260974
+  hand_number=4 id=4706e388-64b6-457e-9094-c365fe484b78 pot_amount=0 completed_at=1767192360951
+  hand_number=5 id=aa174363-2e51-4c04-b15d-96b1836bd671 pot_amount=0 completed_at=1767192467486
+  hand_number=6 id=a16d5417-3094-4d29-8d99-3084d39f491a pot_amount=0 completed_at=1767192556722
+  hand_number=7 id=20a9279b-397e-494f-be3a-8d42a546747a pot_amount=0 completed_at=1767192629262
+  hand_number=8 id=7a00c75c-628c-4303-a3d4-6f36d8eaaae2 pot_amount=0 completed_at=1767192698143
+  hand_number=9 id=89c9f2b1-3b16-4f21-a463-6a1e57f4142d pot_amount=0 completed_at=1767192818590
+  hand_number=10 id=f6fc99f8-0615-4430-923a-2b6bf8999c8e pot_amount=0 completed_at=1767192859243
+  hand_number=11 id=eba1b2a4-9c9c-4fa9-bbac-56809841021f pot_amount=0 completed_at=1767192927454
+  hand_number=12 id=ea2871a9-0325-41be-80c0-24444de96a0f pot_amount=0 completed_at=1767192987567
+  hand_number=13 id=8ffe5e0f-74c4-44b8-9ba2-4a59fbb55982 pot_amount=0 completed_at=1767193077036
+  hand_number=14 id=f4282785-fe37-4222-9ba1-a0b3b6fbbad2 pot_amount=0 completed_at=1767193208110
+  hand_number=15 id=2d29183c-e75b-4f8b-b785-ab8e0fa5e4f4 pot_amount=0 completed_at=1767193313530
+  hand_number=16 id=eb63e29e-a589-424f-a94f-04c64cba7fc4 pot_amount=0 completed_at=1767193356451
+Actions:
+  hand=1 2025-12-31 14:40:07 round=preflop pos=1 name=Maria action=call amount=0
+  hand=1 2025-12-31 14:40:12 round=preflop pos=0 name=William action=check amount=0
+  hand=1 2025-12-31 14:40:54 round=flop pos=0 name=William action=check amount=0
+  hand=1 2025-12-31 14:41:43 round=flop pos=1 name=Maria action=check amount=0
+  hand=1 2025-12-31 14:41:47 round=turn pos=0 name=William action=bet amount=20
+  hand=1 2025-12-31 14:42:01 round=turn pos=1 name=Maria action=call amount=0
+  hand=1 2025-12-31 14:42:09 round=river pos=0 name=William action=check amount=0
+  hand=1 2025-12-31 14:42:18 round=river pos=1 name=Maria action=check amount=0
+  hand=2 2025-12-31 14:42:50 round=preflop pos=0 name=William action=call amount=0
+  hand=2 2025-12-31 14:43:10 round=preflop pos=1 name=Maria action=check amount=0
+  hand=2 2025-12-31 14:43:34 round=flop pos=1 name=Maria action=check amount=0
+  hand=2 2025-12-31 14:43:38 round=flop pos=0 name=William action=check amount=0
+  hand=2 2025-12-31 14:43:55 round=turn pos=1 name=Maria action=bet amount=20
+  hand=2 2025-12-31 14:43:58 round=turn pos=0 name=William action=call amount=0
+  hand=2 2025-12-31 14:44:18 round=river pos=1 name=Maria action=check amount=0
+  hand=2 2025-12-31 14:44:20 round=river pos=0 name=William action=check amount=0
+  hand=3 2025-12-31 14:45:19 round=preflop pos=1 name=Maria action=call amount=0
+  hand=3 2025-12-31 14:45:22 round=preflop pos=0 name=William action=check amount=0
+  hand=3 2025-12-31 14:45:27 round=flop pos=0 name=William action=bet amount=20
+  hand=3 2025-12-31 14:45:30 round=flop pos=1 name=Maria action=raise amount=20
+  hand=3 2025-12-31 14:45:33 round=flop pos=0 name=William action=call amount=0
+  hand=3 2025-12-31 14:45:41 round=turn pos=0 name=William action=check amount=0
+  hand=3 2025-12-31 14:45:47 round=turn pos=1 name=Maria action=bet amount=20
+  hand=3 2025-12-31 14:45:49 round=turn pos=0 name=William action=call amount=0
+  hand=3 2025-12-31 14:45:55 round=river pos=0 name=William action=check amount=0
+  hand=3 2025-12-31 14:46:00 round=river pos=1 name=Maria action=check amount=0
+  hand=4 2025-12-31 14:46:13 round=preflop pos=0 name=William action=raise amount=20
+  hand=4 2025-12-31 14:46:47 round=preflop pos=1 name=Maria action=raise amount=20
+  hand=4 2025-12-31 14:46:52 round=preflop pos=0 name=William action=call amount=0
+  hand=4 2025-12-31 14:47:07 round=flop pos=1 name=Maria action=bet amount=20
+  hand=4 2025-12-31 14:47:10 round=flop pos=0 name=William action=call amount=0
+  hand=4 2025-12-31 14:47:16 round=turn pos=1 name=Maria action=bet amount=20
+  hand=4 2025-12-31 14:47:19 round=turn pos=0 name=William action=call amount=0
+  hand=4 2025-12-31 14:47:39 round=river pos=1 name=Maria action=bet amount=20
+  hand=4 2025-12-31 14:47:43 round=river pos=0 name=William action=raise amount=40
+  hand=4 2025-12-31 14:47:47 round=river pos=1 name=Maria action=call amount=0
+  hand=5 2025-12-31 14:48:24 round=preflop pos=1 name=Maria action=call amount=0
+  hand=5 2025-12-31 14:48:28 round=preflop pos=0 name=William action=raise amount=20
+  hand=5 2025-12-31 14:48:35 round=preflop pos=1 name=Maria action=call amount=0
+  hand=5 2025-12-31 14:48:40 round=flop pos=0 name=William action=bet amount=60
+  hand=5 2025-12-31 14:48:43 round=flop pos=1 name=Maria action=raise amount=60
+  hand=5 2025-12-31 14:48:48 round=flop pos=0 name=William action=call amount=0
+  hand=5 2025-12-31 14:48:50 round=turn pos=0 name=William action=check amount=0
+  hand=5 2025-12-31 14:49:05 round=turn pos=1 name=Maria action=bet amount=20
+  hand=5 2025-12-31 14:49:08 round=turn pos=0 name=William action=call amount=0
+  hand=5 2025-12-31 14:49:14 round=river pos=0 name=William action=check amount=0
+  hand=5 2025-12-31 14:49:16 round=river pos=1 name=Maria action=check amount=0
+  hand=6 2025-12-31 14:49:40 round=preflop pos=0 name=William action=raise amount=40
+  hand=6 2025-12-31 14:49:45 round=preflop pos=1 name=Maria action=raise amount=40
+  hand=6 2025-12-31 14:49:52 round=preflop pos=0 name=William action=call amount=0
+  hand=6 2025-12-31 14:49:58 round=flop pos=1 name=Maria action=bet amount=20
+  hand=6 2025-12-31 14:50:00 round=flop pos=0 name=William action=call amount=0
+  hand=6 2025-12-31 14:50:08 round=turn pos=1 name=Maria action=check amount=0
+  hand=6 2025-12-31 14:50:10 round=turn pos=0 name=William action=check amount=0
+  hand=6 2025-12-31 14:50:18 round=river pos=1 name=Maria action=bet amount=20
+  hand=6 2025-12-31 14:50:22 round=river pos=0 name=William action=raise amount=80
+  hand=6 2025-12-31 14:50:25 round=river pos=1 name=Maria action=raise amount=80
+  hand=6 2025-12-31 14:50:29 round=river pos=0 name=William action=call amount=0
+  hand=7 2025-12-31 14:50:56 round=preflop pos=1 name=Maria action=raise amount=20
+  hand=7 2025-12-31 14:50:59 round=preflop pos=0 name=William action=call amount=0
+  hand=7 2025-12-31 14:51:12 round=flop pos=0 name=William action=check amount=0
+  hand=7 2025-12-31 14:51:18 round=flop pos=1 name=Maria action=check amount=0
+  hand=7 2025-12-31 14:51:23 round=turn pos=0 name=William action=check amount=0
+  hand=7 2025-12-31 14:51:28 round=turn pos=1 name=Maria action=check amount=0
+  hand=7 2025-12-31 14:51:31 round=river pos=0 name=William action=check amount=0
+  hand=7 2025-12-31 14:51:35 round=river pos=1 name=Maria action=bet amount=20
+  hand=7 2025-12-31 14:51:38 round=river pos=0 name=William action=call amount=0
+  hand=8 2025-12-31 14:52:58 round=preflop pos=0 name=William action=raise amount=20
+  hand=8 2025-12-31 14:53:01 round=preflop pos=1 name=Maria action=raise amount=20
+  hand=8 2025-12-31 14:53:04 round=preflop pos=0 name=William action=call amount=0
+  hand=8 2025-12-31 14:53:09 round=flop pos=1 name=Maria action=bet amount=20
+  hand=8 2025-12-31 14:53:15 round=flop pos=0 name=William action=call amount=0
+  hand=8 2025-12-31 14:53:28 round=turn pos=1 name=Maria action=bet amount=20
+  hand=8 2025-12-31 14:53:30 round=turn pos=0 name=William action=call amount=0
+  hand=8 2025-12-31 14:53:36 round=river pos=1 name=Maria action=bet amount=20
+  hand=8 2025-12-31 14:53:38 round=river pos=0 name=William action=call amount=0
+  hand=9 2025-12-31 14:53:59 round=preflop pos=1 name=Maria action=call amount=0
+  hand=9 2025-12-31 14:54:01 round=preflop pos=0 name=William action=check amount=0
+  hand=9 2025-12-31 14:54:09 round=flop pos=0 name=William action=check amount=0
+  hand=9 2025-12-31 14:54:14 round=flop pos=1 name=Maria action=bet amount=60
+  hand=9 2025-12-31 14:54:19 round=flop pos=0 name=William action=fold amount=0
+  hand=10 2025-12-31 14:54:45 round=preflop pos=0 name=William action=raise amount=20
+  hand=10 2025-12-31 14:54:56 round=preflop pos=1 name=Maria action=raise amount=20
+  hand=10 2025-12-31 14:55:00 round=preflop pos=0 name=William action=call amount=0
+  hand=10 2025-12-31 14:55:08 round=flop pos=1 name=Maria action=bet amount=20
+  hand=10 2025-12-31 14:55:12 round=flop pos=0 name=William action=call amount=0
+  hand=10 2025-12-31 14:55:20 round=turn pos=1 name=Maria action=check amount=0
+  hand=10 2025-12-31 14:55:21 round=turn pos=0 name=William action=check amount=0
+  hand=10 2025-12-31 14:55:26 round=river pos=1 name=Maria action=check amount=0
+  hand=10 2025-12-31 14:55:27 round=river pos=0 name=William action=check amount=0
+  hand=11 2025-12-31 14:55:40 round=preflop pos=1 name=Maria action=raise amount=20
+  hand=11 2025-12-31 14:55:43 round=preflop pos=0 name=William action=call amount=0
+  hand=11 2025-12-31 14:55:46 round=flop pos=0 name=William action=check amount=0
+  hand=11 2025-12-31 14:55:51 round=flop pos=1 name=Maria action=bet amount=20
+  hand=11 2025-12-31 14:55:57 round=flop pos=0 name=William action=call amount=0
+  hand=11 2025-12-31 14:56:01 round=turn pos=0 name=William action=check amount=0
+  hand=11 2025-12-31 14:56:07 round=turn pos=1 name=Maria action=bet amount=60
+  hand=11 2025-12-31 14:56:11 round=turn pos=0 name=William action=call amount=0
+  hand=11 2025-12-31 14:56:14 round=river pos=0 name=William action=check amount=0
+  hand=11 2025-12-31 14:56:21 round=river pos=1 name=Maria action=bet amount=160
+  hand=11 2025-12-31 14:56:27 round=river pos=0 name=William action=call amount=0
+  hand=12 2025-12-31 14:56:40 round=preflop pos=0 name=William action=raise amount=60
+  hand=12 2025-12-31 14:56:58 round=preflop pos=1 name=Maria action=call amount=0
+  hand=12 2025-12-31 14:57:02 round=flop pos=1 name=Maria action=check amount=0
+  hand=12 2025-12-31 14:57:11 round=flop pos=0 name=William action=bet amount=80
+  hand=12 2025-12-31 14:57:33 round=flop pos=1 name=Maria action=call amount=0
+  hand=12 2025-12-31 14:57:45 round=turn pos=1 name=Maria action=check amount=0
+  hand=12 2025-12-31 14:57:50 round=turn pos=0 name=William action=bet amount=120
+  hand=12 2025-12-31 14:57:57 round=turn pos=1 name=Maria action=fold amount=0
+  hand=13 2025-12-31 14:58:56 round=preflop pos=1 name=Maria action=call amount=0
+  hand=13 2025-12-31 14:59:01 round=preflop pos=0 name=William action=check amount=0
+  hand=13 2025-12-31 14:59:04 round=flop pos=0 name=William action=check amount=0
+  hand=13 2025-12-31 14:59:09 round=flop pos=1 name=Maria action=bet amount=20
+  hand=13 2025-12-31 14:59:12 round=flop pos=0 name=William action=call amount=0
+  hand=13 2025-12-31 14:59:15 round=turn pos=0 name=William action=check amount=0
+  hand=13 2025-12-31 14:59:19 round=turn pos=1 name=Maria action=bet amount=20
+  hand=13 2025-12-31 14:59:24 round=turn pos=0 name=William action=raise amount=80
+  hand=13 2025-12-31 14:59:31 round=turn pos=1 name=Maria action=raise amount=80
+  hand=13 2025-12-31 14:59:37 round=turn pos=0 name=William action=call amount=0
+  hand=13 2025-12-31 14:59:43 round=river pos=0 name=William action=bet amount=100
+  hand=13 2025-12-31 15:00:00 round=river pos=1 name=Maria action=raise amount=100
+  hand=13 2025-12-31 15:00:08 round=river pos=0 name=William action=raise amount=560
+  hand=14 2025-12-31 15:01:16 round=preflop pos=0 name=William action=raise amount=641
+  hand=14 2025-12-31 15:01:53 round=preflop pos=1 name=Maria action=fold amount=0
+  hand=15 2025-12-31 15:02:12 round=preflop pos=1 name=Maria action=raise amount=20
+  hand=15 2025-12-31 15:02:27 round=preflop pos=0 name=William action=raise amount=631
+  hand=15 2025-12-31 15:02:30 round=preflop pos=1 name=Maria action=call amount=0
