@@ -43,29 +43,40 @@ export default function Home() {
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '50px auto', padding: '20px' }}>
-      <h1>Texas Hold'em</h1>
+    <div style={{ 
+      maxWidth: '600px', 
+      margin: '0 auto', 
+      padding: '20px',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      boxSizing: 'border-box',
+    }}>
+      <h1 style={{ marginTop: '0', marginBottom: '1.5rem' }}>Texas Hold'em</h1>
       
-      <div style={{ marginTop: '40px' }}>
-        <h2>Create New Game</h2>
-        <p>Start a new game and show the table on this screen</p>
+      <div style={{ marginTop: '2rem' }}>
+        <h2 style={{ fontSize: '1.5em', marginBottom: '0.5rem' }}>Create New Game</h2>
+        <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>Start a new game and show the table on this screen</p>
         <button 
           onClick={handleCreateGame}
           disabled={creating}
           style={{
-            padding: '15px 30px',
-            fontSize: '18px',
+            padding: '12px 24px',
+            fontSize: '16px',
             cursor: creating ? 'not-allowed' : 'pointer',
+            width: '100%',
+            maxWidth: '300px',
           }}
         >
           {creating ? 'Creating...' : 'Create Game'}
         </button>
       </div>
 
-      <div style={{ marginTop: '60px' }}>
-        <h2>Join Existing Game</h2>
-        <p>Enter room code to join as a player</p>
-        <div style={{ display: 'flex', gap: '10px' }}>
+      <div style={{ marginTop: '3rem' }}>
+        <h2 style={{ fontSize: '1.5em', marginBottom: '0.5rem' }}>Join Existing Game</h2>
+        <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>Enter room code to join as a player</p>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <input
             type="text"
             placeholder="Room Code (e.g. ABC123)"
@@ -73,19 +84,22 @@ export default function Home() {
             onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
             onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
             style={{
-              padding: '15px',
-              fontSize: '18px',
-              flex: 1,
+              padding: '12px',
+              fontSize: '16px',
+              flex: '1 1 auto',
+              minWidth: '150px',
               textTransform: 'uppercase',
+              boxSizing: 'border-box',
             }}
           />
           <button
             onClick={handleJoinGame}
             disabled={!roomCode.trim()}
             style={{
-              padding: '15px 30px',
-              fontSize: '18px',
+              padding: '12px 24px',
+              fontSize: '16px',
               cursor: !roomCode.trim() ? 'not-allowed' : 'pointer',
+              flex: '0 0 auto',
             }}
           >
             Join
@@ -95,11 +109,12 @@ export default function Home() {
 
       {error && (
         <div style={{ 
-          marginTop: '20px', 
-          padding: '15px', 
+          marginTop: '1.5rem', 
+          padding: '12px', 
           backgroundColor: '#fee', 
           color: '#c00',
           borderRadius: '5px',
+          fontSize: '14px',
         }}>
           {error}
         </div>
