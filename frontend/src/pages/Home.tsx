@@ -98,18 +98,17 @@ export default function Home() {
         <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
           Enter room code to join as a player
         </p>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
           <input
             type="text"
-            placeholder="Room Code (e.g. ABC123)"
+            placeholder="Room Code"
             value={roomCode}
             onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
             onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
             style={{
               padding: '12px',
               fontSize: '16px',
-              flex: '1 1 auto',
-              minWidth: '150px',
+              width: '140px',
               textTransform: 'uppercase',
               boxSizing: 'border-box',
             }}
