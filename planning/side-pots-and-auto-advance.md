@@ -142,28 +142,25 @@ If C folded instead, C's chips still in pots but C not eligible to win.
 ```javascript
 function shouldAutoAdvance(state) {
   const activePlayers = state.players.filter(
-    (p) =>
-      p.status === PLAYER_STATUS.ACTIVE || p.status === PLAYER_STATUS.ALL_IN
-  );
+    (p) => p.status === PLAYER_STATUS.ACTIVE || p.status === PLAYER_STATUS.ALL_IN,
+  )
 
-  if (activePlayers.length <= 1) return true;
+  if (activePlayers.length <= 1) return true
 
-  const canBet = activePlayers.filter(
-    (p) => p.status === PLAYER_STATUS.ACTIVE && p.chips > 0
-  );
+  const canBet = activePlayers.filter((p) => p.status === PLAYER_STATUS.ACTIVE && p.chips > 0)
 
   // If 0 or 1 players can bet, auto-advance
   if (canBet.length <= 1) {
     // Check if that one player has acted
     if (canBet.length === 1) {
-      const player = canBet[0];
-      const hasMatched = player.currentBet >= state.currentBet;
-      return hasMatched;
+      const player = canBet[0]
+      const hasMatched = player.currentBet >= state.currentBet
+      return hasMatched
     }
-    return true;
+    return true
   }
 
-  return false;
+  return false
 }
 ```
 

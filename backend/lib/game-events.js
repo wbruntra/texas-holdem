@@ -3,7 +3,7 @@
  * Enables WebSocket server to broadcast updates without tight coupling
  */
 
-const EventEmitter = require('events');
+const EventEmitter = require('events')
 
 class GameEvents extends EventEmitter {
   /**
@@ -12,7 +12,7 @@ class GameEvents extends EventEmitter {
    * @param {string} reason - Reason for update (action, advance, reveal, next_hand, admin)
    */
   emitGameUpdate(gameId, reason = 'update') {
-    this.emit('game:updated', { gameId, reason });
+    this.emit('game:updated', { gameId, reason })
   }
 
   /**
@@ -20,11 +20,11 @@ class GameEvents extends EventEmitter {
    * @param {Function} handler - Handler function(data)
    */
   onGameUpdate(handler) {
-    this.on('game:updated', handler);
+    this.on('game:updated', handler)
   }
 }
 
 // Singleton instance
-const gameEvents = new GameEvents();
+const gameEvents = new GameEvents()
 
-module.exports = gameEvents;
+module.exports = gameEvents

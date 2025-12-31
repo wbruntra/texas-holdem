@@ -131,11 +131,11 @@ Edit `bots_play.js` and modify these lines:
 ```javascript
 // For aggressive bot (search for these)
 if (validActions.canBet && botPlayer.chips >= 100) {
-  amount = 100; // Change this number
+  amount = 100 // Change this number
 }
 
 // Update the comment too
-console.log('Bot 1: "Aggressive" (bets $100)'); // Change to your amount
+console.log('Bot 1: "Aggressive" (bets $100)') // Change to your amount
 ```
 
 ### Change Starting Chips
@@ -147,7 +147,7 @@ const gameRes = await api.post('/games', {
   smallBlind: 5,
   bigBlind: 10,
   startingChips: 1000, // Change this to increase/decrease starting chips
-});
+})
 ```
 
 ### Modify Bot Strategy

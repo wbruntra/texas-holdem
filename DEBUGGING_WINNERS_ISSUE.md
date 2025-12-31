@@ -27,7 +27,7 @@ Players were losing all their money at showdown with no winner being declared.
 
 ```javascript
 // Migration: Added total_bet column to players table
-table.integer('total_bet').notNullable().defaultTo(0);
+table.integer('total_bet').notNullable().defaultTo(0)
 ```
 
 ### Fix 2: Persist `totalBet` When Saving
@@ -53,7 +53,7 @@ Added fallback logic in `processShowdown()` to handle games that don't have prop
 ```javascript
 // If pots are empty (likely from old games without totalBet tracking),
 // fall back to simple pot distribution
-const hasValidPots = pots.some((pot) => pot.amount > 0);
+const hasValidPots = pots.some((pot) => pot.amount > 0)
 
 if (!hasValidPots) {
   // Split pot evenly among eligible players (old behavior)

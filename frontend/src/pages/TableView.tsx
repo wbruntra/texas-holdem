@@ -1,81 +1,80 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config';
+import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import axios from 'axios'
+import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config'
 
 interface Player {
-  id: string;
-  name: string;
-  position: number;
-  chips: number;
-  currentBet: number;
-  status: string;
-  holeCards?: Array<{ rank: string; suit: string }>;
-  lastAction?: string | null;
+  id: string
+  name: string
+  position: number
+  chips: number
+  currentBet: number
+  status: string
+  holeCards?: Array<{ rank: string; suit: string }>
+  lastAction?: string | null
 }
 
 interface Pot {
-  amount: number;
-  eligiblePlayers: number[];
-  winners?: number[] | null;
-  winningRankName?: string;
+  amount: number
+  eligiblePlayers: number[]
+  winners?: number[] | null
+  winningRankName?: string
 }
 
 interface GameState {
-  id: string;
-  roomCode: string;
-  status: string;
-  currentRound: string;
-  pot: number;
-  pots?: Pot[];
-  currentBet: number;
-  currentPlayerPosition: number | null;
-  communityCards?: Array<{ rank: string; suit: string }>;
-  players: Player[];
-  dealerPosition: number;
-  winners?: number[];
+  id: string
+  roomCode: string
+  status: string
+  currentRound: string
+  pot: number
+  pots?: Pot[]
+  currentBet: number
+  currentPlayerPosition: number | null
+  communityCards?: Array<{ rank: string; suit: string }>
+  players: Player[]
+  dealerPosition: number
+  winners?: number[]
 }
 
 export default function TableView() {
-  const { roomCode } = useParams<{ roomCode: string }>();
-  const [game, setGame] = useState<GameState | null>(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [showGameOverModal, setShowGameOverModal] = useState(true);
-  const [wsConnected, setWsConnected] = useState(false);
+  const { roomCode } = useParams<{ roomCode: string }>()
+  const [game, setGame] = useState<GameState | null>(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [showGameOverModal, setShowGameOverModal] = useState(true)
+  const [wsConnected, setWsConnected] = useState(false)
 
   const getApiErrorMessage = (err: unknown, fallback: string) => {
-    if (!axios.isAxiosError(err)) return fallback;
-    const data = err.response?.data as { error?: string } | undefined;
-    return data?.error || fallback;
-  };
+    if (!axios.isAxiosError(err)) return fallback
+    const data = err.response?.data as { error?: string } | undefined
+    return data?.error || fallback
+  }
 
   useEffect(() => {
-    if (!roomCode) return;
+    if (!roomCode) return
 
-    let ws: WebSocket | null = null;
-    let pollInterval: number | null = null;
-    let reconnectTimeout: number | null = null;
+    let ws: WebSocket | null = null
+    let pollInterval: number | null = null
+    let reconnectTimeout: number | null = null
 
     // WebSocket connection logic
     const connectWebSocket = () => {
       // In development: connect directly to backend (Vite proxy doesn't forward cookies)
       // In production: use same domain/port as the page
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const isDevelopment =
-        window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1';
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       const wsUrl = isDevelopment
         ? `${protocol}//localhost:${BACKEND_LOCAL_PORT}/ws`
-        : `${protocol}//${window.location.host}/ws`;
+        : `${protocol}//${window.location.host}/ws`
 
-      console.log('[TableView] Connecting to WebSocket:', wsUrl);
-      ws = new WebSocket(wsUrl);
+      console.log('[TableView] Connecting to WebSocket:', wsUrl)
+      ws = new WebSocket(wsUrl)
 
       ws.onopen = () => {
-        console.log('[TableView] WebSocket connected');
-        setWsConnected(true);
-        setError('');
+        console.log('[TableView] WebSocket connected')
+        setWsConnected(true)
+        setError('')
 
         // Subscribe to table stream
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -86,110 +85,104 @@ export default function TableView() {
                 roomCode,
                 stream: 'table',
               },
-            })
-          );
+            }),
+          )
         }
-      };
+      }
 
       ws.onmessage = (event) => {
         try {
-          const message = JSON.parse(event.data);
-          console.log('[TableView] WebSocket message:', message.type);
+          const message = JSON.parse(event.data)
+          console.log('[TableView] WebSocket message:', message.type)
 
           switch (message.type) {
             case 'hello':
-              console.log('[TableView] Server hello:', message.payload);
-              break;
+              console.log('[TableView] Server hello:', message.payload)
+              break
 
             case 'subscribed':
-              console.log('[TableView] Subscribed to table stream');
-              setLoading(false);
+              console.log('[TableView] Subscribed to table stream')
+              setLoading(false)
               // Stop polling when WS is active
               if (pollInterval) {
-                clearInterval(pollInterval);
-                pollInterval = null;
+                clearInterval(pollInterval)
+                pollInterval = null
               }
-              break;
+              break
 
             case 'game_state':
-              console.log(
-                '[TableView] Game state update:',
-                message.payload.reason
-              );
-              setGame(message.payload.state);
-              setError('');
-              setLoading(false);
-              break;
+              console.log('[TableView] Game state update:', message.payload.reason)
+              setGame(message.payload.state)
+              setError('')
+              setLoading(false)
+              break
 
             case 'error':
-              console.error(
-                '[TableView] WebSocket error:',
-                message.payload.error
-              );
-              setError(message.payload.error);
-              break;
+              console.error('[TableView] WebSocket error:', message.payload.error)
+              setError(message.payload.error)
+              break
           }
         } catch (err) {
-          console.error('[TableView] Failed to parse WebSocket message:', err);
+          console.error('[TableView] Failed to parse WebSocket message:', err)
         }
-      };
+      }
 
       ws.onerror = (error) => {
-        console.error('[TableView] WebSocket error:', error);
-        setWsConnected(false);
-      };
+        console.error('[TableView] WebSocket error:', error)
+        setWsConnected(false)
+      }
 
       ws.onclose = () => {
-        console.log('[TableView] WebSocket disconnected');
-        setWsConnected(false);
+        console.log('[TableView] WebSocket disconnected')
+        setWsConnected(false)
 
         // Fall back to polling
         if (!pollInterval) {
-          startPolling();
+          startPolling()
         }
 
         // Attempt to reconnect after 3 seconds
         reconnectTimeout = window.setTimeout(() => {
-          console.log('[TableView] Attempting to reconnect...');
-          connectWebSocket();
-        }, 3000);
-      };
-    };
+          console.log('[TableView] Attempting to reconnect...')
+          connectWebSocket()
+        }, 3000)
+      }
+    }
 
     // Polling fallback logic
     const startPolling = () => {
       const fetchGame = async () => {
         try {
-          const response = await axios.get(`/api/games/room/${roomCode}/state`);
-          setGame(response.data);
-          setError('');
-          setLoading(false);
+          const response = await axios.get(`/api/games/room/${roomCode}/state`)
+          setGame(response.data)
+          setError('')
+          setLoading(false)
         } catch (err: unknown) {
-          setError(getApiErrorMessage(err, 'Failed to load game'));
-          setLoading(false);
+          setError(getApiErrorMessage(err, 'Failed to load game'))
+          setLoading(false)
         }
-      };
+      }
 
-      fetchGame(); // Initial fetch
-      pollInterval = window.setInterval(fetchGame, 2000);
-    };
+      fetchGame() // Initial fetch
+      pollInterval = window.setInterval(fetchGame, 2000)
+    }
 
     // Try WebSocket first
-    connectWebSocket();
+    connectWebSocket()
 
     // Cleanup
     return () => {
       if (ws) {
-        ws.close();
+        ws.close()
       }
       if (pollInterval) {
-        clearInterval(pollInterval);
+        clearInterval(pollInterval)
       }
       if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
+        clearTimeout(reconnectTimeout)
       }
-    };
-  }, [roomCode]);
+    }
+  }, [roomCode])
 
   const formatCard = (card: { rank: string; suit: string }) => {
     const suitSymbols: Record<string, string> = {
@@ -197,16 +190,16 @@ export default function TableView() {
       diamonds: '♦',
       clubs: '♣',
       spades: '♠',
-    };
-    return `${card.rank}${suitSymbols[card.suit] || card.suit}`;
-  };
+    }
+    return `${card.rank}${suitSymbols[card.suit] || card.suit}`
+  }
 
   const getSuitColor = (suit: string) => {
-    return suit === 'hearts' || suit === 'diamonds' ? '#d00' : '#000';
-  };
+    return suit === 'hearts' || suit === 'diamonds' ? '#d00' : '#000'
+  }
 
   const formatAction = (action: string | null | undefined) => {
-    if (!action) return '';
+    if (!action) return ''
     // Convert action types to readable format
     const actionMap: Record<string, string> = {
       fold: 'Folded',
@@ -215,46 +208,36 @@ export default function TableView() {
       bet: 'Bet',
       raise: 'Raised',
       all_in: 'All-In',
-    };
-    return actionMap[action.toLowerCase()] || action;
-  };
+    }
+    return actionMap[action.toLowerCase()] || action
+  }
 
   if (loading) {
-    return (
-      <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>
-    );
+    return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>
   }
 
   if (error) {
-    return (
-      <div style={{ padding: '50px', textAlign: 'center', color: '#c00' }}>
-        {error}
-      </div>
-    );
+    return <div style={{ padding: '50px', textAlign: 'center', color: '#c00' }}>{error}</div>
   }
 
   if (!game) {
-    return (
-      <div style={{ padding: '50px', textAlign: 'center' }}>Game not found</div>
-    );
+    return <div style={{ padding: '50px', textAlign: 'center' }}>Game not found</div>
   }
 
-  const isShowdown = game.currentRound === 'showdown';
-  const winnerPositions = Array.isArray(game.winners) ? game.winners : [];
-  const activePlayers = game.players.filter(
-    (p) => p.status !== 'folded' && p.status !== 'out'
-  );
+  const isShowdown = game.currentRound === 'showdown'
+  const winnerPositions = Array.isArray(game.winners) ? game.winners : []
+  const activePlayers = game.players.filter((p) => p.status !== 'folded' && p.status !== 'out')
 
   // Helper to get pot label (Main, Side 1, Side 2, etc.)
-  const getPotLabel = (idx: number) => (idx === 0 ? 'Main' : `Side ${idx}`);
+  const getPotLabel = (idx: number) => (idx === 0 ? 'Main' : `Side ${idx}`)
 
   // Helper to get winner names for a pot
   const getPotWinnerNames = (pot: Pot) => {
     return game.players
       .filter((p) => pot.winners && pot.winners.includes(p.position))
       .map((p) => p.name)
-      .join(', ');
-  };
+      .join(', ')
+  }
 
   return (
     <div
@@ -309,9 +292,7 @@ export default function TableView() {
                 color: wsConnected ? '#4f4' : '#fa4',
                 fontWeight: 'bold',
               }}
-              title={
-                wsConnected ? 'Connected via WebSocket' : 'Polling fallback'
-              }
+              title={wsConnected ? 'Connected via WebSocket' : 'Polling fallback'}
             >
               {wsConnected ? '⚡ WS' : '🔄 POLL'}
             </span>
@@ -324,8 +305,7 @@ export default function TableView() {
             }}
           >
             {game.currentRound
-              ? game.currentRound.charAt(0).toUpperCase() +
-                game.currentRound.slice(1)
+              ? game.currentRound.charAt(0).toUpperCase() + game.currentRound.slice(1)
               : 'Waiting'}
           </div>
           <div style={{ fontSize: '14px', opacity: 0.9, textAlign: 'right' }}>
@@ -358,11 +338,7 @@ export default function TableView() {
               justifyContent: 'center',
             }}
           >
-            <div
-              style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}
-            >
-              POT
-            </div>
+            <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>POT</div>
             <div
               style={{
                 fontSize: '24px',
@@ -373,9 +349,7 @@ export default function TableView() {
               ${game.pot}
             </div>
             {game.pots && game.pots.length > 1 ? (
-              <div
-                style={{ fontSize: '11px', opacity: 0.8, lineHeight: '1.4' }}
-              >
+              <div style={{ fontSize: '11px', opacity: 0.8, lineHeight: '1.4' }}>
                 {game.pots.map((pot, idx) => (
                   <div key={idx}>
                     {getPotLabel(idx)}: ${pot.amount}
@@ -398,11 +372,7 @@ export default function TableView() {
               justifyContent: 'center',
             }}
           >
-            <div
-              style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}
-            >
-              CURRENT BET
-            </div>
+            <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>CURRENT BET</div>
             <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
               {game.currentBet > 0 ? `$${game.currentBet}` : '—'}
             </div>
@@ -421,11 +391,7 @@ export default function TableView() {
               justifyContent: 'center',
             }}
           >
-            <div
-              style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}
-            >
-              TO ACT
-            </div>
+            <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>TO ACT</div>
             {game.currentPlayerPosition !== null ? (
               <div
                 style={{
@@ -472,7 +438,7 @@ export default function TableView() {
             }}
           >
             {Array.from({ length: 5 }).map((_, idx) => {
-              const card = (game.communityCards || [])[idx];
+              const card = (game.communityCards || [])[idx]
 
               if (card) {
                 return (
@@ -493,7 +459,7 @@ export default function TableView() {
                   >
                     {formatCard(card)}
                   </div>
-                );
+                )
               }
 
               // Placeholder (face-down)
@@ -502,8 +468,7 @@ export default function TableView() {
                   key={idx}
                   style={{
                     backgroundColor: '#0066cc',
-                    background:
-                      'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+                    background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
                     color: '#fff',
                     padding: '16px 12px',
                     borderRadius: '8px',
@@ -518,7 +483,7 @@ export default function TableView() {
                 >
                   🂠
                 </div>
-              );
+              )
             })}
           </div>
         </div>
@@ -548,12 +513,10 @@ export default function TableView() {
                 <div
                   key={idx}
                   style={{
-                    marginBottom:
-                      idx < (game.pots?.length ?? 0) - 1 ? '6px' : 0,
+                    marginBottom: idx < (game.pots?.length ?? 0) - 1 ? '6px' : 0,
                   }}
                 >
-                  <strong>{getPotLabel(idx)}:</strong>{' '}
-                  {pot.winningRankName || 'Unknown'} —{' '}
+                  <strong>{getPotLabel(idx)}:</strong> {pot.winningRankName || 'Unknown'} —{' '}
                   <span style={{ opacity: 0.9 }}>{getPotWinnerNames(pot)}</span>
                 </div>
               ))}
@@ -586,12 +549,12 @@ export default function TableView() {
             }}
           >
             {game.players.map((player, idx) => {
-              const isFolded = player.status === 'folded';
-              const isActive = player.status === 'active';
-              const isAllIn = player.status === 'all_in';
-              const isCurrentTurn = game.currentPlayerPosition === idx;
-              const isDealer = game.dealerPosition === idx;
-              const isWinner = winnerPositions.includes(player.position);
+              const isFolded = player.status === 'folded'
+              const isActive = player.status === 'active'
+              const isAllIn = player.status === 'all_in'
+              const isCurrentTurn = game.currentPlayerPosition === idx
+              const isDealer = game.dealerPosition === idx
+              const isWinner = winnerPositions.includes(player.position)
 
               return (
                 <div
@@ -678,8 +641,7 @@ export default function TableView() {
                       ? '❌ Fold'
                       : isAllIn
                         ? '⛔ All-in'
-                        : formatAction(player.lastAction) ||
-                          (isActive ? '✓' : '—')}
+                        : formatAction(player.lastAction) || (isActive ? '✓' : '—')}
                   </div>
 
                   {/* Cards */}
@@ -692,9 +654,7 @@ export default function TableView() {
                       alignItems: 'center',
                     }}
                   >
-                    {isShowdown &&
-                    player.holeCards &&
-                    player.holeCards.length > 0 ? (
+                    {isShowdown && player.holeCards && player.holeCards.length > 0 ? (
                       player.holeCards.map((card, cardIdx) => (
                         <div
                           key={cardIdx}
@@ -718,8 +678,7 @@ export default function TableView() {
                         <div
                           style={{
                             backgroundColor: '#0066cc',
-                            background:
-                              'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+                            background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
                             padding: '6px 4px',
                             borderRadius: '4px',
                             fontSize: '12px',
@@ -733,8 +692,7 @@ export default function TableView() {
                         <div
                           style={{
                             backgroundColor: '#0066cc',
-                            background:
-                              'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+                            background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
                             padding: '6px 4px',
                             borderRadius: '4px',
                             fontSize: '12px',
@@ -750,12 +708,10 @@ export default function TableView() {
                       <div style={{ fontSize: '11px', opacity: 0.6 }}>—</div>
                     )}
                     {isWinner && <span style={{ fontSize: '14px' }}>🏆</span>}
-                    {isCurrentTurn && (
-                      <span style={{ fontSize: '14px' }}>⏱️</span>
-                    )}
+                    {isCurrentTurn && <span style={{ fontSize: '14px' }}>⏱️</span>}
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
         </div>
@@ -843,9 +799,7 @@ export default function TableView() {
             >
               GAME OVER!
             </div>
-            <div
-              style={{ fontSize: '16px', marginBottom: '20px', opacity: 0.9 }}
-            >
+            <div style={{ fontSize: '16px', marginBottom: '20px', opacity: 0.9 }}>
               Final Chip Count
             </div>
             <div
@@ -864,8 +818,7 @@ export default function TableView() {
                     padding: '12px 16px',
                     backgroundColor: player.chips > 0 ? '#1a3a1a' : '#2a1a1a',
                     borderRadius: '6px',
-                    border:
-                      player.chips > 0 ? '1px solid #0f0' : '1px solid #f00',
+                    border: player.chips > 0 ? '1px solid #0f0' : '1px solid #f00',
                     color: player.chips > 0 ? '#4f4' : '#aaa',
                     fontWeight: 'bold',
                   }}
@@ -874,12 +827,10 @@ export default function TableView() {
                 </div>
               ))}
             </div>
-            <div style={{ fontSize: '12px', color: '#aaa' }}>
-              Room: {game.roomCode}
-            </div>
+            <div style={{ fontSize: '12px', color: '#aaa' }}>Room: {game.roomCode}</div>
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }

@@ -1,11 +1,11 @@
 interface VerticalSliderProps {
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (value: number) => void;
-  thumbColor?: string;
-  trackColor?: string;
+  value: number
+  min: number
+  max: number
+  step: number
+  onChange: (value: number) => void
+  thumbColor?: string
+  trackColor?: string
 }
 
 export default function VerticalSlider({
@@ -88,5 +88,5 @@ export default function VerticalSlider({
         onChange={(e) => onChange(parseInt(e.target.value))}
       />
     </div>
-  );
+  )
 }

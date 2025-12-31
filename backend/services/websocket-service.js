@@ -3,22 +3,22 @@
  * Phase 2: Authenticated "player" stream + public "table" stream
  */
 
-const WebSocket = require('ws');
-const Keygrip = require('keygrip');
-const gameService = require('../services/game-service');
-const playerService = require('../services/player-service');
-const gameEvents = require('../lib/game-events');
+const WebSocket = require('ws')
+const Keygrip = require('keygrip')
+const gameService = require('../services/game-service')
+const playerService = require('../services/player-service')
+const gameEvents = require('../lib/game-events')
 
-const SHOWDOWN_ROUND = 'showdown';
+const SHOWDOWN_ROUND = 'showdown'
 
 // Cookie session keys (must match app.js configuration)
-const SESSION_KEYS = ['hackedescape'];
-const keygrip = new Keygrip(SESSION_KEYS);
+const SESSION_KEYS = ['hackedescape']
+const keygrip = new Keygrip(SESSION_KEYS)
 
 class WebSocketService {
   constructor() {
-    this.wss = null;
-    this.subscriptions = new Map(); // ws -> { roomCode, stream, gameId, playerId? }
+    this.wss = null
+    this.subscriptions = new Map() // ws -> { roomCode, stream, gameId, playerId? }
   }
 
   /**
@@ -29,23 +29,23 @@ class WebSocketService {
     this.wss = new WebSocket.Server({
       server,
       path: '/ws',
-    });
+    })
 
     this.wss.on('connection', (ws, req) => {
-      console.log('[WS] Client connected');
-      console.log('[WS] Cookie header:', req.headers.cookie || '(none)');
+      console.log('[WS] Client connected')
+      console.log('[WS] Cookie header:', req.headers.cookie || '(none)')
 
       // Parse session from cookies
-      const session = this.parseSession(req);
-      const playerId = session?.playerId || null;
+      const session = this.parseSession(req)
+      const playerId = session?.playerId || null
 
       // Store session info on the WebSocket
-      ws.playerId = playerId;
+      ws.playerId = playerId
 
       if (playerId) {
-        console.log('[WS] Authenticated connection:', playerId);
+        console.log('[WS] Authenticated connection:', playerId)
       } else {
-        console.log('[WS] Unauthenticated connection');
+        console.log('[WS] Unauthenticated connection')
       }
 
       // Send hello message
@@ -56,54 +56,54 @@ class WebSocketService {
           protocolVersion: 1,
           authenticated: !!playerId,
         },
-      });
+      })
 
       // Handle incoming messages
       ws.on('message', async (data) => {
         try {
-          const message = JSON.parse(data.toString());
-          await this.handleMessage(ws, message);
+          const message = JSON.parse(data.toString())
+          await this.handleMessage(ws, message)
         } catch (error) {
-          console.error('[WS] Message parse error:', error);
-          this.sendError(ws, 'Invalid message format');
+          console.error('[WS] Message parse error:', error)
+          this.sendError(ws, 'Invalid message format')
         }
-      });
+      })
 
       ws.on('close', () => {
-        console.log('[WS] Client disconnected');
-        this.subscriptions.delete(ws);
-      });
+        console.log('[WS] Client disconnected')
+        this.subscriptions.delete(ws)
+      })
 
       ws.on('error', (error) => {
-        console.error('[WS] WebSocket error:', error);
-      });
-    });
+        console.error('[WS] WebSocket error:', error)
+      })
+    })
 
     // Subscribe to game update events
     gameEvents.onGameUpdate(async ({ gameId, reason }) => {
-      await this.broadcastGameUpdate(gameId, reason);
-    });
+      await this.broadcastGameUpdate(gameId, reason)
+    })
 
-    console.log('[WS] WebSocket server initialized on /ws');
+    console.log('[WS] WebSocket server initialized on /ws')
   }
 
   /**
    * Handle incoming WebSocket message
    */
   async handleMessage(ws, message) {
-    const { type, requestId, payload } = message;
+    const { type, requestId, payload } = message
 
     switch (type) {
       case 'subscribe':
-        await this.handleSubscribe(ws, payload, requestId);
-        break;
+        await this.handleSubscribe(ws, payload, requestId)
+        break
 
       case 'resume':
-        await this.handleResume(ws, payload, requestId);
-        break;
+        await this.handleResume(ws, payload, requestId)
+        break
 
       default:
-        this.sendError(ws, `Unknown message type: ${type}`, requestId);
+        this.sendError(ws, `Unknown message type: ${type}`, requestId)
     }
   }
 
@@ -111,71 +111,56 @@ class WebSocketService {
    * Handle subscription request
    */
   async handleSubscribe(ws, payload, requestId) {
-    const {
-      roomCode,
-      stream,
-      gameId: clientGameId,
-      playerId: clientPlayerId,
-    } = payload;
+    const { roomCode, stream, gameId: clientGameId, playerId: clientPlayerId } = payload
 
     if (!roomCode || !stream) {
-      return this.sendError(ws, 'roomCode and stream are required', requestId);
+      return this.sendError(ws, 'roomCode and stream are required', requestId)
     }
 
     if (stream !== 'table' && stream !== 'player') {
-      return this.sendError(
-        ws,
-        'stream must be "table" or "player"',
-        requestId
-      );
+      return this.sendError(ws, 'stream must be "table" or "player"', requestId)
     }
 
     try {
       // Get game by room code
-      const game = await gameService.getGameByRoomCode(roomCode);
+      const game = await gameService.getGameByRoomCode(roomCode)
 
       if (!game) {
-        return this.sendError(ws, 'Game not found', requestId);
+        return this.sendError(ws, 'Game not found', requestId)
       }
 
-      let playerId = null;
+      let playerId = null
 
       // For player stream, try multiple auth methods
       if (stream === 'player') {
         // Method 1: Session-based auth (from cookies)
         if (ws.playerId) {
-          const player = await playerService.getPlayerById(ws.playerId);
+          const player = await playerService.getPlayerById(ws.playerId)
 
           if (player && player.gameId === game.id) {
-            playerId = player.id;
-            console.log('[WS] Player authenticated via session:', playerId);
+            playerId = player.id
+            console.log('[WS] Player authenticated via session:', playerId)
           }
         }
 
         // Method 2: Client-provided playerId (from localStorage)
         if (!playerId && clientPlayerId) {
-          const player = await playerService.getPlayerById(clientPlayerId);
+          const player = await playerService.getPlayerById(clientPlayerId)
 
           if (player && player.gameId === game.id) {
-            playerId = player.id;
-            console.log('[WS] Player authenticated via playerId:', playerId);
+            playerId = player.id
+            console.log('[WS] Player authenticated via playerId:', playerId)
           } else {
-            console.warn('[WS] Invalid playerId provided:', clientPlayerId);
+            console.warn('[WS] Invalid playerId provided:', clientPlayerId)
           }
         }
 
         // Method 3: Fallback to table view if gameId matches
         if (!playerId && clientGameId && clientGameId === game.id) {
-          console.warn(
-            '[WS] Player stream requested but no auth - using table view sanitization'
-          );
+          console.warn('[WS] Player stream requested but no auth - using table view sanitization')
           // Keep playerId = null, will use table sanitization
         } else if (!playerId && !clientGameId) {
-          return this.sendError(
-            ws,
-            'Authentication required for player stream',
-            requestId
-          );
+          return this.sendError(ws, 'Authentication required for player stream', requestId)
         }
       }
 
@@ -185,7 +170,7 @@ class WebSocketService {
         stream,
         gameId: game.id,
         playerId,
-      });
+      })
 
       // Send subscribed confirmation
       this.sendMessage(ws, {
@@ -197,14 +182,14 @@ class WebSocketService {
           stream,
           authenticated: !!playerId,
         },
-      });
+      })
 
       // Send initial game state snapshot
       // If player stream with no playerId, use table sanitization
       const sanitizedState =
         stream === 'player' && playerId
           ? this.sanitizePlayerState(game, playerId)
-          : this.sanitizeTableState(game);
+          : this.sanitizeTableState(game)
 
       this.sendMessage(ws, {
         type: 'game_state',
@@ -214,14 +199,14 @@ class WebSocketService {
           revision: game.handNumber?.toString() || '0',
           reason: 'subscribe',
         },
-      });
+      })
 
       console.log(
-        `[WS] Client subscribed to ${stream} stream: ${roomCode}${playerId ? ` (player: ${playerId})` : ''}`
-      );
+        `[WS] Client subscribed to ${stream} stream: ${roomCode}${playerId ? ` (player: ${playerId})` : ''}`,
+      )
     } catch (error) {
-      console.error('[WS] Subscribe error:', error);
-      this.sendError(ws, 'Failed to subscribe', requestId);
+      console.error('[WS] Subscribe error:', error)
+      this.sendError(ws, 'Failed to subscribe', requestId)
     }
   }
 
@@ -229,24 +214,24 @@ class WebSocketService {
    * Handle resume request (reconnect with last known revision)
    */
   async handleResume(ws, payload, requestId) {
-    const subscription = this.subscriptions.get(ws);
+    const subscription = this.subscriptions.get(ws)
 
     if (!subscription) {
-      return this.sendError(ws, 'Not subscribed', requestId);
+      return this.sendError(ws, 'Not subscribed', requestId)
     }
 
     try {
-      const game = await gameService.getGameById(subscription.gameId);
+      const game = await gameService.getGameById(subscription.gameId)
 
       if (!game) {
-        return this.sendError(ws, 'Game not found', requestId);
+        return this.sendError(ws, 'Game not found', requestId)
       }
 
       // Always send full snapshot on resume (authoritative)
       const sanitizedState =
         subscription.stream === 'player' && subscription.playerId
           ? this.sanitizePlayerState(game, subscription.playerId)
-          : this.sanitizeTableState(game);
+          : this.sanitizeTableState(game)
 
       this.sendMessage(ws, {
         type: 'game_state',
@@ -256,12 +241,12 @@ class WebSocketService {
           revision: game.handNumber?.toString() || '0',
           reason: 'resume',
         },
-      });
+      })
 
-      console.log(`[WS] Client resumed: ${subscription.roomCode}`);
+      console.log(`[WS] Client resumed: ${subscription.roomCode}`)
     } catch (error) {
-      console.error('[WS] Resume error:', error);
-      this.sendError(ws, 'Failed to resume', requestId);
+      console.error('[WS] Resume error:', error)
+      this.sendError(ws, 'Failed to resume', requestId)
     }
   }
 
@@ -270,28 +255,25 @@ class WebSocketService {
    */
   async broadcastGameUpdate(gameId, reason) {
     try {
-      const game = await gameService.getGameById(gameId);
+      const game = await gameService.getGameById(gameId)
 
       if (!game) {
-        console.warn(`[WS] Game not found for broadcast: ${gameId}`);
-        return;
+        console.warn(`[WS] Game not found for broadcast: ${gameId}`)
+        return
       }
 
-      const revision = game.handNumber?.toString() || '0';
+      const revision = game.handNumber?.toString() || '0'
 
       // Send to all clients subscribed to this game (both table and player streams)
       for (const [ws, subscription] of this.subscriptions.entries()) {
-        if (
-          subscription.gameId === gameId &&
-          ws.readyState === WebSocket.OPEN
-        ) {
+        if (subscription.gameId === gameId && ws.readyState === WebSocket.OPEN) {
           // Sanitize state per-connection based on stream type and auth
           // If player stream with playerId, show that player's cards
           // Otherwise use table sanitization
           const sanitizedState =
             subscription.stream === 'player' && subscription.playerId
               ? this.sanitizePlayerState(game, subscription.playerId)
-              : this.sanitizeTableState(game);
+              : this.sanitizeTableState(game)
 
           this.sendMessage(ws, {
             type: 'game_state',
@@ -300,13 +282,13 @@ class WebSocketService {
               revision,
               reason,
             },
-          });
+          })
         }
       }
 
-      console.log(`[WS] Broadcasted game update: ${game.roomCode} (${reason})`);
+      console.log(`[WS] Broadcasted game update: ${game.roomCode} (${reason})`)
     } catch (error) {
-      console.error('[WS] Broadcast error:', error);
+      console.error('[WS] Broadcast error:', error)
     }
   }
 
@@ -314,7 +296,7 @@ class WebSocketService {
    * Sanitize game state for table view (public, no hole cards except showdown)
    */
   sanitizeTableState(game) {
-    const isShowdown = game.currentRound === SHOWDOWN_ROUND;
+    const isShowdown = game.currentRound === SHOWDOWN_ROUND
 
     return {
       id: game.id,
@@ -343,14 +325,14 @@ class WebSocketService {
         lastAction: p.lastAction || null,
         connected: p.connected,
       })),
-    };
+    }
   }
 
   /**
    * Sanitize game state for player view (show only that player's hole cards, except showdown)
    */
   sanitizePlayerState(game, playerId) {
-    const isShowdown = game.currentRound === SHOWDOWN_ROUND;
+    const isShowdown = game.currentRound === SHOWDOWN_ROUND
 
     return {
       id: game.id,
@@ -383,7 +365,7 @@ class WebSocketService {
         isSmallBlind: p.isSmallBlind,
         isBigBlind: p.isBigBlind,
       })),
-    };
+    }
   }
 
   /**
@@ -391,50 +373,47 @@ class WebSocketService {
    */
   parseSession(req) {
     try {
-      const cookies = this.parseCookies(req.headers.cookie || '');
-      console.log('[WS] Parsed cookies:', Object.keys(cookies));
+      const cookies = this.parseCookies(req.headers.cookie || '')
+      console.log('[WS] Parsed cookies:', Object.keys(cookies))
 
-      const sessionCookie = cookies['holdem'];
-      const signatureCookie = cookies['holdem.sig'];
+      const sessionCookie = cookies['holdem']
+      const signatureCookie = cookies['holdem.sig']
 
       if (!sessionCookie) {
-        console.log('[WS] No holdem cookie found');
-        return null;
+        console.log('[WS] No holdem cookie found')
+        return null
       }
 
       if (!signatureCookie) {
-        console.log('[WS] No holdem.sig cookie found');
-        return null;
+        console.log('[WS] No holdem.sig cookie found')
+        return null
       }
 
-      console.log('[WS] Session cookie length:', sessionCookie.length);
-      console.log('[WS] Signature cookie length:', signatureCookie.length);
+      console.log('[WS] Session cookie length:', sessionCookie.length)
+      console.log('[WS] Signature cookie length:', signatureCookie.length)
 
       // Cookie value might be URL-encoded
-      const decodedValue = decodeURIComponent(sessionCookie);
-      const decodedSignature = decodeURIComponent(signatureCookie);
+      const decodedValue = decodeURIComponent(sessionCookie)
+      const decodedSignature = decodeURIComponent(signatureCookie)
 
       // Verify signature
-      const expectedSignature = keygrip.sign(`holdem=${decodedValue}`);
+      const expectedSignature = keygrip.sign(`holdem=${decodedValue}`)
       if (decodedSignature !== expectedSignature) {
-        console.warn('[WS] Invalid session signature');
-        console.warn('[WS] Expected:', expectedSignature);
-        console.warn('[WS] Got:', decodedSignature);
-        return null;
+        console.warn('[WS] Invalid session signature')
+        console.warn('[WS] Expected:', expectedSignature)
+        console.warn('[WS] Got:', decodedSignature)
+        return null
       }
 
       // Decode Base64 session data
-      const sessionJson = Buffer.from(decodedValue, 'base64').toString('utf-8');
-      const session = JSON.parse(sessionJson);
+      const sessionJson = Buffer.from(decodedValue, 'base64').toString('utf-8')
+      const session = JSON.parse(sessionJson)
 
-      console.log(
-        '[WS] Session parsed successfully, playerId:',
-        session.playerId
-      );
-      return session;
+      console.log('[WS] Session parsed successfully, playerId:', session.playerId)
+      return session
     } catch (error) {
-      console.error('[WS] Session parse error:', error);
-      return null;
+      console.error('[WS] Session parse error:', error)
+      return null
     }
   }
 
@@ -442,20 +421,20 @@ class WebSocketService {
    * Parse cookies from cookie header string
    */
   parseCookies(cookieHeader) {
-    const cookies = {};
+    const cookies = {}
 
     if (!cookieHeader) {
-      return cookies;
+      return cookies
     }
 
     cookieHeader.split(';').forEach((cookie) => {
-      const parts = cookie.trim().split('=');
+      const parts = cookie.trim().split('=')
       if (parts.length === 2) {
-        cookies[parts[0]] = parts[1];
+        cookies[parts[0]] = parts[1]
       }
-    });
+    })
 
-    return cookies;
+    return cookies
   }
 
   /**
@@ -463,7 +442,7 @@ class WebSocketService {
    */
   sendMessage(ws, message) {
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(message));
+      ws.send(JSON.stringify(message))
     }
   }
 
@@ -477,7 +456,7 @@ class WebSocketService {
       payload: {
         error: errorMessage,
       },
-    });
+    })
   }
 
   /**
@@ -485,13 +464,13 @@ class WebSocketService {
    */
   close() {
     if (this.wss) {
-      this.wss.close();
-      console.log('[WS] WebSocket server closed');
+      this.wss.close()
+      console.log('[WS] WebSocket server closed')
     }
   }
 }
 
 // Singleton instance
-const wsService = new WebSocketService();
+const wsService = new WebSocketService()
 
-module.exports = wsService;
+module.exports = wsService

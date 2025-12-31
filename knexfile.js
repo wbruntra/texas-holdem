@@ -1,5 +1,5 @@
 // Update with your config settings.
-const path = require('path');
+const path = require('path')
 
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
@@ -19,6 +19,6 @@ const config = {
     },
     useNullAsDefault: true,
   },
-};
+}
 
-module.exports = config;
+module.exports = config

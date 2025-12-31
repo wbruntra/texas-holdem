@@ -1,187 +1,178 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import HorizontalSlider from '../components/HorizontalSlider';
-import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config';
+import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import axios from 'axios'
+import HorizontalSlider from '../components/HorizontalSlider'
+import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config'
 
 interface Player {
-  id: string;
-  name: string;
-  position: number;
-  chips: number;
-  currentBet: number;
-  status: string;
-  holeCards?: Array<{ rank: string; suit: string }>;
+  id: string
+  name: string
+  position: number
+  chips: number
+  currentBet: number
+  status: string
+  holeCards?: Array<{ rank: string; suit: string }>
 }
 
 interface Pot {
-  amount: number;
-  eligiblePlayers: number[];
-  winners?: number[] | null;
+  amount: number
+  eligiblePlayers: number[]
+  winners?: number[] | null
 }
 
 interface GameState {
-  id: string;
-  roomCode: string;
-  status: string;
-  currentRound: string;
-  pot: number;
-  pots?: Pot[];
-  currentBet: number;
-  currentPlayerPosition: number | null;
-  communityCards: Array<{ rank: string; suit: string }>;
-  players: Player[];
-  dealerPosition: number;
-  winners?: number[];
-  bigBlind?: number;
+  id: string
+  roomCode: string
+  status: string
+  currentRound: string
+  pot: number
+  pots?: Pot[]
+  currentBet: number
+  currentPlayerPosition: number | null
+  communityCards: Array<{ rank: string; suit: string }>
+  players: Player[]
+  dealerPosition: number
+  winners?: number[]
+  bigBlind?: number
 }
 
 interface ValidActions {
-  canAct: boolean;
-  canFold: boolean;
-  canCheck: boolean;
-  canCall: boolean;
-  callAmount?: number;
-  canBet: boolean;
-  minBet?: number;
-  maxBet?: number;
-  canRaise: boolean;
-  minRaise?: number;
-  maxRaise?: number;
+  canAct: boolean
+  canFold: boolean
+  canCheck: boolean
+  canCall: boolean
+  callAmount?: number
+  canBet: boolean
+  minBet?: number
+  maxBet?: number
+  canRaise: boolean
+  minRaise?: number
+  maxRaise?: number
 }
 
 export default function PlayerView() {
-  const { roomCode } = useParams<{ roomCode: string }>();
-  const [game, setGame] = useState<GameState | null>(null);
-  const [validActions, setValidActions] = useState<ValidActions | null>(null);
-  const [playerName, setPlayerName] = useState('');
-  const [password, setPassword] = useState('');
-  const [joined, setJoined] = useState(false);
-  const [error, setError] = useState('');
-  const [raiseAmount, setRaiseAmount] = useState<number>(0);
-  const [betAmount, setBetAmount] = useState<number>(0);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [canRevealCard, setCanRevealCard] = useState(false);
-  const [wsConnected, setWsConnected] = useState(false);
+  const { roomCode } = useParams<{ roomCode: string }>()
+  const [game, setGame] = useState<GameState | null>(null)
+  const [validActions, setValidActions] = useState<ValidActions | null>(null)
+  const [playerName, setPlayerName] = useState('')
+  const [password, setPassword] = useState('')
+  const [joined, setJoined] = useState(false)
+  const [error, setError] = useState('')
+  const [raiseAmount, setRaiseAmount] = useState<number>(0)
+  const [betAmount, setBetAmount] = useState<number>(0)
+  const [checkingAuth, setCheckingAuth] = useState(true)
+  const [canRevealCard, setCanRevealCard] = useState(false)
+  const [wsConnected, setWsConnected] = useState(false)
 
-  const playerNameStorageKey = roomCode
-    ? `holdem:${roomCode}:playerName`
-    : null;
+  const playerNameStorageKey = roomCode ? `holdem:${roomCode}:playerName` : null
 
   const getApiErrorMessage = (err: unknown, fallback: string) => {
-    if (!axios.isAxiosError(err)) return fallback;
-    const data = err.response?.data as { error?: string } | undefined;
-    return data?.error || fallback;
-  };
+    if (!axios.isAxiosError(err)) return fallback
+    const data = err.response?.data as { error?: string } | undefined
+    return data?.error || fallback
+  }
 
   // Initialize bet/raise amounts when validActions change
   useEffect(() => {
-    if (!validActions) return;
+    if (!validActions) return
 
     if (validActions.canBet && validActions.minBet !== undefined) {
-      const minBet = validActions.minBet;
-      setBetAmount((prev) => (prev >= minBet ? prev : minBet));
+      const minBet = validActions.minBet
+      setBetAmount((prev) => (prev >= minBet ? prev : minBet))
     }
     if (validActions.canRaise && validActions.minRaise !== undefined) {
-      const minRaise = validActions.minRaise;
-      setRaiseAmount((prev) => (prev >= minRaise ? prev : minRaise));
+      const minRaise = validActions.minRaise
+      setRaiseAmount((prev) => (prev >= minRaise ? prev : minRaise))
     }
-  }, [validActions]);
+  }, [validActions])
 
   // Check for existing authentication on mount
   useEffect(() => {
     const checkExistingAuth = async () => {
       if (!roomCode) {
-        setCheckingAuth(false);
-        return;
+        setCheckingAuth(false)
+        return
       }
 
       // Prefill name from localStorage (lets us identify ourselves pre-flop too)
       if (playerNameStorageKey) {
-        const storedName = localStorage.getItem(playerNameStorageKey);
+        const storedName = localStorage.getItem(playerNameStorageKey)
         if (storedName && !playerName) {
-          setPlayerName(storedName);
+          setPlayerName(storedName)
         }
       }
 
       try {
         // Get game info
-        const gameResponse = await axios.get(`/api/games/room/${roomCode}`);
-        const gameId = gameResponse.data.id;
+        const gameResponse = await axios.get(`/api/games/room/${roomCode}`)
+        const gameId = gameResponse.data.id
 
         // Try to fetch game state with credentials
         const stateResponse = await axios.get(`/api/games/${gameId}`, {
           withCredentials: true,
-        });
+        })
 
         // If we get here, we're authenticated!
-        setGame(stateResponse.data);
-        setJoined(true);
+        setGame(stateResponse.data)
+        setJoined(true)
 
         // If we don't have a stored name yet, try to infer it (works once hole cards exist)
-        if (
-          !playerNameStorageKey ||
-          !localStorage.getItem(playerNameStorageKey)
-        ) {
+        if (!playerNameStorageKey || !localStorage.getItem(playerNameStorageKey)) {
           const authenticatedPlayer = stateResponse.data.players.find(
-            (p: Player) => p.holeCards && p.holeCards.length > 0
-          );
+            (p: Player) => p.holeCards && p.holeCards.length > 0,
+          )
           if (authenticatedPlayer) {
-            setPlayerName(authenticatedPlayer.name);
+            setPlayerName(authenticatedPlayer.name)
             if (playerNameStorageKey) {
-              localStorage.setItem(
-                playerNameStorageKey,
-                authenticatedPlayer.name
-              );
+              localStorage.setItem(playerNameStorageKey, authenticatedPlayer.name)
             }
           }
         }
       } catch {
         // Not authenticated, show login form
       } finally {
-        setCheckingAuth(false);
+        setCheckingAuth(false)
       }
-    };
+    }
 
-    checkExistingAuth();
-  }, [roomCode, playerName, playerNameStorageKey]);
+    checkExistingAuth()
+  }, [roomCode, playerName, playerNameStorageKey])
 
   // WebSocket connection for real-time game state updates
   // Falls back to polling if WebSocket unavailable
   useEffect(() => {
-    if (!joined || !game?.id || !roomCode) return;
+    if (!joined || !game?.id || !roomCode) return
 
-    const gameId = game.id;
-    let ws: WebSocket | null = null;
-    let pollInterval: number | null = null;
-    let reconnectTimeout: number | null = null;
+    const gameId = game.id
+    let ws: WebSocket | null = null
+    let pollInterval: number | null = null
+    let reconnectTimeout: number | null = null
 
     // WebSocket connection logic
     const connectWebSocket = () => {
       // In development: connect directly to backend (Vite proxy doesn't forward cookies)
       // In production: use same domain/port as the page
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const isDevelopment =
-        window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1';
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       const wsUrl = isDevelopment
         ? `${protocol}//localhost:${BACKEND_LOCAL_PORT}/ws`
-        : `${protocol}//${window.location.host}/ws`;
+        : `${protocol}//${window.location.host}/ws`
 
-      console.log('[PlayerView] Connecting to WebSocket:', wsUrl);
-      ws = new WebSocket(wsUrl);
+      console.log('[PlayerView] Connecting to WebSocket:', wsUrl)
+      ws = new WebSocket(wsUrl)
 
       ws.onopen = () => {
-        console.log('[PlayerView] WebSocket connected');
-        setWsConnected(true);
-        setError('');
+        console.log('[PlayerView] WebSocket connected')
+        setWsConnected(true)
+        setError('')
 
         // Subscribe to player stream
         if (ws && ws.readyState === WebSocket.OPEN) {
           // Get stored playerId for authentication
           const storedPlayerId = playerNameStorageKey
             ? localStorage.getItem(`${playerNameStorageKey}:playerId`)
-            : null;
+            : null
 
           ws.send(
             JSON.stringify({
@@ -192,111 +183,104 @@ export default function PlayerView() {
                 gameId,
                 playerId: storedPlayerId, // Send playerId for auth
               },
-            })
-          );
+            }),
+          )
         }
-      };
+      }
 
       ws.onmessage = (event) => {
         try {
-          const message = JSON.parse(event.data);
-          console.log('[PlayerView] WebSocket message:', message.type);
+          const message = JSON.parse(event.data)
+          console.log('[PlayerView] WebSocket message:', message.type)
 
           switch (message.type) {
             case 'hello':
-              console.log('[PlayerView] Server hello:', message.payload);
-              break;
+              console.log('[PlayerView] Server hello:', message.payload)
+              break
 
             case 'subscribed':
-              console.log('[PlayerView] Subscribed to player stream');
+              console.log('[PlayerView] Subscribed to player stream')
               // Stop polling when WS is active
               if (pollInterval) {
-                clearInterval(pollInterval);
-                pollInterval = null;
+                clearInterval(pollInterval)
+                pollInterval = null
               }
-              break;
+              break
 
             case 'game_state':
-              console.log(
-                '[PlayerView] Game state update:',
-                message.payload.reason
-              );
-              const nextGame: GameState = message.payload.state;
-              setGame(nextGame);
+              console.log('[PlayerView] Game state update:', message.payload.reason)
+              const nextGame: GameState = message.payload.state
+              setGame(nextGame)
 
               const me = playerName
                 ? nextGame.players.find((p) => p.name === playerName)
-                : undefined;
+                : undefined
 
               const isMyTurnNow =
                 !!me &&
                 nextGame.status === 'active' &&
                 nextGame.currentPlayerPosition !== null &&
-                nextGame.currentPlayerPosition === (me?.position ?? -1);
+                nextGame.currentPlayerPosition === (me?.position ?? -1)
 
               // Check if we can reveal a card
-              const canReveal = checkCanRevealCard(nextGame, playerName);
-              setCanRevealCard(canReveal);
+              const canReveal = checkCanRevealCard(nextGame, playerName)
+              setCanRevealCard(canReveal)
 
               // Fetch valid actions if it's our turn (Phase 3 will push these)
               if (isMyTurnNow) {
-                fetchValidActions(gameId);
+                fetchValidActions(gameId)
               } else {
-                setValidActions((prev) => (prev ? null : prev));
+                setValidActions((prev) => (prev ? null : prev))
               }
 
-              setError('');
-              break;
+              setError('')
+              break
 
             case 'error':
-              console.error(
-                '[PlayerView] WebSocket error:',
-                message.payload.error
-              );
-              setError(message.payload.error);
-              break;
+              console.error('[PlayerView] WebSocket error:', message.payload.error)
+              setError(message.payload.error)
+              break
           }
         } catch (err) {
-          console.error('[PlayerView] Failed to parse WebSocket message:', err);
+          console.error('[PlayerView] Failed to parse WebSocket message:', err)
         }
-      };
+      }
 
       ws.onerror = (error) => {
-        console.error('[PlayerView] WebSocket error:', error);
-        setWsConnected(false);
-      };
+        console.error('[PlayerView] WebSocket error:', error)
+        setWsConnected(false)
+      }
 
       ws.onclose = () => {
-        console.log('[PlayerView] WebSocket disconnected');
-        setWsConnected(false);
+        console.log('[PlayerView] WebSocket disconnected')
+        setWsConnected(false)
 
         // Fall back to polling
         if (!pollInterval) {
-          startPolling();
+          startPolling()
         }
 
         // Attempt to reconnect after 3 seconds
         reconnectTimeout = window.setTimeout(() => {
-          console.log('[PlayerView] Attempting to reconnect...');
-          connectWebSocket();
-        }, 3000);
-      };
-    };
+          console.log('[PlayerView] Attempting to reconnect...')
+          connectWebSocket()
+        }, 3000)
+      }
+    }
 
     // Helper to fetch valid actions
     const fetchValidActions = async (gid: string) => {
       try {
-        const actionsResponse = await axios.get(
-          `/api/games/${gid}/actions/valid`,
-          { withCredentials: true }
-        );
-        setValidActions(actionsResponse.data);
+        const actionsResponse = await axios.get(`/api/games/${gid}/actions/valid`, {
+          withCredentials: true,
+        })
+        setValidActions(actionsResponse.data)
       } catch (err: unknown) {
         if (!(axios.isAxiosError(err) && err.response?.status === 403)) {
-          console.error('[PlayerView] Failed to fetch valid actions:', err);
+          console.error('[PlayerView] Failed to fetch valid actions:', err)
         }
       }
-    };
+    }
 
     // Polling fallback logic
     const startPolling = () => {
@@ -304,120 +288,113 @@ export default function PlayerView() {
         try {
           const response = await axios.get(`/api/games/${gameId}`, {
             withCredentials: true,
-          });
+          })
 
-          const nextGame: GameState = response.data;
-          setGame(nextGame);
+          const nextGame: GameState = response.data
+          setGame(nextGame)
 
-          const me = playerName
-            ? nextGame.players.find((p) => p.name === playerName)
-            : undefined;
+          const me = playerName ? nextGame.players.find((p) => p.name === playerName) : undefined
 
           const isMyTurnNow =
             !!me &&
             nextGame.status === 'active' &&
             nextGame.currentPlayerPosition !== null &&
-            nextGame.currentPlayerPosition === (me?.position ?? -1);
+            nextGame.currentPlayerPosition === (me?.position ?? -1)
 
-          const canReveal = checkCanRevealCard(nextGame, playerName);
-          setCanRevealCard(canReveal);
+          const canReveal = checkCanRevealCard(nextGame, playerName)
+          setCanRevealCard(canReveal)
 
           if (isMyTurnNow) {
-            await fetchValidActions(gameId);
+            await fetchValidActions(gameId)
           } else {
-            setValidActions((prev) => (prev ? null : prev));
+            setValidActions((prev) => (prev ? null : prev))
           }
 
-          setError('');
+          setError('')
         } catch (err: unknown) {
           if (!(axios.isAxiosError(err) && err.response?.status === 403)) {
-            setError(getApiErrorMessage(err, 'Failed to load game'));
+            setError(getApiErrorMessage(err, 'Failed to load game'))
           }
         }
-      };
+      }
 
-      tick(); // Initial fetch
-      pollInterval = window.setInterval(tick, 1500);
-    };
+      tick() // Initial fetch
+      pollInterval = window.setInterval(tick, 1500)
+    }
 
     // Try WebSocket first
-    connectWebSocket();
+    connectWebSocket()
 
     // Cleanup
     return () => {
       if (ws) {
-        ws.close();
+        ws.close()
       }
       if (pollInterval) {
-        clearInterval(pollInterval);
+        clearInterval(pollInterval)
       }
       if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
+        clearTimeout(reconnectTimeout)
       }
-    };
-  }, [joined, game?.id, roomCode, playerName]);
+    }
+  }, [joined, game?.id, roomCode, playerName])
 
   const handleJoin = async () => {
-    if (!roomCode || !playerName.trim() || !password.trim()) return;
+    if (!roomCode || !playerName.trim() || !password.trim()) return
 
     try {
       // Get game ID first
-      const gameResponse = await axios.get(`/api/games/room/${roomCode}`);
-      const gameId = gameResponse.data.id;
-      const gameData = gameResponse.data;
+      const gameResponse = await axios.get(`/api/games/room/${roomCode}`)
+      const gameId = gameResponse.data.id
+      const gameData = gameResponse.data
 
       // Check if player already exists in the game
-      const playerExists = gameData.players?.some(
-        (p: Player) => p.name === playerName.trim()
-      );
+      const playerExists = gameData.players?.some((p: Player) => p.name === playerName.trim())
 
       if (playerExists) {
         // Use auth endpoint for reconnection
         await axios.post(
           `/api/games/${gameId}/auth`,
           { name: playerName.trim(), password },
-          { withCredentials: true }
-        );
+          { withCredentials: true },
+        )
       } else {
         // Use join endpoint for new players
         await axios.post(
           `/api/games/${gameId}/join`,
           { name: playerName.trim(), password },
-          { withCredentials: true }
-        );
+          { withCredentials: true },
+        )
       }
 
       if (playerNameStorageKey) {
-        localStorage.setItem(playerNameStorageKey, playerName.trim());
+        localStorage.setItem(playerNameStorageKey, playerName.trim())
       }
 
       // Get initial game state
       const stateResponse = await axios.get(`/api/games/${gameId}`, {
         withCredentials: true,
-      });
+      })
 
-      setGame(stateResponse.data);
+      setGame(stateResponse.data)
 
       // Store playerId in localStorage for WebSocket auth
       const authenticatedPlayer = stateResponse.data.players.find(
-        (p: Player) => p.holeCards && p.holeCards.length > 0
-      );
+        (p: Player) => p.holeCards && p.holeCards.length > 0,
+      )
       if (authenticatedPlayer && playerNameStorageKey) {
-        localStorage.setItem(
-          `${playerNameStorageKey}:playerId`,
-          authenticatedPlayer.id
-        );
+        localStorage.setItem(`${playerNameStorageKey}:playerId`, authenticatedPlayer.id)
       }
 
-      setJoined(true);
-      setError('');
+      setJoined(true)
+      setError('')
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to join game'));
+      setError(getApiErrorMessage(err, 'Failed to join game'))
     }
-  };
+  }
 
   const handleStartGame = async () => {
-    if (!game?.id) return;
+    if (!game?.id) return
 
     try {
       await axios.post(
@@ -425,73 +402,70 @@ export default function PlayerView() {
         {},
         {
           withCredentials: true,
-        }
-      );
-      setError('');
+        },
+      )
+      setError('')
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to start game'));
+      setError(getApiErrorMessage(err, 'Failed to start game'))
     }
-  };
+  }
 
   const handleAction = async (action: string, amount?: number) => {
-    if (!game?.id) return;
+    if (!game?.id) return
 
     try {
       await axios.post(
         `/api/games/${game.id}/actions`,
         { action, amount },
-        { withCredentials: true }
-      );
-      setError('');
-      setRaiseAmount(0);
-      setBetAmount(0);
+        { withCredentials: true },
+      )
+      setError('')
+      setRaiseAmount(0)
+      setBetAmount(0)
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to submit action'));
+      setError(getApiErrorMessage(err, 'Failed to submit action'))
     }
-  };
+  }
 
   const handleNextHand = async () => {
-    if (!game?.id) return;
+    if (!game?.id) return
 
     try {
       const res = await axios.post(
         `/api/games/${game.id}/next-hand`,
         {},
-        { withCredentials: true }
-      );
-      setGame(res.data);
-      setError('');
-      setValidActions(null);
-      setRaiseAmount(0);
-      setBetAmount(0);
+        { withCredentials: true },
+      )
+      setGame(res.data)
+      setError('')
+      setValidActions(null)
+      setRaiseAmount(0)
+      setBetAmount(0)
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to start next hand'));
+      setError(getApiErrorMessage(err, 'Failed to start next hand'))
     }
-  };
+  }
 
   const handleRevealCard = async () => {
-    if (!game?.id) return;
+    if (!game?.id) return
 
     try {
       const res = await axios.post(
         `/api/games/${game.id}/reveal-card`,
         {},
-        { withCredentials: true }
-      );
-      setGame(res.data);
-      setError('');
-      setCanRevealCard(false);
+        { withCredentials: true },
+      )
+      setGame(res.data)
+      setError('')
+      setCanRevealCard(false)
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to reveal card'));
+      setError(getApiErrorMessage(err, 'Failed to reveal card'))
     }
-  };
+  }
 
-  const checkCanRevealCard = (
-    gameState: GameState,
-    myPlayerName: string | null
-  ) => {
+  const checkCanRevealCard = (gameState: GameState, myPlayerName: string | null) => {
     if (!myPlayerName || gameState.status !== 'active') {
-      return false;
+      return false
     }
 
     // Can't reveal in preflop or showdown
@@ -500,23 +474,23 @@ export default function PlayerView() {
       gameState.currentRound === 'preflop' ||
       gameState.currentRound === 'showdown'
     ) {
-      return false;
+      return false
     }
 
     // Count players with chips
     const playersWithChips = gameState.players.filter(
-      (p) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded'
-    );
+      (p) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
+    )
 
     // Can only reveal if I'm the only one with chips
     if (playersWithChips.length !== 1) {
-      return false;
+      return false
     }
 
     // Must be that player
-    const myPlayer = gameState.players.find((p) => p.name === myPlayerName);
-    return (myPlayer?.chips ?? 0) > 0;
-  };
+    const myPlayer = gameState.players.find((p) => p.name === myPlayerName)
+    return (myPlayer?.chips ?? 0) > 0
+  }
 
   const formatCard = (card: { rank: string; suit: string }) => {
     const suitSymbols: Record<string, string> = {
@@ -524,13 +498,13 @@ export default function PlayerView() {
       diamonds: '♦',
       clubs: '♣',
       spades: '♠',
-    };
-    return `${card.rank}${suitSymbols[card.suit] || card.suit}`;
-  };
+    }
+    return `${card.rank}${suitSymbols[card.suit] || card.suit}`
+  }
 
   const getSuitColor = (suit: string) => {
-    return suit === 'hearts' || suit === 'diamonds' ? '#d00' : '#000';
-  };
+    return suit === 'hearts' || suit === 'diamonds' ? '#d00' : '#000'
+  }
 
   // Show loading while checking authentication
   if (checkingAuth) {
@@ -545,7 +519,7 @@ export default function PlayerView() {
       >
         <h2>Checking authentication...</h2>
       </div>
-    );
+    )
   }
 
   // Join screen
@@ -590,10 +564,7 @@ export default function PlayerView() {
               width: '100%',
               padding: '15px',
               fontSize: '18px',
-              cursor:
-                !playerName.trim() || password.length < 4
-                  ? 'not-allowed'
-                  : 'pointer',
+              cursor: !playerName.trim() || password.length < 4 ? 'not-allowed' : 'pointer',
             }}
           >
             Join Game
@@ -614,24 +585,21 @@ export default function PlayerView() {
           </div>
         )}
       </div>
-    );
+    )
   }
 
   if (!game) {
-    return (
-      <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>
-    );
+    return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>
   }
 
-  const myPlayer = game.players.find((p) => p.name === playerName);
-  const isMyTurn = myPlayer && game.currentPlayerPosition === myPlayer.position;
+  const myPlayer = game.players.find((p) => p.name === playerName)
+  const isMyTurn = myPlayer && game.currentPlayerPosition === myPlayer.position
 
-  const isShowdown = game.currentRound === 'showdown';
-  const winnerPositions = Array.isArray(game.winners) ? game.winners : [];
-  const amWinner = !!myPlayer && winnerPositions.includes(myPlayer.position);
+  const isShowdown = game.currentRound === 'showdown'
+  const winnerPositions = Array.isArray(game.winners) ? game.winners : []
+  const amWinner = !!myPlayer && winnerPositions.includes(myPlayer.position)
 
-  const derivedMaxBet =
-    validActions?.maxBet ?? validActions?.maxRaise ?? myPlayer?.chips ?? 0;
+  const derivedMaxBet = validActions?.maxBet ?? validActions?.maxRaise ?? myPlayer?.chips ?? 0
 
   return (
     <div
@@ -738,9 +706,7 @@ export default function PlayerView() {
               <div
                 key={p.id}
                 style={{
-                  backgroundColor: winnerPositions.includes(p.position)
-                    ? '#2a5a3a'
-                    : '#1a472a',
+                  backgroundColor: winnerPositions.includes(p.position) ? '#2a5a3a' : '#1a472a',
                   border: winnerPositions.includes(p.position)
                     ? '2px solid gold'
                     : '2px solid #456',
@@ -785,8 +751,7 @@ export default function PlayerView() {
                       <div
                         style={{
                           backgroundColor: '#0066cc',
-                          background:
-                            'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+                          background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
                           borderRadius: '8px',
                           fontSize: '20px',
                           fontWeight: 'bold',
@@ -804,8 +769,7 @@ export default function PlayerView() {
                       <div
                         style={{
                           backgroundColor: '#0066cc',
-                          background:
-                            'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+                          background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
                           borderRadius: '8px',
                           fontSize: '20px',
                           fontWeight: 'bold',
@@ -848,28 +812,25 @@ export default function PlayerView() {
       )}
 
       {/* Fold button - positioned above pot to prevent accidental touches */}
-      {game.status === 'active' &&
-        isMyTurn &&
-        validActions?.canAct &&
-        validActions.canFold && (
-          <button
-            onClick={() => handleAction('fold')}
-            style={{
-              width: '100%',
-              padding: '15px',
-              fontSize: '18px',
-              backgroundColor: '#c00',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              marginBottom: '12px',
-            }}
-          >
-            Fold
-          </button>
-        )}
+      {game.status === 'active' && isMyTurn && validActions?.canAct && validActions.canFold && (
+        <button
+          onClick={() => handleAction('fold')}
+          style={{
+            width: '100%',
+            padding: '15px',
+            fontSize: '18px',
+            backgroundColor: '#c00',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            marginBottom: '12px',
+          }}
+        >
+          Fold
+        </button>
+      )}
 
       {/* Game Info */}
       <div
@@ -889,9 +850,7 @@ export default function PlayerView() {
             marginBottom: '8px',
           }}
         >
-          <span style={{ fontSize: '12px', opacity: 0.7 }}>
-            Room: {game.roomCode}
-          </span>
+          <span style={{ fontSize: '12px', opacity: 0.7 }}>Room: {game.roomCode}</span>
           <span
             style={{
               fontSize: '10px',
@@ -914,17 +873,11 @@ export default function PlayerView() {
                 Pot: <strong>${game.pot}</strong>
               </div>
               {game.pots.map((pot, idx) => (
-                <div
-                  key={idx}
-                  style={{ fontSize: '14px', marginTop: '3px', opacity: 0.85 }}
-                >
+                <div key={idx} style={{ fontSize: '14px', marginTop: '3px', opacity: 0.85 }}>
                   {idx === 0 ? 'Main' : `Side ${idx}`}: ${pot.amount}
-                  {myPlayer &&
-                    pot.eligiblePlayers.includes(myPlayer.position) && (
-                      <span style={{ color: '#0f0', marginLeft: '6px' }}>
-                        ✓
-                      </span>
-                    )}
+                  {myPlayer && pot.eligiblePlayers.includes(myPlayer.position) && (
+                    <span style={{ color: '#0f0', marginLeft: '6px' }}>✓</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -974,9 +927,7 @@ export default function PlayerView() {
       {game.status === 'active' && (
         <div>
           {isMyTurn && validActions?.canAct ? (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
-            >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {validActions.canCheck && (
                 <button
                   onClick={() => handleAction('check')}
@@ -1039,10 +990,7 @@ export default function PlayerView() {
                       <button
                         onClick={() =>
                           setBetAmount((prev) =>
-                            Math.max(
-                              prev - (game.bigBlind || 10),
-                              validActions.minBet!
-                            )
+                            Math.max(prev - (game.bigBlind || 10), validActions.minBet!),
                           )
                         }
                         style={{
@@ -1075,10 +1023,7 @@ export default function PlayerView() {
                       <button
                         onClick={() =>
                           setBetAmount((prev) =>
-                            Math.min(
-                              prev + (game.bigBlind || 10),
-                              derivedMaxBet
-                            )
+                            Math.min(prev + (game.bigBlind || 10), derivedMaxBet),
                           )
                         }
                         style={{
@@ -1101,12 +1046,7 @@ export default function PlayerView() {
                     </div>
                   </div>
                   <button
-                    onClick={() =>
-                      handleAction(
-                        'bet',
-                        Math.max(betAmount, validActions.minBet!)
-                      )
-                    }
+                    onClick={() => handleAction('bet', Math.max(betAmount, validActions.minBet!))}
                     style={{
                       width: '100%',
                       padding: '15px',
@@ -1123,24 +1063,23 @@ export default function PlayerView() {
                   </button>
                 </div>
               )}
-              {validActions.canCall &&
-                validActions.callAmount !== undefined && (
-                  <button
-                    onClick={() => handleAction('call')}
-                    style={{
-                      padding: '15px',
-                      fontSize: '18px',
-                      backgroundColor: '#0a0',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Call ${validActions.callAmount}
-                  </button>
-                )}
+              {validActions.canCall && validActions.callAmount !== undefined && (
+                <button
+                  onClick={() => handleAction('call')}
+                  style={{
+                    padding: '15px',
+                    fontSize: '18px',
+                    backgroundColor: '#0a0',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Call ${validActions.callAmount}
+                </button>
+              )}
 
               {validActions.canRaise &&
                 validActions.minRaise !== undefined &&
@@ -1148,13 +1087,10 @@ export default function PlayerView() {
                   <div style={{ marginBottom: '10px' }}>
                     <div style={{ marginBottom: '10px', textAlign: 'center' }}>
                       {(() => {
-                        const minInc = validActions.minRaise!;
-                        const maxInc = validActions.maxRaise!;
-                        const inc = Math.min(
-                          Math.max(raiseAmount, minInc),
-                          maxInc
-                        );
-                        const raiseTo = game.currentBet + inc;
+                        const minInc = validActions.minRaise!
+                        const maxInc = validActions.maxRaise!
+                        const inc = Math.min(Math.max(raiseAmount, minInc), maxInc)
+                        const raiseTo = game.currentBet + inc
 
                         return (
                           <>
@@ -1200,10 +1136,7 @@ export default function PlayerView() {
                               <button
                                 onClick={() =>
                                   setRaiseAmount((prev) =>
-                                    Math.max(
-                                      prev - (game.bigBlind || 10),
-                                      minInc
-                                    )
+                                    Math.max(prev - (game.bigBlind || 10), minInc),
                                   )
                                 }
                                 style={{
@@ -1236,10 +1169,7 @@ export default function PlayerView() {
                               <button
                                 onClick={() =>
                                   setRaiseAmount((prev) =>
-                                    Math.min(
-                                      prev + (game.bigBlind || 10),
-                                      maxInc
-                                    )
+                                    Math.min(prev + (game.bigBlind || 10), maxInc),
                                   )
                                 }
                                 style={{
@@ -1261,18 +1191,15 @@ export default function PlayerView() {
                               </button>
                             </div>
                           </>
-                        );
+                        )
                       })()}
                     </div>
                     <button
                       onClick={() => {
-                        const minInc = validActions.minRaise!;
-                        const maxInc = validActions.maxRaise!;
-                        const inc = Math.min(
-                          Math.max(raiseAmount, minInc),
-                          maxInc
-                        );
-                        handleAction('raise', inc);
+                        const minInc = validActions.minRaise!
+                        const maxInc = validActions.maxRaise!
+                        const inc = Math.min(Math.max(raiseAmount, minInc), maxInc)
+                        handleAction('raise', inc)
                       }}
                       style={{
                         width: '100%',
@@ -1287,13 +1214,10 @@ export default function PlayerView() {
                       }}
                     >
                       {(() => {
-                        const minInc = validActions.minRaise!;
-                        const maxInc = validActions.maxRaise!;
-                        const inc = Math.min(
-                          Math.max(raiseAmount, minInc),
-                          maxInc
-                        );
-                        return `Raise to $${game.currentBet + inc}`;
+                        const minInc = validActions.minRaise!
+                        const maxInc = validActions.maxRaise!
+                        const inc = Math.min(Math.max(raiseAmount, minInc), maxInc)
+                        return `Raise to $${game.currentBet + inc}`
                       })()}
                     </button>
                   </div>
@@ -1332,9 +1256,7 @@ export default function PlayerView() {
                   fontSize: '18px',
                 }}
               >
-                {myPlayer?.status === 'folded'
-                  ? 'You folded'
-                  : 'Waiting for other players...'}
+                {myPlayer?.status === 'folded' ? 'You folded' : 'Waiting for other players...'}
               </div>
             </div>
           )}
@@ -1386,5 +1308,5 @@ export default function PlayerView() {
         </div>
       )}
     </div>
-  );
+  )
 }

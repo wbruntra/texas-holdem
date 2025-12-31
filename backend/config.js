@@ -3,4 +3,4 @@ module.exports = {
     bucketName: 'wbruntra',
     region: 'us-iad-1',
   },
-};
+}

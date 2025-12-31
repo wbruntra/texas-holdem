@@ -2,8 +2,8 @@
  * Game Service - Handles game creation, state management, and persistence
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../../db');
+const { v4: uuidv4 } = require('uuid')
+const db = require('../../db')
 const {
   createGameState,
   startNewHand,
@@ -14,19 +14,19 @@ const {
   shouldContinueToNextRound,
   GAME_STATUS,
   ROUND,
-} = require('../lib/game-state-machine');
-const { calculatePots, getTotalPot } = require('../lib/pot-manager');
+} = require('../lib/game-state-machine')
+const { calculatePots, getTotalPot } = require('../lib/pot-manager')
 
 /**
  * Generate a unique 6-character room code
  */
 function generateRoomCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude ambiguous characters
-  let code = '';
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Exclude ambiguous characters
+  let code = ''
   for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
   }
-  return code;
+  return code
 }
 
 /**
@@ -35,23 +35,23 @@ function generateRoomCode() {
  * @returns {Promise<Object>} Created game with room code
  */
 async function createGame(config = {}) {
-  const { smallBlind = 5, bigBlind = 10, startingChips = 1000 } = config;
+  const { smallBlind = 5, bigBlind = 10, startingChips = 1000 } = config
 
   // Generate unique room code
-  let roomCode;
-  let attempts = 0;
+  let roomCode
+  let attempts = 0
   do {
-    roomCode = generateRoomCode();
-    const existing = await db('games').where({ room_code: roomCode }).first();
-    if (!existing) break;
-    attempts++;
-  } while (attempts < 10);
+    roomCode = generateRoomCode()
+    const existing = await db('games').where({ room_code: roomCode }).first()
+    if (!existing) break
+    attempts++
+  } while (attempts < 10)
 
   if (attempts >= 10) {
-    throw new Error('Failed to generate unique room code');
+    throw new Error('Failed to generate unique room code')
   }
 
-  const gameId = uuidv4();
+  const gameId = uuidv4()
 
   await db('games').insert({
     id: gameId,
@@ -65,7 +65,7 @@ async function createGame(config = {}) {
     current_bet: 0,
     hand_number: 0,
     last_raise: 0,
-  });
+  })
 
   return {
     id: gameId,
@@ -74,7 +74,7 @@ async function createGame(config = {}) {
     smallBlind,
     bigBlind,
     startingChips,
-  };
+  }
 }
 
 /**
@@ -83,12 +83,10 @@ async function createGame(config = {}) {
  * @returns {Promise<Object|null>} Game object or null
  */
 async function getGameById(gameId) {
-  const game = await db('games').where({ id: gameId }).first();
-  if (!game) return null;
+  const game = await db('games').where({ id: gameId }).first()
+  if (!game) return null
 
-  const players = await db('players')
-    .where({ game_id: gameId })
-    .orderBy('position');
+  const players = await db('players').where({ game_id: gameId }).orderBy('position')
 
   const gameState = {
     id: game.id,
@@ -101,9 +99,7 @@ async function getGameById(gameId) {
     currentRound: game.current_round,
     pot: game.pot,
     pots: game.pots ? JSON.parse(game.pots) : [],
-    communityCards: game.community_cards
-      ? JSON.parse(game.community_cards)
-      : [],
+    communityCards: game.community_cards ? JSON.parse(game.community_cards) : [],
     deck: game.deck ? JSON.parse(game.deck) : [],
     winners: game.winners ? JSON.parse(game.winners) : undefined,
     currentBet: game.current_bet,
@@ -125,14 +121,14 @@ async function getGameById(gameId) {
       lastAction: p.last_action,
       connected: p.connected === 1,
     })),
-  };
+  }
 
   // If game is completed, clear the current player position
   if (gameState.status === 'completed') {
-    gameState.currentPlayerPosition = null;
+    gameState.currentPlayerPosition = null
   }
 
-  return gameState;
+  return gameState
 }
 
 /**
@@ -141,10 +137,10 @@ async function getGameById(gameId) {
  * @returns {Promise<Object|null>} Game object or null
  */
 async function getGameByRoomCode(roomCode) {
-  const game = await db('games').where({ room_code: roomCode }).first();
-  if (!game) return null;
+  const game = await db('games').where({ room_code: roomCode }).first()
+  if (!game) return null
 
-  return getGameById(game.id);
+  return getGameById(game.id)
 }
 
 /**
@@ -153,17 +149,17 @@ async function getGameByRoomCode(roomCode) {
  * @returns {Promise<Object>} Updated game state
  */
 async function startGame(gameId) {
-  const game = await getGameById(gameId);
+  const game = await getGameById(gameId)
   if (!game) {
-    throw new Error('Game not found');
+    throw new Error('Game not found')
   }
 
   if (game.status !== GAME_STATUS.WAITING) {
-    throw new Error('Game already started');
+    throw new Error('Game already started')
   }
 
   if (game.players.length < 2) {
-    throw new Error('Need at least 2 players to start');
+    throw new Error('Need at least 2 players to start')
   }
 
   // Create game state and start first hand
@@ -172,14 +168,14 @@ async function startGame(gameId) {
     bigBlind: game.bigBlind,
     startingChips: game.startingChips,
     players: game.players,
-  });
+  })
 
-  const newState = startNewHand(gameState);
+  const newState = startNewHand(gameState)
 
   // Save updated state to database
-  await saveGameState(gameId, newState);
+  await saveGameState(gameId, newState)
 
-  return getGameById(gameId);
+  return getGameById(gameId)
 }
 
 /**
@@ -198,17 +194,10 @@ async function saveGameState(gameId, state) {
         current_round: state.currentRound,
         pot: state.pot,
         pots:
-          Array.isArray(state.pots) && state.pots.length > 0
-            ? JSON.stringify(state.pots)
-            : null,
+          Array.isArray(state.pots) && state.pots.length > 0 ? JSON.stringify(state.pots) : null,
         community_cards:
-          state.communityCards.length > 0
-            ? JSON.stringify(state.communityCards)
-            : null,
-        deck:
-          state.deck && state.deck.length > 0
-            ? JSON.stringify(state.deck)
-            : null,
+          state.communityCards.length > 0 ? JSON.stringify(state.communityCards) : null,
+        deck: state.deck && state.deck.length > 0 ? JSON.stringify(state.deck) : null,
         winners:
           Array.isArray(state.winners) && state.winners.length > 0
             ? JSON.stringify(state.winners)
@@ -218,7 +207,7 @@ async function saveGameState(gameId, state) {
         hand_number: state.handNumber,
         last_raise: state.lastRaise,
         updated_at: new Date(),
-      });
+      })
 
     // Update players
     for (const player of state.players) {
@@ -228,19 +217,16 @@ async function saveGameState(gameId, state) {
           chips: player.chips,
           current_bet: player.currentBet,
           total_bet: player.totalBet || 0,
-          hole_cards:
-            player.holeCards.length > 0
-              ? JSON.stringify(player.holeCards)
-              : null,
+          hole_cards: player.holeCards.length > 0 ? JSON.stringify(player.holeCards) : null,
           status: player.status,
           is_dealer: player.isDealer ? 1 : 0,
           is_small_blind: player.isSmallBlind ? 1 : 0,
           is_big_blind: player.isBigBlind ? 1 : 0,
           last_action: player.lastAction,
           updated_at: new Date(),
-        });
+        })
     }
-  });
+  })
 }
 
 /**
@@ -249,15 +235,15 @@ async function saveGameState(gameId, state) {
  * @returns {Promise<Object>} Updated game state
  */
 async function advanceRoundIfReady(gameId) {
-  const game = await getGameById(gameId);
+  const game = await getGameById(gameId)
   if (!game) {
-    throw new Error('Game not found');
+    throw new Error('Game not found')
   }
 
-  let gameState = game;
+  let gameState = game
 
   // Check if we should auto-advance (everyone all-in or only one player can act)
-  const shouldAutoAdvanceNow = shouldAutoAdvance(gameState);
+  const shouldAutoAdvanceNow = shouldAutoAdvance(gameState)
 
   // Keep advancing rounds while betting is complete OR should auto-advance
   while (
@@ -265,42 +251,42 @@ async function advanceRoundIfReady(gameId) {
     gameState.currentRound !== ROUND.SHOWDOWN
   ) {
     if (shouldContinueToNextRound(gameState)) {
-      gameState = advanceRound(gameState);
+      gameState = advanceRound(gameState)
 
       // Recalculate pots after each round
-      gameState.pots = calculatePots(gameState.players);
-      gameState.pot = getTotalPot(gameState.pots);
+      gameState.pots = calculatePots(gameState.players)
+      gameState.pot = getTotalPot(gameState.pots)
 
       // If auto-advancing, add timestamp for when this round's cards were revealed
       if (shouldAutoAdvanceNow) {
-        gameState.autoAdvanceTimestamp = Date.now();
+        gameState.autoAdvanceTimestamp = Date.now()
       }
 
-      await saveGameState(gameId, gameState);
+      await saveGameState(gameId, gameState)
 
       // If auto-advancing, add delay before next round
       if (shouldAutoAdvanceNow && shouldAutoAdvance(gameState)) {
         // 2 second delay between auto-revealed cards
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000))
       }
     } else {
       // Go to showdown
-      gameState = advanceRound(gameState);
+      gameState = advanceRound(gameState)
 
       // Final pot calculation
-      gameState.pots = calculatePots(gameState.players);
-      gameState.pot = getTotalPot(gameState.pots);
+      gameState.pots = calculatePots(gameState.players)
+      gameState.pot = getTotalPot(gameState.pots)
 
-      gameState = processShowdown(gameState);
-      await saveGameState(gameId, gameState);
+      gameState = processShowdown(gameState)
+      await saveGameState(gameId, gameState)
 
       // Record hand history
-      await recordHandHistory(gameId, gameState);
-      break;
+      await recordHandHistory(gameId, gameState)
+      break
     }
   }
 
-  return getGameById(gameId);
+  return getGameById(gameId)
 }
 
 /**
@@ -309,19 +295,19 @@ async function advanceRoundIfReady(gameId) {
  * @returns {Promise<Object>} Updated game state
  */
 async function startNextHand(gameId) {
-  const game = await getGameById(gameId);
+  const game = await getGameById(gameId)
   if (!game) {
-    throw new Error('Game not found');
+    throw new Error('Game not found')
   }
 
   if (game.currentRound !== ROUND.SHOWDOWN) {
-    throw new Error('Current hand not finished');
+    throw new Error('Current hand not finished')
   }
 
-  const newState = startNewHand(game);
-  await saveGameState(gameId, newState);
+  const newState = startNewHand(game)
+  await saveGameState(gameId, newState)
 
-  return getGameById(gameId);
+  return getGameById(gameId)
 }
 
 /**
@@ -330,7 +316,7 @@ async function startNextHand(gameId) {
  * @param {Object} gameState - Game state after showdown
  */
 async function recordHandHistory(gameId, gameState) {
-  const handId = uuidv4();
+  const handId = uuidv4()
 
   await db('hands').insert({
     id: handId,
@@ -341,7 +327,7 @@ async function recordHandHistory(gameId, gameState) {
     pot_amount: gameState.pot,
     community_cards: JSON.stringify(gameState.communityCards),
     completed_at: new Date(),
-  });
+  })
 }
 
 /**
@@ -349,7 +335,7 @@ async function recordHandHistory(gameId, gameState) {
  * @param {string} gameId - Game ID
  */
 async function deleteGame(gameId) {
-  await db('games').where({ id: gameId }).delete();
+  await db('games').where({ id: gameId }).delete()
 }
 
 module.exports = {
@@ -363,4 +349,4 @@ module.exports = {
   startNextHand,
   recordHandHistory,
   deleteGame,
-};
+}

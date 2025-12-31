@@ -23,10 +23,8 @@ In [backend/lib/pot-manager.js](backend/lib/pot-manager.js#L96), the `distribute
 
 ```javascript
 // WRONG: Only comparing numeric values
-const bestValue = Math.max(...evaluations.map((e) => e.hand.value));
-const winners = evaluations
-  .filter((e) => e.hand.value === bestValue)
-  .map((e) => e.position);
+const bestValue = Math.max(...evaluations.map((e) => e.hand.value))
+const winners = evaluations.filter((e) => e.hand.value === bestValue).map((e) => e.position)
 ```
 
 ### Why This Fails
@@ -44,17 +42,17 @@ Changed the comparison logic to use `compareHands()` which correctly compares ra
 
 ```javascript
 // CORRECT: Compare rank first, then value as tiebreaker
-let bestHand = evaluations[0].hand;
+let bestHand = evaluations[0].hand
 for (let i = 1; i < evaluations.length; i++) {
-  const comp = compareHands(evaluations[i].hand, bestHand);
+  const comp = compareHands(evaluations[i].hand, bestHand)
   if (comp > 0) {
-    bestHand = evaluations[i].hand;
+    bestHand = evaluations[i].hand
   }
 }
 
 const winners = evaluations
   .filter((e) => compareHands(e.hand, bestHand) === 0)
-  .map((e) => e.position);
+  .map((e) => e.position)
 ```
 
 ## Changed Files

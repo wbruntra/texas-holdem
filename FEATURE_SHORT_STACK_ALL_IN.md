@@ -20,7 +20,7 @@ When a player's remaining stack is smaller than the current bet, they couldn't c
 ```javascript
 // WRONG: Too restrictive
 if (player.chips < callAmount) {
-  return { valid: false, error: 'Not enough chips to call, must go all-in' };
+  return { valid: false, error: 'Not enough chips to call, must go all-in' }
 }
 ```
 
@@ -29,9 +29,9 @@ if (player.chips < callAmount) {
 ```javascript
 // CORRECT: Allow call even with short stack
 if (player.chips === 0) {
-  return { valid: false, error: 'No chips to call' };
+  return { valid: false, error: 'No chips to call' }
 }
-return { valid: true };
+return { valid: true }
 ```
 
 ### 2. Fixed `getValidActions()` Function
@@ -39,14 +39,14 @@ return { valid: true };
 **Before**:
 
 ```javascript
-const canCall = callAmount > 0 && player.chips >= callAmount;
+const canCall = callAmount > 0 && player.chips >= callAmount
 ```
 
 **After**: Changed to allow calls with any remaining chips
 
 ```javascript
-const canCall = callAmount > 0 && player.chips > 0;
-const actualCallAmount = Math.min(callAmount, player.chips);
+const canCall = callAmount > 0 && player.chips > 0
+const actualCallAmount = Math.min(callAmount, player.chips)
 ```
 
 ### 3. Existing Call Processing Already Correct
