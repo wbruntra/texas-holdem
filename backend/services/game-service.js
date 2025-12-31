@@ -13,7 +13,7 @@ const {
   shouldAutoAdvance,
   shouldContinueToNextRound,
   GAME_STATUS,
-  ROUND
+  ROUND,
 } = require('../lib/game-state-machine');
 const { calculatePots, getTotalPot } = require('../lib/pot-manager');
 
@@ -35,12 +35,8 @@ function generateRoomCode() {
  * @returns {Promise<Object>} Created game with room code
  */
 async function createGame(config = {}) {
-  const {
-    smallBlind = 5,
-    bigBlind = 10,
-    startingChips = 1000
-  } = config;
-  
+  const { smallBlind = 5, bigBlind = 10, startingChips = 1000 } = config;
+
   // Generate unique room code
   let roomCode;
   let attempts = 0;
@@ -50,13 +46,13 @@ async function createGame(config = {}) {
     if (!existing) break;
     attempts++;
   } while (attempts < 10);
-  
+
   if (attempts >= 10) {
     throw new Error('Failed to generate unique room code');
   }
-  
+
   const gameId = uuidv4();
-  
+
   await db('games').insert({
     id: gameId,
     room_code: roomCode,
@@ -68,16 +64,16 @@ async function createGame(config = {}) {
     pot: 0,
     current_bet: 0,
     hand_number: 0,
-    last_raise: 0
+    last_raise: 0,
   });
-  
+
   return {
     id: gameId,
     roomCode,
     status: GAME_STATUS.WAITING,
     smallBlind,
     bigBlind,
-    startingChips
+    startingChips,
   };
 }
 
@@ -89,11 +85,11 @@ async function createGame(config = {}) {
 async function getGameById(gameId) {
   const game = await db('games').where({ id: gameId }).first();
   if (!game) return null;
-  
+
   const players = await db('players')
     .where({ game_id: gameId })
     .orderBy('position');
-  
+
   const gameState = {
     id: game.id,
     roomCode: game.room_code,
@@ -105,14 +101,16 @@ async function getGameById(gameId) {
     currentRound: game.current_round,
     pot: game.pot,
     pots: game.pots ? JSON.parse(game.pots) : [],
-    communityCards: game.community_cards ? JSON.parse(game.community_cards) : [],
+    communityCards: game.community_cards
+      ? JSON.parse(game.community_cards)
+      : [],
     deck: game.deck ? JSON.parse(game.deck) : [],
     winners: game.winners ? JSON.parse(game.winners) : undefined,
     currentBet: game.current_bet,
     currentPlayerPosition: game.current_player_position,
     handNumber: game.hand_number,
     lastRaise: game.last_raise,
-    players: players.map(p => ({
+    players: players.map((p) => ({
       id: p.id,
       name: p.name,
       position: p.position,
@@ -125,15 +123,15 @@ async function getGameById(gameId) {
       isSmallBlind: p.is_small_blind === 1,
       isBigBlind: p.is_big_blind === 1,
       lastAction: p.last_action,
-      connected: p.connected === 1
-    }))
+      connected: p.connected === 1,
+    })),
   };
-  
+
   // If game is completed, clear the current player position
   if (gameState.status === 'completed') {
     gameState.currentPlayerPosition = null;
   }
-  
+
   return gameState;
 }
 
@@ -145,7 +143,7 @@ async function getGameById(gameId) {
 async function getGameByRoomCode(roomCode) {
   const game = await db('games').where({ room_code: roomCode }).first();
   if (!game) return null;
-  
+
   return getGameById(game.id);
 }
 
@@ -159,28 +157,28 @@ async function startGame(gameId) {
   if (!game) {
     throw new Error('Game not found');
   }
-  
+
   if (game.status !== GAME_STATUS.WAITING) {
     throw new Error('Game already started');
   }
-  
+
   if (game.players.length < 2) {
     throw new Error('Need at least 2 players to start');
   }
-  
+
   // Create game state and start first hand
   const gameState = createGameState({
     smallBlind: game.smallBlind,
     bigBlind: game.bigBlind,
     startingChips: game.startingChips,
-    players: game.players
+    players: game.players,
   });
-  
+
   const newState = startNewHand(gameState);
-  
+
   // Save updated state to database
   await saveGameState(gameId, newState);
-  
+
   return getGameById(gameId);
 }
 
@@ -199,25 +197,29 @@ async function saveGameState(gameId, state) {
         dealer_position: state.dealerPosition,
         current_round: state.currentRound,
         pot: state.pot,
-        pots: Array.isArray(state.pots) && state.pots.length > 0
-          ? JSON.stringify(state.pots)
-          : null,
-        community_cards: state.communityCards.length > 0 
-          ? JSON.stringify(state.communityCards) 
-          : null,
-        deck: state.deck && state.deck.length > 0
-          ? JSON.stringify(state.deck)
-          : null,
-        winners: Array.isArray(state.winners) && state.winners.length > 0
-          ? JSON.stringify(state.winners)
-          : null,
+        pots:
+          Array.isArray(state.pots) && state.pots.length > 0
+            ? JSON.stringify(state.pots)
+            : null,
+        community_cards:
+          state.communityCards.length > 0
+            ? JSON.stringify(state.communityCards)
+            : null,
+        deck:
+          state.deck && state.deck.length > 0
+            ? JSON.stringify(state.deck)
+            : null,
+        winners:
+          Array.isArray(state.winners) && state.winners.length > 0
+            ? JSON.stringify(state.winners)
+            : null,
         current_bet: state.currentBet,
         current_player_position: state.currentPlayerPosition,
         hand_number: state.handNumber,
         last_raise: state.lastRaise,
-        updated_at: new Date()
+        updated_at: new Date(),
       });
-    
+
     // Update players
     for (const player of state.players) {
       await trx('players')
@@ -226,15 +228,16 @@ async function saveGameState(gameId, state) {
           chips: player.chips,
           current_bet: player.currentBet,
           total_bet: player.totalBet || 0,
-          hole_cards: player.holeCards.length > 0 
-            ? JSON.stringify(player.holeCards) 
-            : null,
+          hole_cards:
+            player.holeCards.length > 0
+              ? JSON.stringify(player.holeCards)
+              : null,
           status: player.status,
           is_dealer: player.isDealer ? 1 : 0,
           is_small_blind: player.isSmallBlind ? 1 : 0,
           is_big_blind: player.isBigBlind ? 1 : 0,
           last_action: player.lastAction,
-          updated_at: new Date()
+          updated_at: new Date(),
         });
     }
   });
@@ -250,50 +253,53 @@ async function advanceRoundIfReady(gameId) {
   if (!game) {
     throw new Error('Game not found');
   }
-  
+
   let gameState = game;
-  
+
   // Check if we should auto-advance (everyone all-in or only one player can act)
   const shouldAutoAdvanceNow = shouldAutoAdvance(gameState);
-  
+
   // Keep advancing rounds while betting is complete OR should auto-advance
-  while ((isBettingRoundComplete(gameState) || shouldAutoAdvance(gameState)) && gameState.currentRound !== ROUND.SHOWDOWN) {
+  while (
+    (isBettingRoundComplete(gameState) || shouldAutoAdvance(gameState)) &&
+    gameState.currentRound !== ROUND.SHOWDOWN
+  ) {
     if (shouldContinueToNextRound(gameState)) {
       gameState = advanceRound(gameState);
-      
+
       // Recalculate pots after each round
       gameState.pots = calculatePots(gameState.players);
       gameState.pot = getTotalPot(gameState.pots);
-      
+
       // If auto-advancing, add timestamp for when this round's cards were revealed
       if (shouldAutoAdvanceNow) {
         gameState.autoAdvanceTimestamp = Date.now();
       }
-      
+
       await saveGameState(gameId, gameState);
-      
+
       // If auto-advancing, add delay before next round
       if (shouldAutoAdvanceNow && shouldAutoAdvance(gameState)) {
         // 2 second delay between auto-revealed cards
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     } else {
       // Go to showdown
       gameState = advanceRound(gameState);
-      
+
       // Final pot calculation
       gameState.pots = calculatePots(gameState.players);
       gameState.pot = getTotalPot(gameState.pots);
-      
+
       gameState = processShowdown(gameState);
       await saveGameState(gameId, gameState);
-      
+
       // Record hand history
       await recordHandHistory(gameId, gameState);
       break;
     }
   }
-  
+
   return getGameById(gameId);
 }
 
@@ -307,14 +313,14 @@ async function startNextHand(gameId) {
   if (!game) {
     throw new Error('Game not found');
   }
-  
+
   if (game.currentRound !== ROUND.SHOWDOWN) {
     throw new Error('Current hand not finished');
   }
-  
+
   const newState = startNewHand(game);
   await saveGameState(gameId, newState);
-  
+
   return getGameById(gameId);
 }
 
@@ -325,7 +331,7 @@ async function startNextHand(gameId) {
  */
 async function recordHandHistory(gameId, gameState) {
   const handId = uuidv4();
-  
+
   await db('hands').insert({
     id: handId,
     game_id: gameId,
@@ -334,7 +340,7 @@ async function recordHandHistory(gameId, gameState) {
     winners: gameState.winners ? JSON.stringify(gameState.winners) : null,
     pot_amount: gameState.pot,
     community_cards: JSON.stringify(gameState.communityCards),
-    completed_at: new Date()
+    completed_at: new Date(),
   });
 }
 
@@ -356,5 +362,5 @@ module.exports = {
   advanceRoundIfReady,
   startNextHand,
   recordHandHistory,
-  deleteGame
+  deleteGame,
 };

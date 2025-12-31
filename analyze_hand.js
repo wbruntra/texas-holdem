@@ -6,19 +6,19 @@ const community = [
   { rank: 'J', suit: 'spades', value: 11 },
   { rank: '10', suit: 'clubs', value: 10 },
   { rank: '4', suit: 'hearts', value: 4 },
-  { rank: '9', suit: 'spades', value: 9 }
+  { rank: '9', suit: 'spades', value: 9 },
 ];
 
 // Player 0: bill
 const hand0 = [
   { rank: '6', suit: 'diamonds', value: 6 },
-  { rank: '9', suit: 'clubs', value: 9 }
+  { rank: '9', suit: 'clubs', value: 9 },
 ];
 
 // Player 1: BotPlayer
 const hand1 = [
   { rank: '5', suit: 'diamonds', value: 5 },
-  { rank: '7', suit: 'clubs', value: 7 }
+  { rank: '7', suit: 'clubs', value: 7 },
 ];
 
 console.log('Community Cards: 3♠ J♠ 10♣ 4♥ 9♠');

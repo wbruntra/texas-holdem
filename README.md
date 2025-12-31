@@ -28,6 +28,7 @@ A real-time multiplayer Texas Hold'em poker game built with modern web technolog
 ## Installation
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd 2025-12-30-holdem
@@ -41,6 +42,7 @@ A real-time multiplayer Texas Hold'em poker game built with modern web technolog
 ## Database Setup
 
 1. Run database migrations:
+
    ```bash
    bunx knex migrate:latest
    ```
@@ -51,6 +53,7 @@ A real-time multiplayer Texas Hold'em poker game built with modern web technolog
    ```
 
 The application uses SQLite databases:
+
 - `holdem.sqlite3` for development
 - `holdem-test.sqlite3` for testing
 
@@ -59,22 +62,26 @@ The application uses SQLite databases:
 ### Development Mode
 
 Start both backend and frontend simultaneously:
+
 ```bash
 bun run start
 ```
 
 This runs:
+
 - Backend API server (default port 3660)
 - Frontend development server (default port 5173)
 
 ### Individual Services
 
 Start backend only:
+
 ```bash
 bun run backend
 ```
 
 Start frontend only:
+
 ```bash
 bun run frontend
 ```
@@ -82,6 +89,7 @@ bun run frontend
 ### Production
 
 For production deployment, use the backend's PM2 configuration:
+
 ```bash
 cd backend
 bunx pm2 start ecosystem.config.js
@@ -90,12 +98,14 @@ bunx pm2 start ecosystem.config.js
 ## Testing
 
 Run backend tests:
+
 ```bash
 cd backend
 bun run test
 ```
 
 Run database migrations for test environment:
+
 ```bash
 bunx knex migrate:latest --env test
 ```
@@ -110,6 +120,7 @@ The repository includes several utility scripts:
 - `create_test_game.js` - Create test game data
 
 Example:
+
 ```bash
 bun run simulate_game.js
 ```

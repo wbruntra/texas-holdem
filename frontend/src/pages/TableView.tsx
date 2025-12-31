@@ -62,11 +62,13 @@ export default function TableView() {
       // In development: connect directly to backend (Vite proxy doesn't forward cookies)
       // In production: use same domain/port as the page
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const wsUrl = isDevelopment 
+      const isDevelopment =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
+      const wsUrl = isDevelopment
         ? `${protocol}//localhost:${BACKEND_LOCAL_PORT}/ws`
         : `${protocol}//${window.location.host}/ws`;
-      
+
       console.log('[TableView] Connecting to WebSocket:', wsUrl);
       ws = new WebSocket(wsUrl);
 
@@ -77,13 +79,15 @@ export default function TableView() {
 
         // Subscribe to table stream
         if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-            type: 'subscribe',
-            payload: {
-              roomCode,
-              stream: 'table'
-            }
-          }));
+          ws.send(
+            JSON.stringify({
+              type: 'subscribe',
+              payload: {
+                roomCode,
+                stream: 'table',
+              },
+            })
+          );
         }
       };
 
@@ -108,14 +112,20 @@ export default function TableView() {
               break;
 
             case 'game_state':
-              console.log('[TableView] Game state update:', message.payload.reason);
+              console.log(
+                '[TableView] Game state update:',
+                message.payload.reason
+              );
               setGame(message.payload.state);
               setError('');
               setLoading(false);
               break;
 
             case 'error':
-              console.error('[TableView] WebSocket error:', message.payload.error);
+              console.error(
+                '[TableView] WebSocket error:',
+                message.payload.error
+              );
               setError(message.payload.error);
               break;
           }
@@ -199,120 +209,173 @@ export default function TableView() {
     if (!action) return '';
     // Convert action types to readable format
     const actionMap: Record<string, string> = {
-      'fold': 'Folded',
-      'check': 'Checked',
-      'call': 'Called',
-      'bet': 'Bet',
-      'raise': 'Raised',
-      'all_in': 'All-In',
+      fold: 'Folded',
+      check: 'Checked',
+      call: 'Called',
+      bet: 'Bet',
+      raise: 'Raised',
+      all_in: 'All-In',
     };
     return actionMap[action.toLowerCase()] || action;
   };
 
   if (loading) {
-    return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;
+    return (
+      <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>
+    );
   }
 
   if (error) {
-    return <div style={{ padding: '50px', textAlign: 'center', color: '#c00' }}>{error}</div>;
+    return (
+      <div style={{ padding: '50px', textAlign: 'center', color: '#c00' }}>
+        {error}
+      </div>
+    );
   }
 
   if (!game) {
-    return <div style={{ padding: '50px', textAlign: 'center' }}>Game not found</div>;
+    return (
+      <div style={{ padding: '50px', textAlign: 'center' }}>Game not found</div>
+    );
   }
 
   const isShowdown = game.currentRound === 'showdown';
   const winnerPositions = Array.isArray(game.winners) ? game.winners : [];
-  const activePlayers = game.players.filter(p => p.status !== 'folded' && p.status !== 'out');
+  const activePlayers = game.players.filter(
+    (p) => p.status !== 'folded' && p.status !== 'out'
+  );
 
   // Helper to get pot label (Main, Side 1, Side 2, etc.)
-  const getPotLabel = (idx: number) => idx === 0 ? 'Main' : `Side ${idx}`;
+  const getPotLabel = (idx: number) => (idx === 0 ? 'Main' : `Side ${idx}`);
 
   // Helper to get winner names for a pot
   const getPotWinnerNames = (pot: Pot) => {
     return game.players
-      .filter(p => pot.winners && pot.winners.includes(p.position))
-      .map(p => p.name)
+      .filter((p) => pot.winners && pot.winners.includes(p.position))
+      .map((p) => p.name)
       .join(', ');
   };
 
   return (
-    <div style={{ 
-      padding: '20px', 
-      minHeight: '100vh',
-      backgroundColor: '#1a472a',
-      color: '#fff',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-    }}>
+    <div
+      style={{
+        padding: '20px',
+        minHeight: '100vh',
+        backgroundColor: '#1a472a',
+        color: '#fff',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
       {/* Main container: stable max-width */}
-      <div style={{
-        width: '100%',
-        maxWidth: '1200px',
-      }}>
-
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '1200px',
+        }}
+      >
         {/* 1) COMPACT HEADER */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
-          gap: '20px',
-          alignItems: 'center',
-          marginBottom: '20px',
-          padding: '12px',
-          backgroundColor: '#234a34',
-          borderRadius: '8px',
-          border: '1px solid #456',
-        }}>
-          <div style={{ fontSize: '14px', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr auto 1fr',
+            gap: '20px',
+            alignItems: 'center',
+            marginBottom: '20px',
+            padding: '12px',
+            backgroundColor: '#234a34',
+            borderRadius: '8px',
+            border: '1px solid #456',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '14px',
+              opacity: 0.9,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
             Room: <strong>{game.roomCode}</strong>
-            <span 
-              style={{ 
-                fontSize: '10px', 
-                padding: '2px 6px', 
+            <span
+              style={{
+                fontSize: '10px',
+                padding: '2px 6px',
                 borderRadius: '4px',
                 backgroundColor: wsConnected ? '#2a5a3a' : '#5a3a2a',
                 border: `1px solid ${wsConnected ? '#4f4' : '#fa4'}`,
                 color: wsConnected ? '#4f4' : '#fa4',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
               }}
-              title={wsConnected ? 'Connected via WebSocket' : 'Polling fallback'}
+              title={
+                wsConnected ? 'Connected via WebSocket' : 'Polling fallback'
+              }
             >
               {wsConnected ? '⚡ WS' : '🔄 POLL'}
             </span>
           </div>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'center' }}>
-            {game.currentRound ? game.currentRound.charAt(0).toUpperCase() + game.currentRound.slice(1) : 'Waiting'}
+          <div
+            style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+            }}
+          >
+            {game.currentRound
+              ? game.currentRound.charAt(0).toUpperCase() +
+                game.currentRound.slice(1)
+              : 'Waiting'}
           </div>
           <div style={{ fontSize: '14px', opacity: 0.9, textAlign: 'right' }}>
-            Players In: <strong>{activePlayers.length}/{game.players.length}</strong>
+            Players In:{' '}
+            <strong>
+              {activePlayers.length}/{game.players.length}
+            </strong>
           </div>
         </div>
 
         {/* 2) TABLE SUMMARY: Pot + Current Bet + To Act */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '12px',
-          marginBottom: '20px',
-        }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '12px',
+            marginBottom: '20px',
+          }}
+        >
           {/* Pot Panel */}
-          <div style={{
-            padding: '12px',
-            backgroundColor: '#234a34',
-            borderRadius: '8px',
-            border: '2px solid gold',
-            minHeight: '80px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-          }}>
-            <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>POT</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>
+          <div
+            style={{
+              padding: '12px',
+              backgroundColor: '#234a34',
+              borderRadius: '8px',
+              border: '2px solid gold',
+              minHeight: '80px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <div
+              style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}
+            >
+              POT
+            </div>
+            <div
+              style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                marginBottom: '8px',
+              }}
+            >
               ${game.pot}
             </div>
             {game.pots && game.pots.length > 1 ? (
-              <div style={{ fontSize: '11px', opacity: 0.8, lineHeight: '1.4' }}>
+              <div
+                style={{ fontSize: '11px', opacity: 0.8, lineHeight: '1.4' }}
+              >
                 {game.pots.map((pot, idx) => (
                   <div key={idx}>
                     {getPotLabel(idx)}: ${pot.amount}
@@ -323,36 +386,54 @@ export default function TableView() {
           </div>
 
           {/* Current Bet Panel */}
-          <div style={{
-            padding: '12px',
-            backgroundColor: '#234a34',
-            borderRadius: '8px',
-            border: '2px solid #456',
-            minHeight: '80px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-          }}>
-            <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>CURRENT BET</div>
+          <div
+            style={{
+              padding: '12px',
+              backgroundColor: '#234a34',
+              borderRadius: '8px',
+              border: '2px solid #456',
+              minHeight: '80px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <div
+              style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}
+            >
+              CURRENT BET
+            </div>
             <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
               {game.currentBet > 0 ? `$${game.currentBet}` : '—'}
             </div>
           </div>
 
           {/* Turn Indicator Panel */}
-          <div style={{
-            padding: '12px',
-            backgroundColor: '#234a34',
-            borderRadius: '8px',
-            border: '2px solid #456',
-            minHeight: '80px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-          }}>
-            <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>TO ACT</div>
+          <div
+            style={{
+              padding: '12px',
+              backgroundColor: '#234a34',
+              borderRadius: '8px',
+              border: '2px solid #456',
+              minHeight: '80px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <div
+              style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}
+            >
+              TO ACT
+            </div>
             {game.currentPlayerPosition !== null ? (
-              <div style={{ fontSize: '18px', fontWeight: 'bold', wordBreak: 'break-word' }}>
+              <div
+                style={{
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  wordBreak: 'break-word',
+                }}
+              >
                 {game.players[game.currentPlayerPosition]?.name || '—'}
               </div>
             ) : (
@@ -362,28 +443,34 @@ export default function TableView() {
         </div>
 
         {/* 3) COMMUNITY CARDS */}
-        <div style={{
-          marginBottom: '20px',
-          padding: '16px',
-          backgroundColor: '#234a34',
-          borderRadius: '8px',
-          border: '1px solid #456',
-        }}>
-          <h2 style={{
-            margin: '0 0 16px 0',
-            fontSize: '14px',
-            opacity: 0.8,
-            fontWeight: 'bold',
-            textTransform: 'uppercase',
-          }}>
+        <div
+          style={{
+            marginBottom: '20px',
+            padding: '16px',
+            backgroundColor: '#234a34',
+            borderRadius: '8px',
+            border: '1px solid #456',
+          }}
+        >
+          <h2
+            style={{
+              margin: '0 0 16px 0',
+              fontSize: '14px',
+              opacity: 0.8,
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+            }}
+          >
             Community Cards
           </h2>
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
             {Array.from({ length: 5 }).map((_, idx) => {
               const card = (game.communityCards || [])[idx];
 
@@ -415,7 +502,8 @@ export default function TableView() {
                   key={idx}
                   style={{
                     backgroundColor: '#0066cc',
-                    background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+                    background:
+                      'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
                     color: '#fff',
                     padding: '16px 12px',
                     borderRadius: '8px',
@@ -437,24 +525,35 @@ export default function TableView() {
 
         {/* 4) SHOWDOWN WINNING RANKS (compact, in table summary) */}
         {isShowdown && game.pots && game.pots.length > 0 && (
-          <div style={{
-            marginBottom: '20px',
-            padding: '12px',
-            backgroundColor: '#2a5a3a',
-            borderRadius: '8px',
-            border: '2px solid gold',
-          }}>
-            <h3 style={{
-              margin: '0 0 10px 0',
-              fontSize: '14px',
-              fontWeight: 'bold',
-            }}>
+          <div
+            style={{
+              marginBottom: '20px',
+              padding: '12px',
+              backgroundColor: '#2a5a3a',
+              borderRadius: '8px',
+              border: '2px solid gold',
+            }}
+          >
+            <h3
+              style={{
+                margin: '0 0 10px 0',
+                fontSize: '14px',
+                fontWeight: 'bold',
+              }}
+            >
               Winning Hands
             </h3>
             <div style={{ fontSize: '13px', lineHeight: '1.6' }}>
               {game.pots.map((pot, idx) => (
-                <div key={idx} style={{ marginBottom: idx < (game.pots?.length ?? 0) - 1 ? '6px' : 0 }}>
-                  <strong>{getPotLabel(idx)}:</strong> {pot.winningRankName || 'Unknown'} —{' '}
+                <div
+                  key={idx}
+                  style={{
+                    marginBottom:
+                      idx < (game.pots?.length ?? 0) - 1 ? '6px' : 0,
+                  }}
+                >
+                  <strong>{getPotLabel(idx)}:</strong>{' '}
+                  {pot.winningRankName || 'Unknown'} —{' '}
                   <span style={{ opacity: 0.9 }}>{getPotWinnerNames(pot)}</span>
                 </div>
               ))}
@@ -463,23 +562,29 @@ export default function TableView() {
         )}
 
         {/* 5) PLAYERS LIST (single column, no duplication) */}
-        <div style={{
-          marginBottom: '20px',
-        }}>
-          <h2 style={{
-            margin: '0 0 12px 0',
-            fontSize: '14px',
-            opacity: 0.8,
-            fontWeight: 'bold',
-            textTransform: 'uppercase',
-          }}>
+        <div
+          style={{
+            marginBottom: '20px',
+          }}
+        >
+          <h2
+            style={{
+              margin: '0 0 12px 0',
+              fontSize: '14px',
+              opacity: 0.8,
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+            }}
+          >
             Players
           </h2>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+            }}
+          >
             {game.players.map((player, idx) => {
               const isFolded = player.status === 'folded';
               const isActive = player.status === 'active';
@@ -497,71 +602,99 @@ export default function TableView() {
                     gap: '10px',
                     alignItems: 'center',
                     padding: '10px',
-                    backgroundColor:
-                      isCurrentTurn ? '#2a5a3a' : isWinner ? '#2a4a3a' : isFolded ? '#1a2a1a' : '#234a34',
+                    backgroundColor: isCurrentTurn
+                      ? '#2a5a3a'
+                      : isWinner
+                        ? '#2a4a3a'
+                        : isFolded
+                          ? '#1a2a1a'
+                          : '#234a34',
                     borderRadius: '6px',
                     border: isDealer
                       ? '2px solid gold'
                       : isWinner
-                      ? '2px solid #4f4'
-                      : isFolded
-                      ? '1px solid #444'
-                      : '1px solid #456',
+                        ? '2px solid #4f4'
+                        : isFolded
+                          ? '1px solid #444'
+                          : '1px solid #456',
                     opacity: isFolded ? 0.6 : 1,
                   }}
                 >
                   {/* Identity (name + dealer) */}
-                  <div style={{
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    overflow: 'hidden',
-                  }}>
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      overflow: 'hidden',
+                    }}
+                  >
                     {isDealer && <span style={{ fontSize: '14px' }}>🔵</span>}
-                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <span
+                      style={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
                       {player.name}
                     </span>
                   </div>
 
                   {/* Stack */}
-                  <div style={{
-                    fontSize: '12px',
-                    color: '#4f4',
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                  }}>
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: '#4f4',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                    }}
+                  >
                     ${player.chips}
                   </div>
 
                   {/* In-front (current bet) */}
-                  <div style={{
-                    fontSize: '12px',
-                    color: player.currentBet > 0 ? '#ff0' : '#aaa',
-                    textAlign: 'center',
-                  }}>
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: player.currentBet > 0 ? '#ff0' : '#aaa',
+                      textAlign: 'center',
+                    }}
+                  >
                     {player.currentBet > 0 ? `$${player.currentBet}` : '—'}
                   </div>
 
                   {/* Action/Status */}
-                  <div style={{
-                    fontSize: '11px',
-                    textAlign: 'center',
-                    opacity: 0.9,
-                  }}>
-                    {isFolded ? '❌ Fold' : isAllIn ? '⛔ All-in' : formatAction(player.lastAction) || (isActive ? '✓' : '—')}
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      textAlign: 'center',
+                      opacity: 0.9,
+                    }}
+                  >
+                    {isFolded
+                      ? '❌ Fold'
+                      : isAllIn
+                        ? '⛔ All-in'
+                        : formatAction(player.lastAction) ||
+                          (isActive ? '✓' : '—')}
                   </div>
 
                   {/* Cards */}
-                  <div style={{
-                    display: 'flex',
-                    gap: '6px',
-                    justifyContent: 'flex-end',
-                    minHeight: '30px',
-                    alignItems: 'center',
-                  }}>
-                    {isShowdown && player.holeCards && player.holeCards.length > 0 ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '6px',
+                      justifyContent: 'flex-end',
+                      minHeight: '30px',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {isShowdown &&
+                    player.holeCards &&
+                    player.holeCards.length > 0 ? (
                       player.holeCards.map((card, cardIdx) => (
                         <div
                           key={cardIdx}
@@ -585,7 +718,8 @@ export default function TableView() {
                         <div
                           style={{
                             backgroundColor: '#0066cc',
-                            background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+                            background:
+                              'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
                             padding: '6px 4px',
                             borderRadius: '4px',
                             fontSize: '12px',
@@ -599,7 +733,8 @@ export default function TableView() {
                         <div
                           style={{
                             backgroundColor: '#0066cc',
-                            background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+                            background:
+                              'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
                             padding: '6px 4px',
                             borderRadius: '4px',
                             fontSize: '12px',
@@ -615,7 +750,9 @@ export default function TableView() {
                       <div style={{ fontSize: '11px', opacity: 0.6 }}>—</div>
                     )}
                     {isWinner && <span style={{ fontSize: '14px' }}>🏆</span>}
-                    {isCurrentTurn && <span style={{ fontSize: '14px' }}>⏱️</span>}
+                    {isCurrentTurn && (
+                      <span style={{ fontSize: '14px' }}>⏱️</span>
+                    )}
                   </div>
                 </div>
               );
@@ -706,7 +843,9 @@ export default function TableView() {
             >
               GAME OVER!
             </div>
-            <div style={{ fontSize: '16px', marginBottom: '20px', opacity: 0.9 }}>
+            <div
+              style={{ fontSize: '16px', marginBottom: '20px', opacity: 0.9 }}
+            >
               Final Chip Count
             </div>
             <div
@@ -725,7 +864,8 @@ export default function TableView() {
                     padding: '12px 16px',
                     backgroundColor: player.chips > 0 ? '#1a3a1a' : '#2a1a1a',
                     borderRadius: '6px',
-                    border: player.chips > 0 ? '1px solid #0f0' : '1px solid #f00',
+                    border:
+                      player.chips > 0 ? '1px solid #0f0' : '1px solid #f00',
                     color: player.chips > 0 ? '#4f4' : '#aaa',
                     fontWeight: 'bold',
                   }}
@@ -734,7 +874,9 @@ export default function TableView() {
                 </div>
               ))}
             </div>
-            <div style={{ fontSize: '12px', color: '#aaa' }}>Room: {game.roomCode}</div>
+            <div style={{ fontSize: '12px', color: '#aaa' }}>
+              Room: {game.roomCode}
+            </div>
           </div>
         </div>
       )}

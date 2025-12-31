@@ -19,7 +19,7 @@ const {
   processShowdown,
   isBettingRoundComplete,
   shouldContinueToNextRound,
-  ROUND
+  ROUND,
 } = require('../lib/game-state-machine');
 
 const { processAction, getValidActions } = require('../lib/betting-logic');
@@ -27,12 +27,22 @@ const { evaluateHand } = require('../lib/poker-engine');
 
 function cardsToString(cards) {
   if (!cards || cards.length === 0) return '(none)';
-  return cards.map((c) => (typeof c?.toString === 'function' ? c.toString() : `${c.rank} of ${c.suit}`)).join(' ');
+  return cards
+    .map((c) =>
+      typeof c?.toString === 'function'
+        ? c.toString()
+        : `${c.rank} of ${c.suit}`
+    )
+    .join(' ');
 }
 
 function printStacks(state) {
   const parts = state.players.map((p) => {
-    const flags = [p.isDealer ? 'D' : null, p.isSmallBlind ? 'SB' : null, p.isBigBlind ? 'BB' : null]
+    const flags = [
+      p.isDealer ? 'D' : null,
+      p.isSmallBlind ? 'SB' : null,
+      p.isBigBlind ? 'BB' : null,
+    ]
       .filter(Boolean)
       .join(',');
     const status = p.status;
@@ -44,14 +54,18 @@ function printStacks(state) {
 
 function printStateHeader(state, label) {
   console.log(`\n=== ${label} ===`);
-  console.log(`round=${state.currentRound} pot=${state.pot} currentBet=${state.currentBet} toAct=${state.currentPlayerPosition}`);
+  console.log(
+    `round=${state.currentRound} pot=${state.pot} currentBet=${state.currentBet} toAct=${state.currentPlayerPosition}`
+  );
   console.log(`board: ${cardsToString(state.communityCards)}`);
 }
 
 function chooseAutoAction(state, playerPosition) {
   const actions = getValidActions(state, playerPosition);
   if (!actions.canAct) {
-    throw new Error(`Player at position ${playerPosition} cannot act right now`);
+    throw new Error(
+      `Player at position ${playerPosition} cannot act right now`
+    );
   }
 
   // "Check the whole time" means: check if legal, otherwise call to continue.
@@ -73,8 +87,8 @@ function runSingleHandSimulation() {
     players: [
       { id: 'p1', name: 'Alice' },
       { id: 'p2', name: 'Bob' },
-      { id: 'p3', name: 'Carol' }
-    ]
+      { id: 'p3', name: 'Carol' },
+    ],
   });
 
   let state = startNewHand(base);
@@ -88,17 +102,23 @@ function runSingleHandSimulation() {
     while (!isBettingRoundComplete(state)) {
       const pos = state.currentPlayerPosition;
       if (pos === null || pos === undefined) {
-        throw new Error(`Unexpected: betting not complete but currentPlayerPosition is ${pos}`);
+        throw new Error(
+          `Unexpected: betting not complete but currentPlayerPosition is ${pos}`
+        );
       }
 
       const player = state.players[pos];
       const { action, amount } = chooseAutoAction(state, pos);
 
-      console.log(`\nACTION: ${player.name} (pos ${pos}) -> ${action}${amount ? ` ${amount}` : ''}`);
+      console.log(
+        `\nACTION: ${player.name} (pos ${pos}) -> ${action}${amount ? ` ${amount}` : ''}`
+      );
       state = processAction(state, pos, action, amount);
 
       // Useful snapshot
-      console.log(`after: pot=${state.pot} currentBet=${state.currentBet} toAct=${state.currentPlayerPosition}`);
+      console.log(
+        `after: pot=${state.pot} currentBet=${state.currentBet} toAct=${state.currentPlayerPosition}`
+      );
     }
 
     // Move to next round or showdown.
@@ -120,7 +140,9 @@ function runSingleHandSimulation() {
   for (const p of state.players) {
     const hole = cardsToString(p.holeCards);
     const evalResult = evaluateHand(p.holeCards, state.communityCards);
-    console.log(`${p.position}:${p.name} hole=${hole} => ${evalResult.rankName} (${cardsToString(evalResult.cards)})`);
+    console.log(
+      `${p.position}:${p.name} hole=${hole} => ${evalResult.rankName} (${cardsToString(evalResult.cards)})`
+    );
   }
 
   console.log(`\n=== WINNERS ===`);
@@ -132,7 +154,9 @@ function runSingleHandSimulation() {
       .filter(Boolean)
       .map((p) => `${p.position}:${p.name}`);
 
-    console.log(`winners=${JSON.stringify(state.winners)} (${winnerNames.join(', ')})`);
+    console.log(
+      `winners=${JSON.stringify(state.winners)} (${winnerNames.join(', ')})`
+    );
   }
 
   console.log(`\n=== FINAL STACKS ===`);

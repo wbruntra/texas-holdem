@@ -1,4 +1,9 @@
-const { calculatePots, distributePots, awardPots, getTotalPot } = require('../lib/pot-manager');
+const {
+  calculatePots,
+  distributePots,
+  awardPots,
+  getTotalPot,
+} = require('../lib/pot-manager');
 const { PLAYER_STATUS } = require('../lib/game-state-machine');
 
 describe('Pot Manager', () => {
@@ -7,7 +12,7 @@ describe('Pot Manager', () => {
       const players = [
         { totalBet: 100, status: PLAYER_STATUS.ACTIVE },
         { totalBet: 100, status: PLAYER_STATUS.ACTIVE },
-        { totalBet: 100, status: PLAYER_STATUS.ACTIVE }
+        { totalBet: 100, status: PLAYER_STATUS.ACTIVE },
       ];
 
       const pots = calculatePots(players);
@@ -21,7 +26,7 @@ describe('Pot Manager', () => {
       const players = [
         { totalBet: 100, status: PLAYER_STATUS.ACTIVE },
         { totalBet: 50, status: PLAYER_STATUS.ALL_IN }, // all-in for less
-        { totalBet: 100, status: PLAYER_STATUS.ACTIVE }
+        { totalBet: 100, status: PLAYER_STATUS.ACTIVE },
       ];
 
       const pots = calculatePots(players);
@@ -40,7 +45,7 @@ describe('Pot Manager', () => {
         { totalBet: 100, status: PLAYER_STATUS.ACTIVE },
         { totalBet: 30, status: PLAYER_STATUS.ALL_IN },
         { totalBet: 150, status: PLAYER_STATUS.ACTIVE },
-        { totalBet: 50, status: PLAYER_STATUS.ALL_IN }
+        { totalBet: 50, status: PLAYER_STATUS.ALL_IN },
       ];
 
       const pots = calculatePots(players);
@@ -64,7 +69,7 @@ describe('Pot Manager', () => {
       const players = [
         { totalBet: 100, status: PLAYER_STATUS.ACTIVE },
         { totalBet: 50, status: PLAYER_STATUS.FOLDED },
-        { totalBet: 100, status: PLAYER_STATUS.ACTIVE }
+        { totalBet: 100, status: PLAYER_STATUS.ACTIVE },
       ];
 
       const pots = calculatePots(players);
@@ -79,7 +84,7 @@ describe('Pot Manager', () => {
       const players = [
         { totalBet: 100, status: PLAYER_STATUS.ACTIVE },
         { totalBet: 0, status: PLAYER_STATUS.FOLDED },
-        { totalBet: 100, status: PLAYER_STATUS.ACTIVE }
+        { totalBet: 100, status: PLAYER_STATUS.ACTIVE },
       ];
 
       const pots = calculatePots(players);
@@ -95,7 +100,7 @@ describe('Pot Manager', () => {
         { totalBet: 20, status: PLAYER_STATUS.FOLDED },
         { totalBet: 50, status: PLAYER_STATUS.ALL_IN },
         { totalBet: 30, status: PLAYER_STATUS.FOLDED },
-        { totalBet: 100, status: PLAYER_STATUS.ACTIVE }
+        { totalBet: 100, status: PLAYER_STATUS.ACTIVE },
       ];
 
       const pots = calculatePots(players);
@@ -113,7 +118,21 @@ describe('Pot Manager', () => {
   describe('distributePots', () => {
     const mockEvaluateHand = (cards) => {
       // Mock hand evaluation - return rank and value based on first card
-      const cardValues = { 'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10, '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2 };
+      const cardValues = {
+        A: 14,
+        K: 13,
+        Q: 12,
+        J: 11,
+        T: 10,
+        9: 9,
+        8: 8,
+        7: 7,
+        6: 6,
+        5: 5,
+        4: 4,
+        3: 3,
+        2: 2,
+      };
       const firstCard = cards[0];
       const cardValue = cardValues[firstCard[0]] || 10;
       // Use a simple value system where higher card = higher value
@@ -122,38 +141,44 @@ describe('Pot Manager', () => {
     };
 
     it('should award pot to player with best hand', () => {
-      const pots = [
-        { amount: 300, eligiblePlayers: [0, 1, 2], winners: null }
-      ];
+      const pots = [{ amount: 300, eligiblePlayers: [0, 1, 2], winners: null }];
 
       const players = [
         { holeCards: ['Ah', 'Kh'] },
         { holeCards: ['Qd', 'Jd'] },
-        { holeCards: ['9c', '8c'] }
+        { holeCards: ['9c', '8c'] },
       ];
 
       const communityCards = ['Ts', '7s', '6s', '5h', '4h'];
 
-      const result = distributePots(pots, players, communityCards, mockEvaluateHand);
+      const result = distributePots(
+        pots,
+        players,
+        communityCards,
+        mockEvaluateHand
+      );
 
       expect(result[0].winners).toEqual([0]); // Player 0 has Ace (highest)
       expect(result[0].winAmount).toBe(300);
     });
 
     it('should split pot on tie', () => {
-      const pots = [
-        { amount: 300, eligiblePlayers: [0, 1, 2], winners: null }
-      ];
+      const pots = [{ amount: 300, eligiblePlayers: [0, 1, 2], winners: null }];
 
       const players = [
         { holeCards: ['Ah', 'Kh'] },
         { holeCards: ['Ad', 'Qd'] }, // Also has Ace
-        { holeCards: ['9c', '8c'] }
+        { holeCards: ['9c', '8c'] },
       ];
 
       const communityCards = ['Ts', '7s', '6s', '5h', '4h'];
 
-      const result = distributePots(pots, players, communityCards, mockEvaluateHand);
+      const result = distributePots(
+        pots,
+        players,
+        communityCards,
+        mockEvaluateHand
+      );
 
       expect(result[0].winners).toEqual([0, 1]); // Both have Ace
       expect(result[0].winAmount).toBe(150); // Split pot
@@ -162,18 +187,23 @@ describe('Pot Manager', () => {
     it('should award each pot independently', () => {
       const pots = [
         { amount: 150, eligiblePlayers: [0, 1, 2], winners: null },
-        { amount: 100, eligiblePlayers: [0, 2], winners: null }
+        { amount: 100, eligiblePlayers: [0, 2], winners: null },
       ];
 
       const players = [
         { holeCards: ['9h', '8h'] },
         { holeCards: ['Kd', 'Qd'] }, // Only eligible for main pot
-        { holeCards: ['Ac', 'Jc'] }  // Best hand overall
+        { holeCards: ['Ac', 'Jc'] }, // Best hand overall
       ];
 
       const communityCards = ['Ts', '7s', '6s', '5h', '4h'];
 
-      const result = distributePots(pots, players, communityCards, mockEvaluateHand);
+      const result = distributePots(
+        pots,
+        players,
+        communityCards,
+        mockEvaluateHand
+      );
 
       expect(result[0].winners).toEqual([2]); // Player 2 wins main pot (A high)
       expect(result[1].winners).toEqual([2]); // Player 2 wins side pot (A high)
@@ -182,15 +212,9 @@ describe('Pot Manager', () => {
 
   describe('awardPots', () => {
     it('should add winnings to player chips', () => {
-      const pots = [
-        { amount: 300, winners: [1], winAmount: 300 }
-      ];
+      const pots = [{ amount: 300, winners: [1], winAmount: 300 }];
 
-      const players = [
-        { chips: 500 },
-        { chips: 200 },
-        { chips: 300 }
-      ];
+      const players = [{ chips: 500 }, { chips: 200 }, { chips: 300 }];
 
       const result = awardPots(pots, players);
 
@@ -200,15 +224,9 @@ describe('Pot Manager', () => {
     });
 
     it('should split pot evenly and give remainder to first winner', () => {
-      const pots = [
-        { amount: 301, winners: [0, 2], winAmount: 150 }
-      ];
+      const pots = [{ amount: 301, winners: [0, 2], winAmount: 150 }];
 
-      const players = [
-        { chips: 100 },
-        { chips: 200 },
-        { chips: 100 }
-      ];
+      const players = [{ chips: 100 }, { chips: 200 }, { chips: 100 }];
 
       const result = awardPots(pots, players);
 
@@ -220,14 +238,10 @@ describe('Pot Manager', () => {
     it('should award multiple pots', () => {
       const pots = [
         { amount: 150, winners: [1], winAmount: 150 },
-        { amount: 100, winners: [2], winAmount: 100 }
+        { amount: 100, winners: [2], winAmount: 100 },
       ];
 
-      const players = [
-        { chips: 0 },
-        { chips: 0 },
-        { chips: 0 }
-      ];
+      const players = [{ chips: 0 }, { chips: 0 }, { chips: 0 }];
 
       const result = awardPots(pots, players);
 
@@ -239,11 +253,7 @@ describe('Pot Manager', () => {
 
   describe('getTotalPot', () => {
     it('should sum all pot amounts', () => {
-      const pots = [
-        { amount: 150 },
-        { amount: 100 },
-        { amount: 50 }
-      ];
+      const pots = [{ amount: 150 }, { amount: 100 }, { amount: 50 }];
 
       expect(getTotalPot(pots)).toBe(300);
     });

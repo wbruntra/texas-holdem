@@ -23,23 +23,21 @@ CREATE TABLE hands (
 -- * games via game_id (fk_hands_game_id_games_id)
  * END_DDL
  */
-const { Model } = require('objection')
-const knex = require('../db')
-
+const { Model } = require('objection');
+const knex = require('../db');
 
 // Initialize knex connection for all models
 if (!Model.knex()) {
-  Model.knex(knex)
+  Model.knex(knex);
 }
 
 class Hands extends Model {
   static get tableName() {
-    return 'hands'
+    return 'hands';
   }
-  
 
   // TODO: Add jsonSchema based on DDL above
   // TODO: Add relationMappings if needed
 }
 
-module.exports = Hands
+module.exports = Hands;

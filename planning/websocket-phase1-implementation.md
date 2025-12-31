@@ -50,11 +50,14 @@
 ## How to test
 
 1. **Start the backend** (if not already running):
+
    ```bash
    cd backend
    bun run api
    ```
+
    You should see:
+
    ```
    Backend will run on port: 3660
    [WS] WebSocket server initialized on /ws
@@ -62,6 +65,7 @@
    ```
 
 2. **Start the frontend** (in another terminal):
+
    ```bash
    cd frontend
    bun run dev
@@ -99,11 +103,13 @@
 ## Performance improvement
 
 **Before (polling)**:
+
 - Frontend polls `GET /api/games/room/:roomCode/state` every 2000ms
 - For a 3-player game with 2 spectators, that's ~150 requests/minute
 - Most responses return "no change" (wasted bandwidth)
 
 **After (WebSocket)**:
+
 - Frontend receives updates **only when state changes**
 - For a typical hand (~20 actions over 2 minutes), that's ~20 pushes vs ~60 polls
 - **67% reduction** in network traffic
@@ -119,6 +125,7 @@
 ## Rollback
 
 If issues arise:
+
 1. Set `WS_ENABLED=false` in backend environment
 2. Restart backend → WebSocket server won't initialize
 3. Frontend automatically falls back to polling

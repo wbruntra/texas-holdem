@@ -7,7 +7,7 @@ Date: 2025-12-31
 1. **Stable geometry**: avoid horizontal “jumping” when the round changes (preflop→flop→turn→river→showdown) or when values appear/disappear (e.g., current bet).
 2. **Intelligent use of space**: show the most relevant shared/public table information first.
 3. **Single player list**: one list that adapts across the hand; no separate “Showdown” section duplicating player display.
-4. **Showdown clarity**: winners + *winning hand rank* (e.g., “Flush”, “Two Pair”) are visible on the common display.
+4. **Showdown clarity**: winners + _winning hand rank_ (e.g., “Flush”, “Two Pair”) are visible on the common display.
 5. **Room code de-emphasis**: still present, but not the largest element on the page.
 
 Non-goals (for now): table-seat circular layout, animations, advanced filtering, per-street hand history UI.
@@ -15,7 +15,7 @@ Non-goals (for now): table-seat circular layout, animations, advanced filtering,
 ## Current pain points (observed)
 
 - The header reflows as elements appear/disappear (notably the conditional "Current Bet" panel). This can change line breaks and perceived width.
-- At showdown the UI renders a dedicated "Showdown" grid *and* keeps the regular players grid, creating duplication.
+- At showdown the UI renders a dedicated "Showdown" grid _and_ keeps the regular players grid, creating duplication.
 - Room code is currently the largest typographic element, competing with the poker state.
 
 ## Proposed layout (single-screen)
@@ -37,6 +37,7 @@ Overall structure: **one fixed-width main column** with two zones:
 Replace the current large “Room: XXXX” title with a compact header bar.
 
 **Header row (single line, stable):**
+
 - Left: `Room XXXX` (small/medium text)
 - Center: `Round: <street>`
 - Right: `Players in: A/B`
@@ -48,6 +49,7 @@ Optional: show game status (“waiting”, “active”, “completed”) as sma
 Second row: a fixed grid with 3–4 equal-width panels. Always present.
 
 Suggested panels:
+
 1. **Pot**: `Total: $N` and (if multiple pots) a compact stacked line list with fixed max height.
 2. **Current bet**: always shown; when `0` show `Current bet: —`.
 3. **To act**: `Turn: <player name>` when active; otherwise `Turn: —`.
@@ -60,6 +62,7 @@ This replaces the current behavior where “Current Bet” appears only sometime
 Keep the 5-slot layout (this is the right approach for stable width).
 
 Adjustments to ensure stability:
+
 - Keep card slots at fixed width/height and center them.
 - Ensure the placeholder is the same size as a face-up card.
 - Avoid any text below the board that appears/disappears in a way that changes vertical spacing; reserve a fixed-height “status line” under the board.
@@ -71,6 +74,7 @@ Replace the current auto-fit card grid with a single-column list.
 Each player row is a fixed-height-ish “strip” with consistent columns:
 
 **Columns** (left → right):
+
 - **Identity**: dealer marker + player name (truncate if needed)
 - **Stack**: chips
 - **In-front**: current bet (always shown; `—` if zero)
@@ -94,18 +98,21 @@ Instead, the player rows adapt:
 At showdown, show the winning rank for **each pot** (main pot and any side pots).
 
 **Minimum requirement (meets request):**
+
 - In the table summary row, render a compact list:
   - `Main: <rank> — <winner names>`
   - `Side 1: <rank> — <winner names>`
   - `Side 2: ...`
 
 Notes:
+
 - If a pot is split (multiple winners), that’s already represented by multiple winner names; the rank stays a single value (the best hand that won that pot).
 - If a hand ends by everyone folding (no true showdown evaluation), show something like `Won by fold` instead of a poker rank.
 
 ### 8) Side pots + winners (common display)
 
 Because this is a public display, the minimum needed is:
+
 - Total pot
 - If multiple pots: “Main / Side 1 / Side 2…” with amount and eligible player count
 - At showdown: show which winners correspond to which pot (optional, but useful)
@@ -115,38 +122,42 @@ Because this is a public display, the minimum needed is:
 ## Data / API requirements
 
 Today, `TableView` has:
+
 - `game.winners?: number[]` (positions)
 - `game.pots?: { amount, eligiblePlayers, winners? }[]`
 - `players[].holeCards?` (present at showdown)
 
-To show the *winning hand rank per pot*, we need one of these:
+To show the _winning hand rank per pot_, we need one of these:
 
 ### Option A (preferred): server provides showdown evaluation results (rank names)
 
 Extend the game state shape so each pot includes a displayable winning rank name:
 
 - `pots?: Array<{
-    amount: number;
-    eligiblePlayers: number[];
-    winners?: number[];
-    winningRankName?: string; // e.g. "Flush", "Two Pair", "Royal Flush", "Won by fold"
-  }>`
+  amount: number;
+  eligiblePlayers: number[];
+  winners?: number[];
+  winningRankName?: string; // e.g. "Flush", "Two Pair", "Royal Flush", "Won by fold"
+}>`
 
 Then TableView can render:
+
 - a stable “Pots” panel that lists `Main/Side N`, amount, winners, and `winningRankName`.
 
-This keeps *all* evaluation logic on the backend (single source of truth) and avoids frontend duplication.
+This keeps _all_ evaluation logic on the backend (single source of truth) and avoids frontend duplication.
 
 ### Option B: shared evaluator code via `@scaffold/shared`
 
 If we want true reuse, we can move the hand-evaluation logic into `@scaffold/shared` and import it from backend + (optionally) frontend.
 
-However, even with a shared evaluator, the frontend still should not *need* to evaluate hands to display the common screen. The cleanest approach remains:
+However, even with a shared evaluator, the frontend still should not _need_ to evaluate hands to display the common screen. The cleanest approach remains:
+
 - backend evaluates once
 - backend returns `winningRankName` per pot
 - frontend just renders
 
-Where `@scaffold/shared` *does* help immediately is shared contracts:
+Where `@scaffold/shared` _does_ help immediately is shared contracts:
+
 - shared TypeScript types for `GameState`, `Pot`, `ShowdownPotResult`
 - shared formatting helpers (e.g., mapping rank identifiers to short labels, if we ever standardize rank IDs)
 

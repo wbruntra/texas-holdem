@@ -11,6 +11,7 @@ bun create_test_game.js
 ```
 
 Output:
+
 ```
 ✅ Game created!
    Room Code: BGEJSE
@@ -34,6 +35,7 @@ bun bots_play.js BGEJSE
 ### 3. Watch the Game
 
 Open your browser to the table view URL from step 1:
+
 ```
 http://localhost:5173/table/BGEJSE
 ```
@@ -41,11 +43,13 @@ http://localhost:5173/table/BGEJSE
 ## What the Bots Do
 
 ### Bot 1: "Aggressive"
+
 - Always tries to bet **$100** per round
 - Raises when possible
 - Attempts to dominate the game through aggressive betting
 
-### Bot 2: "Conservative"  
+### Bot 2: "Conservative"
+
 - Prefers to check when possible
 - Calls larger bets but won't initiate them
 - Plays a passive strategy
@@ -58,7 +62,7 @@ http://localhost:5173/table/BGEJSE
 ✅ **Hand Advancement** - Moves to next hand when current hand completes  
 ✅ **Chip Tracking** - Shows chip counts after each hand  
 ✅ **Visible Delays** - 1-2 second delays between actions for observability  
-✅ **Game Completion** - Stops when one player has all chips  
+✅ **Game Completion** - Stops when one player has all chips
 
 ## Example Game Output
 
@@ -102,6 +106,7 @@ AggressiveBot: $1400 | ConservativeBot: $585
 ## Frontend Display
 
 ### During Play
+
 - **Table View** (`/table/{roomCode}`)
   - Shows all player positions and chip stacks
   - Displays current bet and pot
@@ -110,6 +115,7 @@ AggressiveBot: $1400 | ConservativeBot: $585
   - Displays last action taken
 
 ### Game Over
+
 - **Full-screen overlay** with:
   - Large "🏆 GAME OVER!" message
   - Final chip counts for all players
@@ -125,11 +131,11 @@ Edit `bots_play.js` and modify these lines:
 ```javascript
 // For aggressive bot (search for these)
 if (validActions.canBet && botPlayer.chips >= 100) {
-  amount = 100;  // Change this number
+  amount = 100; // Change this number
 }
 
 // Update the comment too
-console.log('Bot 1: "Aggressive" (bets $100)');  // Change to your amount
+console.log('Bot 1: "Aggressive" (bets $100)'); // Change to your amount
 ```
 
 ### Change Starting Chips
@@ -140,7 +146,7 @@ Edit `create_test_game.js`:
 const gameRes = await api.post('/games', {
   smallBlind: 5,
   bigBlind: 10,
-  startingChips: 1000  // Change this to increase/decrease starting chips
+  startingChips: 1000, // Change this to increase/decrease starting chips
 });
 ```
 
@@ -159,15 +165,18 @@ if (bot.strategy === 'aggressive') {
 ## Troubleshooting
 
 ### Bots not starting game
+
 - Ensure backend is running on `http://localhost:3660`
 - Check that both bots successfully join (look for "✅" messages)
 
 ### Game seems stuck
+
 - Frontend may need a refresh
 - Check browser console for errors
 - Verify backend is still running
 
 ### Performance issues
+
 - Increase delays in `bots_play.js` sleep() calls
 - Reduce polling frequency in TableView component
 

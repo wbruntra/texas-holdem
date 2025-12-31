@@ -9,7 +9,7 @@ const db = knex(config.development);
       console.log('Game not found');
       process.exit(0);
     }
-    
+
     console.log('=== GAME STATE ===');
     console.log('Game ID:', game.id);
     console.log('Status:', game.status);
@@ -21,10 +21,12 @@ const db = knex(config.development);
     console.log('Small Blind:', game.small_blind);
     console.log('Big Blind:', game.big_blind);
     console.log('Winners:', game.winners);
-    
+
     console.log('\n=== PLAYERS ===');
-    const players = await db('players').where({ game_id: game.id }).orderBy('position');
-    players.forEach(p => {
+    const players = await db('players')
+      .where({ game_id: game.id })
+      .orderBy('position');
+    players.forEach((p) => {
       console.log(`\nPosition ${p.position}: ${p.username}`);
       console.log('  Stack:', p.stack);
       console.log('  All-in:', p.all_in);
@@ -32,7 +34,7 @@ const db = knex(config.development);
       console.log('  Total Bet:', p.total_bet);
       console.log('  Hand:', p.hand);
     });
-    
+
     process.exit(0);
   } catch (err) {
     console.error('Error:', err.message);

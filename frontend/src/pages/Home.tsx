@@ -19,14 +19,14 @@ export default function Home() {
   const handleCreateGame = async () => {
     setCreating(true);
     setError('');
-    
+
     try {
       const response = await axios.post('/api/games', {
         smallBlind: 5,
         bigBlind: 10,
         startingChips: 1000,
       });
-      
+
       const roomCode = response.data.roomCode;
       navigate(`/table/${roomCode}`);
     } catch (err: unknown) {
@@ -43,22 +43,28 @@ export default function Home() {
   };
 
   return (
-    <div style={{ 
-      maxWidth: '600px', 
-      margin: '0 auto', 
-      padding: '20px',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      boxSizing: 'border-box',
-    }}>
+    <div
+      style={{
+        maxWidth: '600px',
+        margin: '0 auto',
+        padding: '20px',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        boxSizing: 'border-box',
+      }}
+    >
       <h1 style={{ marginTop: '0', marginBottom: '1.5rem' }}>Texas Hold'em</h1>
-      
+
       <div style={{ marginTop: '2rem' }}>
-        <h2 style={{ fontSize: '1.5em', marginBottom: '0.5rem' }}>Create New Game</h2>
-        <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>Start a new game and show the table on this screen</p>
-        <button 
+        <h2 style={{ fontSize: '1.5em', marginBottom: '0.5rem' }}>
+          Create New Game
+        </h2>
+        <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
+          Start a new game and show the table on this screen
+        </p>
+        <button
           onClick={handleCreateGame}
           disabled={creating}
           style={{
@@ -74,8 +80,12 @@ export default function Home() {
       </div>
 
       <div style={{ marginTop: '3rem' }}>
-        <h2 style={{ fontSize: '1.5em', marginBottom: '0.5rem' }}>Join Existing Game</h2>
-        <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>Enter room code to join as a player</p>
+        <h2 style={{ fontSize: '1.5em', marginBottom: '0.5rem' }}>
+          Join Existing Game
+        </h2>
+        <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
+          Enter room code to join as a player
+        </p>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <input
             type="text"
@@ -108,14 +118,16 @@ export default function Home() {
       </div>
 
       {error && (
-        <div style={{ 
-          marginTop: '1.5rem', 
-          padding: '12px', 
-          backgroundColor: '#fee', 
-          color: '#c00',
-          borderRadius: '5px',
-          fontSize: '14px',
-        }}>
+        <div
+          style={{
+            marginTop: '1.5rem',
+            padding: '12px',
+            backgroundColor: '#fee',
+            color: '#c00',
+            borderRadius: '5px',
+            fontSize: '14px',
+          }}
+        >
           {error}
         </div>
       )}

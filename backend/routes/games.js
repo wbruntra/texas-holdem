@@ -41,13 +41,13 @@ async function loadPlayer(req, res, next) {
 router.post('/', async (req, res, next) => {
   try {
     const { smallBlind, bigBlind, startingChips } = req.body;
-    
+
     const game = await gameService.createGame({
       smallBlind,
       bigBlind,
-      startingChips
+      startingChips,
     });
-    
+
     res.status(201).json(game);
   } catch (error) {
     next(error);
@@ -61,11 +61,11 @@ router.post('/', async (req, res, next) => {
 router.get('/room/:roomCode', async (req, res, next) => {
   try {
     const game = await gameService.getGameByRoomCode(req.params.roomCode);
-    
+
     if (!game) {
       return res.status(404).json({ error: 'Game not found' });
     }
-    
+
     // Return public info only (no hole cards)
     const publicGame = {
       id: game.id,
@@ -74,14 +74,14 @@ router.get('/room/:roomCode', async (req, res, next) => {
       smallBlind: game.smallBlind,
       bigBlind: game.bigBlind,
       startingChips: game.startingChips,
-      players: game.players.map(p => ({
+      players: game.players.map((p) => ({
         name: p.name,
         position: p.position,
         chips: p.chips,
-        connected: p.connected
-      }))
+        connected: p.connected,
+      })),
     };
-    
+
     res.json(publicGame);
   } catch (error) {
     next(error);
@@ -101,7 +101,7 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
     }
 
     // Normalize turn in case current player is ALL_IN or FOLDED
-    game = await actionService.normalizeTurnIfNeeded(game.id) || game;
+    game = (await actionService.normalizeTurnIfNeeded(game.id)) || game;
 
     const isShowdown = game.currentRound === SHOWDOWN_ROUND;
 
@@ -122,17 +122,17 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
       handNumber: game.handNumber,
       communityCards: game.communityCards || [],
       winners: game.winners || undefined,
-      players: game.players.map(p => ({
+      players: game.players.map((p) => ({
         id: p.id,
         name: p.name,
         position: p.position,
         chips: p.chips,
         currentBet: p.currentBet,
         status: p.status,
-        holeCards: isShowdown ? (p.holeCards || []) : [],
+        holeCards: isShowdown ? p.holeCards || [] : [],
         lastAction: p.lastAction || null,
-        connected: p.connected
-      }))
+        connected: p.connected,
+      })),
     };
 
     res.json(tableState);
@@ -148,30 +148,30 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
 router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     let game = await gameService.getGameById(req.params.gameId);
-    
+
     if (!game) {
       return res.status(404).json({ error: 'Game not found' });
     }
-    
+
     // Verify player is in this game
     if (req.player.gameId !== game.id) {
       return res.status(403).json({ error: 'Not authorized for this game' });
     }
-    
+
     // Normalize turn in case current player is ALL_IN or FOLDED
-    game = await actionService.normalizeTurnIfNeeded(game.id) || game;
-    
+    game = (await actionService.normalizeTurnIfNeeded(game.id)) || game;
+
     const isShowdown = game.currentRound === SHOWDOWN_ROUND;
 
     // Return full state but only show this player's hole cards (except at showdown)
     const gameState = {
       ...game,
-      players: game.players.map(p => ({
+      players: game.players.map((p) => ({
         ...p,
-        holeCards: isShowdown || p.id === req.player.id ? p.holeCards : []
-      }))
+        holeCards: isShowdown || p.id === req.player.id ? p.holeCards : [],
+      })),
     };
-    
+
     res.json(gameState);
   } catch (error) {
     next(error);
@@ -185,26 +185,26 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
 router.post('/:gameId/join', async (req, res, next) => {
   try {
     const { name, password } = req.body;
-    
+
     if (!name || !password) {
       return res.status(400).json({ error: 'Name and password required' });
     }
-    
+
     const player = await playerService.joinGame(
       req.params.gameId,
       name,
       password
     );
-    
+
     // Set session
     req.session.playerId = player.id;
-    
+
     // Emit game update event
     gameEvents.emitGameUpdate(req.params.gameId, 'join');
-    
+
     res.status(201).json({
       player,
-      message: 'Joined game successfully'
+      message: 'Joined game successfully',
     });
   } catch (error) {
     next(error);
@@ -218,23 +218,23 @@ router.post('/:gameId/join', async (req, res, next) => {
 router.post('/:gameId/auth', async (req, res, next) => {
   try {
     const { name, password } = req.body;
-    
+
     if (!name || !password) {
       return res.status(400).json({ error: 'Name and password required' });
     }
-    
+
     const player = await playerService.authenticatePlayer(
       req.params.gameId,
       name,
       password
     );
-    
+
     // Set session
     req.session.playerId = player.id;
-    
+
     res.json({
       player,
-      message: 'Authenticated successfully'
+      message: 'Authenticated successfully',
     });
   } catch (error) {
     if (error.message === 'Invalid credentials') {
@@ -248,194 +248,228 @@ router.post('/:gameId/auth', async (req, res, next) => {
  * POST /api/games/:gameId/start
  * Start the game
  */
-router.post('/:gameId/start', requireAuth, loadPlayer, async (req, res, next) => {
-  try {
-    // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' });
+router.post(
+  '/:gameId/start',
+  requireAuth,
+  loadPlayer,
+  async (req, res, next) => {
+    try {
+      // Verify player is in this game
+      if (req.player.gameId !== req.params.gameId) {
+        return res.status(403).json({ error: 'Not authorized for this game' });
+      }
+
+      const game = await gameService.startGame(req.params.gameId);
+
+      // Emit game update event
+      gameEvents.emitGameUpdate(req.params.gameId, 'start');
+
+      res.json(game);
+    } catch (error) {
+      next(error);
     }
-    
-    const game = await gameService.startGame(req.params.gameId);
-    
-    // Emit game update event
-    gameEvents.emitGameUpdate(req.params.gameId, 'start');
-    
-    res.json(game);
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /**
  * POST /api/games/:gameId/actions
  * Submit a player action
  */
-router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) => {
-  try {
-    const { action, amount } = req.body;
-    
-    if (!action) {
-      return res.status(400).json({ error: 'Action required' });
-    }
-    
-    // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' });
-    }
-    
-    const gameState = await actionService.submitAction(
-      req.player.id,
-      action,
-      amount || 0
-    );
+router.post(
+  '/:gameId/actions',
+  requireAuth,
+  loadPlayer,
+  async (req, res, next) => {
+    try {
+      const { action, amount } = req.body;
 
-    const isShowdown = gameState.currentRound === SHOWDOWN_ROUND;
-    
-    // Return game state with only this player's hole cards visible
-    const sanitizedState = {
-      ...gameState,
-      players: gameState.players.map(p => ({
-        ...p,
-        holeCards: isShowdown || p.id === req.player.id ? p.holeCards : []
-      }))
-    };
-    
-    // Emit game update event
-    gameEvents.emitGameUpdate(req.params.gameId, 'action');
-    
-    res.json(sanitizedState);
-  } catch (error) {
-    if (error instanceof Error) {
-      return res.status(400).json({ error: error.message || 'Invalid action' });
+      if (!action) {
+        return res.status(400).json({ error: 'Action required' });
+      }
+
+      // Verify player is in this game
+      if (req.player.gameId !== req.params.gameId) {
+        return res.status(403).json({ error: 'Not authorized for this game' });
+      }
+
+      const gameState = await actionService.submitAction(
+        req.player.id,
+        action,
+        amount || 0
+      );
+
+      const isShowdown = gameState.currentRound === SHOWDOWN_ROUND;
+
+      // Return game state with only this player's hole cards visible
+      const sanitizedState = {
+        ...gameState,
+        players: gameState.players.map((p) => ({
+          ...p,
+          holeCards: isShowdown || p.id === req.player.id ? p.holeCards : [],
+        })),
+      };
+
+      // Emit game update event
+      gameEvents.emitGameUpdate(req.params.gameId, 'action');
+
+      res.json(sanitizedState);
+    } catch (error) {
+      if (error instanceof Error) {
+        return res
+          .status(400)
+          .json({ error: error.message || 'Invalid action' });
+      }
+      next(error);
     }
-    next(error);
   }
-});
+);
 
 /**
  * POST /api/games/:gameId/reveal-card
  * Manually reveal the next community card (when only 1 player has chips)
  */
-router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, next) => {
-  try {
-    // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' });
-    }
+router.post(
+  '/:gameId/reveal-card',
+  requireAuth,
+  loadPlayer,
+  async (req, res, next) => {
+    try {
+      // Verify player is in this game
+      if (req.player.gameId !== req.params.gameId) {
+        return res.status(403).json({ error: 'Not authorized for this game' });
+      }
 
-    const gameState = await actionService.revealCard(req.player.id);
+      const gameState = await actionService.revealCard(req.player.id);
 
-    const isShowdown = gameState.currentRound === SHOWDOWN_ROUND;
-    
-    // Return game state with only this player's hole cards visible
-    const sanitizedState = {
-      ...gameState,
-      players: gameState.players.map(p => ({
-        ...p,
-        holeCards: isShowdown || p.id === req.player.id ? p.holeCards : []
-      }))
-    };
-    
-    // Emit game update event
-    gameEvents.emitGameUpdate(req.params.gameId, 'reveal');
-    
-    res.json(sanitizedState);
-  } catch (error) {
-    if (error instanceof Error) {
-      return res.status(400).json({ error: error.message || 'Cannot reveal card' });
+      const isShowdown = gameState.currentRound === SHOWDOWN_ROUND;
+
+      // Return game state with only this player's hole cards visible
+      const sanitizedState = {
+        ...gameState,
+        players: gameState.players.map((p) => ({
+          ...p,
+          holeCards: isShowdown || p.id === req.player.id ? p.holeCards : [],
+        })),
+      };
+
+      // Emit game update event
+      gameEvents.emitGameUpdate(req.params.gameId, 'reveal');
+
+      res.json(sanitizedState);
+    } catch (error) {
+      if (error instanceof Error) {
+        return res
+          .status(400)
+          .json({ error: error.message || 'Cannot reveal card' });
+      }
+      next(error);
     }
-    next(error);
   }
-});
+);
 
 /**
  * GET /api/games/:gameId/actions/valid
  * Get valid actions for current player
  */
-router.get('/:gameId/actions/valid', requireAuth, loadPlayer, async (req, res, next) => {
-  try {
-    // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' });
+router.get(
+  '/:gameId/actions/valid',
+  requireAuth,
+  loadPlayer,
+  async (req, res, next) => {
+    try {
+      // Verify player is in this game
+      if (req.player.gameId !== req.params.gameId) {
+        return res.status(403).json({ error: 'Not authorized for this game' });
+      }
+
+      const actions = await actionService.getPlayerValidActions(req.player.id);
+
+      res.json(actions);
+    } catch (error) {
+      next(error);
     }
-    
-    const actions = await actionService.getPlayerValidActions(req.player.id);
-    
-    res.json(actions);
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /**
  * POST /api/games/:gameId/next-hand
  * Start the next hand (any player can trigger)
  */
-router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next) => {
-  try {
-    // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' });
+router.post(
+  '/:gameId/next-hand',
+  requireAuth,
+  loadPlayer,
+  async (req, res, next) => {
+    try {
+      // Verify player is in this game
+      if (req.player.gameId !== req.params.gameId) {
+        return res.status(403).json({ error: 'Not authorized for this game' });
+      }
+
+      const game = await gameService.getGameById(req.params.gameId);
+      if (!game) {
+        return res.status(404).json({ error: 'Game not found' });
+      }
+
+      if (game.currentRound !== SHOWDOWN_ROUND) {
+        return res.status(400).json({ error: 'Current hand not finished' });
+      }
+
+      // Allow next hand even if winners is not set (handles old game states)
+      // The startNewHand function will handle resetting the state properly
+
+      const nextState = await gameService.startNextHand(req.params.gameId);
+
+      // Not showdown anymore: only reveal this player's hole cards
+      const sanitizedState = {
+        ...nextState,
+        players: nextState.players.map((p) => ({
+          ...p,
+          holeCards: p.id === req.player.id ? p.holeCards : [],
+        })),
+      };
+
+      // Emit game update event
+      gameEvents.emitGameUpdate(req.params.gameId, 'next_hand');
+
+      res.json(sanitizedState);
+    } catch (error) {
+      next(error);
     }
-
-    const game = await gameService.getGameById(req.params.gameId);
-    if (!game) {
-      return res.status(404).json({ error: 'Game not found' });
-    }
-
-    if (game.currentRound !== SHOWDOWN_ROUND) {
-      return res.status(400).json({ error: 'Current hand not finished' });
-    }
-
-    // Allow next hand even if winners is not set (handles old game states)
-    // The startNewHand function will handle resetting the state properly
-
-    const nextState = await gameService.startNextHand(req.params.gameId);
-
-    // Not showdown anymore: only reveal this player's hole cards
-    const sanitizedState = {
-      ...nextState,
-      players: nextState.players.map(p => ({
-        ...p,
-        holeCards: p.id === req.player.id ? p.holeCards : []
-      }))
-    };
-
-    // Emit game update event
-    gameEvents.emitGameUpdate(req.params.gameId, 'next_hand');
-
-    res.json(sanitizedState);
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /**
  * POST /api/games/:gameId/leave
  * Leave the game
  */
-router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) => {
-  try {
-    // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' });
+router.post(
+  '/:gameId/leave',
+  requireAuth,
+  loadPlayer,
+  async (req, res, next) => {
+    try {
+      // Verify player is in this game
+      if (req.player.gameId !== req.params.gameId) {
+        return res.status(403).json({ error: 'Not authorized for this game' });
+      }
+
+      const gameId = req.player.gameId;
+
+      await playerService.leaveGame(req.player.id);
+
+      // Clear session
+      req.session = null;
+
+      // Emit game update event
+      gameEvents.emitGameUpdate(gameId, 'leave');
+
+      res.json({ message: 'Left game successfully' });
+    } catch (error) {
+      next(error);
     }
-    
-    const gameId = req.player.gameId;
-    
-    await playerService.leaveGame(req.player.id);
-    
-    // Clear session
-    req.session = null;
-    
-    // Emit game update event
-    gameEvents.emitGameUpdate(gameId, 'leave');
-    
-    res.json({ message: 'Left game successfully' });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /**
  * GET /api/games/:gameId/players
@@ -444,7 +478,7 @@ router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) =>
 router.get('/:gameId/players', async (req, res, next) => {
   try {
     const players = await playerService.getAllPlayersInGame(req.params.gameId);
-    
+
     res.json(players);
   } catch (error) {
     next(error);

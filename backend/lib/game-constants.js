@@ -5,7 +5,7 @@
 const GAME_STATUS = {
   WAITING: 'waiting',
   ACTIVE: 'active',
-  COMPLETED: 'completed'
+  COMPLETED: 'completed',
 };
 
 const ROUND = {
@@ -13,14 +13,14 @@ const ROUND = {
   FLOP: 'flop',
   TURN: 'turn',
   RIVER: 'river',
-  SHOWDOWN: 'showdown'
+  SHOWDOWN: 'showdown',
 };
 
 const PLAYER_STATUS = {
   ACTIVE: 'active',
   FOLDED: 'folded',
   ALL_IN: 'all_in',
-  OUT: 'out'
+  OUT: 'out',
 };
 
 const ACTION_TYPE = {
@@ -29,12 +29,12 @@ const ACTION_TYPE = {
   CALL: 'call',
   BET: 'bet',
   RAISE: 'raise',
-  ALL_IN: 'all_in'
+  ALL_IN: 'all_in',
 };
 
 module.exports = {
   GAME_STATUS,
   ROUND,
   PLAYER_STATUS,
-  ACTION_TYPE
+  ACTION_TYPE,
 };

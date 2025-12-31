@@ -1,7 +1,9 @@
 # Texas Hold'em Game - Implementation Plan
 
 ## Project Overview
+
 Build a multiplayer Texas Hold'em poker game where:
+
 - **Shared screen** displays the community cards, pot, and player statuses
 - **Individual phone screens** show private cards and betting controls
 - Players can join games with a simple room code
@@ -12,17 +14,21 @@ Build a multiplayer Texas Hold'em poker game where:
 ## Architecture
 
 ### Backend (Express + SQLite)
+
 - REST API for game management
 - WebSocket/SSE for real-time updates
 - Game state machine for poker logic
 - Session management for player authentication
 
 ### Frontend (React + Vite)
+
 Two distinct UI modes:
+
 1. **Table View** - Shared screen showing board state
 2. **Player View** - Mobile-optimized for individual players
 
 ### Shared Package
+
 - TypeScript types/interfaces
 - Game constants and enums
 - Poker hand evaluation logic
@@ -36,6 +42,7 @@ Two distinct UI modes:
 #### Tables to create:
 
 **games**
+
 - `id` (UUID, primary key)
 - `room_code` (6-char unique code)
 - `status` (waiting, active, completed)
@@ -50,6 +57,7 @@ Two distinct UI modes:
 - `updated_at` (timestamp)
 
 **players**
+
 - `id` (UUID, primary key)
 - `game_id` (foreign key → games)
 - `name` (string)
@@ -67,6 +75,7 @@ Two distinct UI modes:
 - `created_at` (timestamp)
 
 **hands**
+
 - `id` (UUID, primary key)
 - `game_id` (foreign key → games)
 - `hand_number` (integer)
@@ -77,6 +86,7 @@ Two distinct UI modes:
 - `completed_at` (timestamp)
 
 **actions**
+
 - `id` (UUID, primary key)
 - `hand_id` (foreign key → hands)
 - `player_id` (foreign key → players)
@@ -90,6 +100,7 @@ Two distinct UI modes:
 Create these in `backend/lib/`:
 
 **poker-engine.js**
+
 - `shuffleDeck()` - Create and shuffle 52 cards
 - `dealHoleCards(players)` - Deal 2 cards to each player
 - `dealFlop()` - Deal 3 community cards
@@ -100,12 +111,14 @@ Create these in `backend/lib/`:
 - `distributePot(winners, pot, sidePots)` - Handle pot distribution including side pots
 
 **game-state-machine.js**
+
 - State transitions: waiting → active → completed
 - Round transitions: preflop → flop → turn → river → showdown
 - Validate actions based on current state
 - Handle betting rounds (track current bet, minimum raise, etc.)
 
 **betting-logic.js**
+
 - `validateAction(player, action, amount, gameState)` - Check if action is legal
 - `processAction(player, action, amount, gameState)` - Update game state
 - `calculateMinBet(gameState)` - Get minimum bet amount
@@ -113,6 +126,7 @@ Create these in `backend/lib/`:
 - `handleSidePots(players)` - Calculate side pots for all-in situations
 
 **hand-evaluator.js**
+
 - Rank hands: High Card → Royal Flush
 - Compare hands to determine winner
 - Handle ties/split pots
@@ -121,6 +135,7 @@ Create these in `backend/lib/`:
 ### 1.3 API Endpoints
 
 **Game Management:**
+
 ```
 POST   /api/games                    - Create new game
 GET    /api/games/:roomCode          - Get game by room code
@@ -129,6 +144,7 @@ GET    /api/games/:gameId/state      - Get current game state
 ```
 
 **Player Management:**
+
 ```
 POST   /api/games/:gameId/join       - Join game with name
 DELETE /api/players/:playerId        - Leave game
@@ -136,6 +152,7 @@ PATCH  /api/players/:playerId        - Update player (ready status, etc.)
 ```
 
 **Game Actions:**
+
 ```
 POST   /api/games/:gameId/start      - Start game (host only)
 POST   /api/games/:gameId/actions    - Submit player action (fold/check/call/raise)
@@ -143,6 +160,7 @@ POST   /api/games/:gameId/next-hand  - Start next hand
 ```
 
 **Real-time Updates:**
+
 ```
 GET    /api/games/:gameId/events     - SSE endpoint for real-time updates
 ```
@@ -150,6 +168,7 @@ GET    /api/games/:gameId/events     - SSE endpoint for real-time updates
 ### 1.4 Authentication Strategy
 
 Simple token-based auth:
+
 - When player joins, generate a UUID session token
 - Store in cookie or localStorage
 - Include in all requests
@@ -160,11 +179,13 @@ Simple token-based auth:
 Two options:
 
 **Option A: Server-Sent Events (SSE)** - Simpler
+
 - Players subscribe to `/api/games/:gameId/events`
 - Server pushes updates when game state changes
 - Works with standard HTTP
 
 **Option B: WebSocket** - More complex but bidirectional
+
 - Use `ws` or `socket.io`
 - Allows instant bidirectional communication
 - Better for very responsive UI
@@ -176,6 +197,7 @@ Two options:
 ## Phase 2: Poker Game Rules Implementation
 
 ### 2.1 Card Representation
+
 ```javascript
 // Use simple objects
 { rank: 'A', suit: 'hearts' }  // Ace of Hearts
@@ -186,6 +208,7 @@ Two options:
 ```
 
 ### 2.2 Hand Rankings (Highest to Lowest)
+
 1. Royal Flush (A-K-Q-J-10, same suit)
 2. Straight Flush (5 sequential cards, same suit)
 3. Four of a Kind (4 cards of same rank)
@@ -198,6 +221,7 @@ Two options:
 10. High Card
 
 ### 2.3 Betting Round Flow
+
 1. Dealer button rotates clockwise
 2. Small blind (left of dealer) posts small blind
 3. Big blind (left of small blind) posts big blind
@@ -214,6 +238,7 @@ Two options:
 14. Start new hand
 
 ### 2.4 Action Validation Rules
+
 - First to act: Can bet or check
 - After a bet: Can fold, call, or raise
 - Raise must be at least double the previous bet
@@ -221,6 +246,7 @@ Two options:
 - Side pots: When players are all-in with different amounts
 
 ### 2.5 Edge Cases to Handle
+
 - Player disconnects during hand
 - Multiple side pots
 - Multiple players all-in
@@ -234,7 +260,9 @@ Two options:
 ## Phase 3: Testing Strategy
 
 ### 3.1 Unit Tests
+
 Test individual poker functions:
+
 - Hand evaluation accuracy
 - Pot calculation
 - Side pot calculations
@@ -242,7 +270,9 @@ Test individual poker functions:
 - State transitions
 
 ### 3.2 Integration Tests
+
 Test API endpoints:
+
 - Create game flow
 - Join game flow
 - Complete hand flow
@@ -250,6 +280,7 @@ Test API endpoints:
 - Edge cases (disconnects, all-ins)
 
 ### 3.3 Manual Testing Checklist
+
 - [ ] Create game and get room code
 - [ ] Multiple players join with different devices
 - [ ] Start game and deal cards
@@ -267,7 +298,9 @@ Test API endpoints:
 ## Phase 4: Frontend Implementation (After Backend)
 
 ### 4.1 Table View (Shared Screen)
+
 **Components:**
+
 - GameBoard - Main container
 - CommunityCards - Shows flop/turn/river
 - PotDisplay - Current pot amount
@@ -282,6 +315,7 @@ Test API endpoints:
 - CurrentPlayerIndicator - Highlight whose turn
 
 **Features:**
+
 - Read-only view (no controls)
 - Auto-refreshes on state changes (SSE)
 - Shows animations for actions
@@ -289,6 +323,7 @@ Test API endpoints:
 - Fullscreen mode
 
 ### 4.2 Player View (Mobile)
+
 **Screens:**
 
 1. **Join Screen**
@@ -324,6 +359,7 @@ Test API endpoints:
    - "Next hand" button (dealer only)
 
 ### 4.3 Routing
+
 ```
 /                          - Landing page (choose table or player view)
 /table/:roomCode           - Table view
@@ -336,6 +372,7 @@ Test API endpoints:
 ## Phase 5: Polish & Features
 
 ### 5.1 Essential Features
+
 - [ ] Show hand history
 - [ ] Configurable blinds at game creation
 - [ ] Configurable starting chips
@@ -345,6 +382,7 @@ Test API endpoints:
 - [ ] Reconnection handling
 
 ### 5.2 Nice-to-Have Features
+
 - [ ] Chat between players
 - [ ] Hand replay/review
 - [ ] Statistics (hands won, biggest pot, etc.)
@@ -359,6 +397,7 @@ Test API endpoints:
 ## Implementation Order
 
 ### Sprint 1: Core Backend (Week 1)
+
 1. Create database migrations for all tables
 2. Implement poker-engine.js (deck, dealing, hand evaluation)
 3. Implement game-state-machine.js
@@ -366,6 +405,7 @@ Test API endpoints:
 5. Create basic API endpoints (create game, join game)
 
 ### Sprint 2: Game Flow (Week 1-2)
+
 1. Implement action endpoints
 2. Add SSE for real-time updates
 3. Complete full hand lifecycle (preflop → showdown)
@@ -373,6 +413,7 @@ Test API endpoints:
 5. Test with manual API calls (Postman/curl)
 
 ### Sprint 3: Testing & Refinement (Week 2)
+
 1. Write unit tests for poker logic
 2. Write integration tests for API
 3. Fix bugs and edge cases
@@ -380,6 +421,7 @@ Test API endpoints:
 5. Document API endpoints
 
 ### Sprint 4: Frontend - Table View (Week 3)
+
 1. Create GameBoard component
 2. Implement real-time state updates
 3. Display community cards and pot
@@ -387,6 +429,7 @@ Test API endpoints:
 5. Style for large display
 
 ### Sprint 5: Frontend - Player View (Week 3-4)
+
 1. Create join flow
 2. Implement player game screen
 3. Add action controls (fold/check/call/raise)
@@ -394,6 +437,7 @@ Test API endpoints:
 5. Mobile-responsive design
 
 ### Sprint 6: Polish (Week 4)
+
 1. Add animations and transitions
 2. Improve error handling and messaging
 3. Add sound effects
@@ -405,22 +449,24 @@ Test API endpoints:
 ## Technical Dependencies to Add
 
 ### Backend
+
 ```json
 {
-  "poker-evaluator": "^1.0.0",      // or "pokersolver": "^2.1.4"
+  "poker-evaluator": "^1.0.0", // or "pokersolver": "^2.1.4"
   "uuid": "^9.0.0",
-  "ws": "^8.0.0",                    // if using WebSocket
-  "joi": "^17.0.0"                   // for input validation
+  "ws": "^8.0.0", // if using WebSocket
+  "joi": "^17.0.0" // for input validation
 }
 ```
 
 ### Frontend (already has React, Bootstrap)
+
 ```json
 {
-  "react-router-dom": "^6.0.0",      // routing
-  "zustand": "^4.0.0",               // state management (lighter than Redux)
-  "react-query": "^3.0.0",           // server state management
-  "framer-motion": "^10.0.0"         // animations
+  "react-router-dom": "^6.0.0", // routing
+  "zustand": "^4.0.0", // state management (lighter than Redux)
+  "react-query": "^3.0.0", // server state management
+  "framer-motion": "^10.0.0" // animations
 }
 ```
 
@@ -457,6 +503,7 @@ Test API endpoints:
 ## API Response Formats
 
 ### Game State Response
+
 ```json
 {
   "id": "uuid",
@@ -487,6 +534,7 @@ Test API endpoints:
 ```
 
 ### Player Private State Response
+
 ```json
 {
   "id": "uuid",

@@ -5,6 +5,7 @@ Base URL: `http://localhost:3660/api`
 ## Authentication
 
 All authenticated endpoints require a session cookie. Sessions are established when:
+
 - Joining a game (`POST /games/:gameId/join`)
 - Authenticating with existing credentials (`POST /games/:gameId/auth`)
 
@@ -17,6 +18,7 @@ All authenticated endpoints require a session cookie. Sessions are established w
 Check if API is running.
 
 **Response:**
+
 ```json
 {
   "health": "OK"
@@ -32,19 +34,21 @@ Check if API is running.
 Create a new poker game.
 
 **Request Body:**
+
 ```json
 {
-  "smallBlind": 5,      // optional, default: 5
-  "bigBlind": 10,       // optional, default: 10
+  "smallBlind": 5, // optional, default: 5
+  "bigBlind": 10, // optional, default: 10
   "startingChips": 1000 // optional, default: 1000
 }
 ```
 
 **Response (201):**
+
 ```json
 {
   "id": "uuid",
-  "roomCode": "ABC123",  // 6-character code for joining
+  "roomCode": "ABC123", // 6-character code for joining
   "status": "waiting",
   "smallBlind": 5,
   "bigBlind": 10,
@@ -61,6 +65,7 @@ Create a new poker game.
 Get public game information (no authentication required).
 
 **Response (200):**
+
 ```json
 {
   "id": "uuid",
@@ -89,14 +94,16 @@ Get public game information (no authentication required).
 Join a game with a username and password. Sets session cookie.
 
 **Request Body:**
+
 ```json
 {
   "name": "Alice",
-  "password": "mypassword"  // min 4 characters
+  "password": "mypassword" // min 4 characters
 }
 ```
 
 **Response (201):**
+
 ```json
 {
   "player": {
@@ -111,6 +118,7 @@ Join a game with a username and password. Sets session cookie.
 ```
 
 **Errors:**
+
 - `400` - Name or password missing
 - `400` - Password too short
 - `400` - Player name already taken
@@ -127,6 +135,7 @@ Join a game with a username and password. Sets session cookie.
 Re-authenticate with existing credentials (for reconnecting). Sets session cookie.
 
 **Request Body:**
+
 ```json
 {
   "name": "Alice",
@@ -135,6 +144,7 @@ Re-authenticate with existing credentials (for reconnecting). Sets session cooki
 ```
 
 **Response (200):**
+
 ```json
 {
   "player": {
@@ -149,6 +159,7 @@ Re-authenticate with existing credentials (for reconnecting). Sets session cooki
 ```
 
 **Errors:**
+
 - `401` - Invalid credentials
 - `404` - Game not found
 
@@ -161,6 +172,7 @@ Re-authenticate with existing credentials (for reconnecting). Sets session cooki
 Get full game state. Requires authentication. Only shows authenticated player's hole cards.
 
 **Response (200):**
+
 ```json
 {
   "id": "uuid",
@@ -169,9 +181,9 @@ Get full game state. Requires authentication. Only shows authenticated player's 
   "currentRound": "flop",
   "pot": 30,
   "communityCards": [
-    {"rank": "A", "suit": "hearts", "value": 14},
-    {"rank": "K", "suit": "spades", "value": 13},
-    {"rank": "Q", "suit": "diamonds", "value": 12}
+    { "rank": "A", "suit": "hearts", "value": 14 },
+    { "rank": "K", "suit": "spades", "value": 13 },
+    { "rank": "Q", "suit": "diamonds", "value": 12 }
   ],
   "currentBet": 10,
   "currentPlayerPosition": 1,
@@ -184,9 +196,10 @@ Get full game state. Requires authentication. Only shows authenticated player's 
       "position": 0,
       "chips": 990,
       "currentBet": 10,
-      "holeCards": [  // Only visible for authenticated player
-        {"rank": "J", "suit": "clubs", "value": 11},
-        {"rank": "10", "suit": "hearts", "value": 10}
+      "holeCards": [
+        // Only visible for authenticated player
+        { "rank": "J", "suit": "clubs", "value": 11 },
+        { "rank": "10", "suit": "hearts", "value": 10 }
       ],
       "status": "active",
       "isDealer": true,
@@ -201,7 +214,7 @@ Get full game state. Requires authentication. Only shows authenticated player's 
       "position": 1,
       "chips": 980,
       "currentBet": 10,
-      "holeCards": [],  // Hidden for other players
+      "holeCards": [], // Hidden for other players
       "status": "active",
       "isDealer": false,
       "isSmallBlind": false,
@@ -214,6 +227,7 @@ Get full game state. Requires authentication. Only shows authenticated player's 
 ```
 
 **Errors:**
+
 - `401` - Not authenticated
 - `403` - Not authorized for this game
 - `404` - Game not found
@@ -230,6 +244,7 @@ Start the game (requires at least 2 players). Requires authentication.
 Returns full game state (same as GET /games/:gameId)
 
 **Errors:**
+
 - `401` - Not authenticated
 - `403` - Not authorized for this game
 - `400` - Need at least 2 players
@@ -245,10 +260,11 @@ Returns full game state (same as GET /games/:gameId)
 Submit a player action. Requires authentication.
 
 **Request Body:**
+
 ```json
 {
-  "action": "call",  // fold, check, call, bet, raise, all_in
-  "amount": 20       // optional, required for bet/raise
+  "action": "call", // fold, check, call, bet, raise, all_in
+  "amount": 20 // optional, required for bet/raise
 }
 ```
 
@@ -256,6 +272,7 @@ Submit a player action. Requires authentication.
 Returns updated game state (same format as GET /games/:gameId)
 
 **Errors:**
+
 - `401` - Not authenticated
 - `403` - Not authorized for this game
 - `400` - Action required
@@ -272,6 +289,7 @@ Returns updated game state (same format as GET /games/:gameId)
 Get valid actions for authenticated player. Requires authentication.
 
 **Response (200):**
+
 ```json
 {
   "canAct": true,
@@ -290,6 +308,7 @@ Get valid actions for authenticated player. Requires authentication.
 ```
 
 **Errors:**
+
 - `401` - Not authenticated
 - `403` - Not authorized for this game
 - `404` - Game not found
@@ -303,6 +322,7 @@ Get valid actions for authenticated player. Requires authentication.
 Leave the game. If game hasn't started, removes player. If game is active, marks as disconnected. Clears session cookie.
 
 **Response (200):**
+
 ```json
 {
   "message": "Left game successfully"
@@ -310,6 +330,7 @@ Leave the game. If game hasn't started, removes player. If game is active, marks
 ```
 
 **Errors:**
+
 - `401` - Not authenticated
 - `403` - Not authorized for this game
 - `404` - Game not found
@@ -323,6 +344,7 @@ Leave the game. If game hasn't started, removes player. If game is active, marks
 Get all players in game (public info only, no authentication required).
 
 **Response (200):**
+
 ```json
 [
   {

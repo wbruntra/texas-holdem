@@ -11,23 +11,21 @@ CREATE TABLE demo (
 );
  * END_DDL
  */
-const { Model } = require('objection')
-const knex = require('../db')
-
+const { Model } = require('objection');
+const knex = require('../db');
 
 // Initialize knex connection for all models
 if (!Model.knex()) {
-  Model.knex(knex)
+  Model.knex(knex);
 }
 
 class Demo extends Model {
   static get tableName() {
-    return 'demo'
+    return 'demo';
   }
-  
 
   // TODO: Add jsonSchema based on DDL above
   // TODO: Add relationMappings if needed
 }
 
-module.exports = Demo
+module.exports = Demo;

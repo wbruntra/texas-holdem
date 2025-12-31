@@ -19,6 +19,6 @@ const config = {
     },
     useNullAsDefault: true,
   },
-}
+};
 
-module.exports = config
+module.exports = config;

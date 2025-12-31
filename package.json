@@ -10,11 +10,22 @@
   "scripts": {
     "backend": "cd backend && bun run api",
     "frontend": "cd frontend && bun run dev",
-    "start": "concurrently \"bun run backend\" \"bun run frontend\""
+    "start": "concurrently \"bun run backend\" \"bun run frontend\"",
+    "prepare": "husky",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write"
+    ]
   },
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4"
   },
   "peerDependencies": {
     "typescript": "^5"

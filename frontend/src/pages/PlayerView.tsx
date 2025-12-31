@@ -64,7 +64,9 @@ export default function PlayerView() {
   const [canRevealCard, setCanRevealCard] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
 
-  const playerNameStorageKey = roomCode ? `holdem:${roomCode}:playerName` : null;
+  const playerNameStorageKey = roomCode
+    ? `holdem:${roomCode}:playerName`
+    : null;
 
   const getApiErrorMessage = (err: unknown, fallback: string) => {
     if (!axios.isAxiosError(err)) return fallback;
@@ -117,14 +119,20 @@ export default function PlayerView() {
         setJoined(true);
 
         // If we don't have a stored name yet, try to infer it (works once hole cards exist)
-        if (!playerNameStorageKey || !localStorage.getItem(playerNameStorageKey)) {
+        if (
+          !playerNameStorageKey ||
+          !localStorage.getItem(playerNameStorageKey)
+        ) {
           const authenticatedPlayer = stateResponse.data.players.find(
             (p: Player) => p.holeCards && p.holeCards.length > 0
           );
           if (authenticatedPlayer) {
             setPlayerName(authenticatedPlayer.name);
             if (playerNameStorageKey) {
-              localStorage.setItem(playerNameStorageKey, authenticatedPlayer.name);
+              localStorage.setItem(
+                playerNameStorageKey,
+                authenticatedPlayer.name
+              );
             }
           }
         }
@@ -153,11 +161,13 @@ export default function PlayerView() {
       // In development: connect directly to backend (Vite proxy doesn't forward cookies)
       // In production: use same domain/port as the page
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const wsUrl = isDevelopment 
+      const isDevelopment =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
+      const wsUrl = isDevelopment
         ? `${protocol}//localhost:${BACKEND_LOCAL_PORT}/ws`
         : `${protocol}//${window.location.host}/ws`;
-      
+
       console.log('[PlayerView] Connecting to WebSocket:', wsUrl);
       ws = new WebSocket(wsUrl);
 
@@ -169,19 +179,21 @@ export default function PlayerView() {
         // Subscribe to player stream
         if (ws && ws.readyState === WebSocket.OPEN) {
           // Get stored playerId for authentication
-          const storedPlayerId = playerNameStorageKey 
+          const storedPlayerId = playerNameStorageKey
             ? localStorage.getItem(`${playerNameStorageKey}:playerId`)
             : null;
-            
-          ws.send(JSON.stringify({
-            type: 'subscribe',
-            payload: {
-              roomCode,
-              stream: 'player',
-              gameId,
-              playerId: storedPlayerId // Send playerId for auth
-            }
-          }));
+
+          ws.send(
+            JSON.stringify({
+              type: 'subscribe',
+              payload: {
+                roomCode,
+                stream: 'player',
+                gameId,
+                playerId: storedPlayerId, // Send playerId for auth
+              },
+            })
+          );
         }
       };
 
@@ -205,12 +217,15 @@ export default function PlayerView() {
               break;
 
             case 'game_state':
-              console.log('[PlayerView] Game state update:', message.payload.reason);
+              console.log(
+                '[PlayerView] Game state update:',
+                message.payload.reason
+              );
               const nextGame: GameState = message.payload.state;
               setGame(nextGame);
 
               const me = playerName
-                ? nextGame.players.find(p => p.name === playerName)
+                ? nextGame.players.find((p) => p.name === playerName)
                 : undefined;
 
               const isMyTurnNow =
@@ -227,14 +242,17 @@ export default function PlayerView() {
               if (isMyTurnNow) {
                 fetchValidActions(gameId);
               } else {
-                setValidActions(prev => (prev ? null : prev));
+                setValidActions((prev) => (prev ? null : prev));
               }
 
               setError('');
               break;
 
             case 'error':
-              console.error('[PlayerView] WebSocket error:', message.payload.error);
+              console.error(
+                '[PlayerView] WebSocket error:',
+                message.payload.error
+              );
               setError(message.payload.error);
               break;
           }
@@ -292,7 +310,7 @@ export default function PlayerView() {
           setGame(nextGame);
 
           const me = playerName
-            ? nextGame.players.find(p => p.name === playerName)
+            ? nextGame.players.find((p) => p.name === playerName)
             : undefined;
 
           const isMyTurnNow =
@@ -307,7 +325,7 @@ export default function PlayerView() {
           if (isMyTurnNow) {
             await fetchValidActions(gameId);
           } else {
-            setValidActions(prev => (prev ? null : prev));
+            setValidActions((prev) => (prev ? null : prev));
           }
 
           setError('');
@@ -349,7 +367,9 @@ export default function PlayerView() {
       const gameData = gameResponse.data;
 
       // Check if player already exists in the game
-      const playerExists = gameData.players?.some((p: Player) => p.name === playerName.trim());
+      const playerExists = gameData.players?.some(
+        (p: Player) => p.name === playerName.trim()
+      );
 
       if (playerExists) {
         // Use auth endpoint for reconnection
@@ -377,15 +397,18 @@ export default function PlayerView() {
       });
 
       setGame(stateResponse.data);
-      
+
       // Store playerId in localStorage for WebSocket auth
       const authenticatedPlayer = stateResponse.data.players.find(
         (p: Player) => p.holeCards && p.holeCards.length > 0
       );
       if (authenticatedPlayer && playerNameStorageKey) {
-        localStorage.setItem(`${playerNameStorageKey}:playerId`, authenticatedPlayer.id);
+        localStorage.setItem(
+          `${playerNameStorageKey}:playerId`,
+          authenticatedPlayer.id
+        );
       }
-      
+
       setJoined(true);
       setError('');
     } catch (err: unknown) {
@@ -397,9 +420,13 @@ export default function PlayerView() {
     if (!game?.id) return;
 
     try {
-      await axios.post(`/api/games/${game.id}/start`, {}, {
-        withCredentials: true,
-      });
+      await axios.post(
+        `/api/games/${game.id}/start`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
       setError('');
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, 'Failed to start game'));
@@ -459,19 +486,26 @@ export default function PlayerView() {
     }
   };
 
-  const checkCanRevealCard = (gameState: GameState, myPlayerName: string | null) => {
+  const checkCanRevealCard = (
+    gameState: GameState,
+    myPlayerName: string | null
+  ) => {
     if (!myPlayerName || gameState.status !== 'active') {
       return false;
     }
 
     // Can't reveal in preflop or showdown
-    if (!gameState.currentRound || gameState.currentRound === 'preflop' || gameState.currentRound === 'showdown') {
+    if (
+      !gameState.currentRound ||
+      gameState.currentRound === 'preflop' ||
+      gameState.currentRound === 'showdown'
+    ) {
       return false;
     }
 
     // Count players with chips
     const playersWithChips = gameState.players.filter(
-      p => p.chips > 0 && p.status !== 'out' && p.status !== 'folded'
+      (p) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded'
     );
 
     // Can only reveal if I'm the only one with chips
@@ -480,7 +514,7 @@ export default function PlayerView() {
     }
 
     // Must be that player
-    const myPlayer = gameState.players.find(p => p.name === myPlayerName);
+    const myPlayer = gameState.players.find((p) => p.name === myPlayerName);
     return (myPlayer?.chips ?? 0) > 0;
   };
 
@@ -501,7 +535,14 @@ export default function PlayerView() {
   // Show loading while checking authentication
   if (checkingAuth) {
     return (
-      <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', textAlign: 'center' }}>
+      <div
+        style={{
+          maxWidth: '400px',
+          margin: '50px auto',
+          padding: '20px',
+          textAlign: 'center',
+        }}
+      >
         <h2>Checking authentication...</h2>
       </div>
     );
@@ -513,7 +554,7 @@ export default function PlayerView() {
       <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
         <h1>Join Game</h1>
         <p>Room: {roomCode}</p>
-        
+
         <div style={{ marginTop: '30px' }}>
           <input
             type="text"
@@ -527,7 +568,7 @@ export default function PlayerView() {
               marginBottom: '15px',
             }}
           />
-          
+
           <input
             type="password"
             placeholder="Password (min 4 chars)"
@@ -541,7 +582,7 @@ export default function PlayerView() {
               marginBottom: '15px',
             }}
           />
-          
+
           <button
             onClick={handleJoin}
             disabled={!playerName.trim() || password.length < 4}
@@ -549,7 +590,10 @@ export default function PlayerView() {
               width: '100%',
               padding: '15px',
               fontSize: '18px',
-              cursor: (!playerName.trim() || password.length < 4) ? 'not-allowed' : 'pointer',
+              cursor:
+                !playerName.trim() || password.length < 4
+                  ? 'not-allowed'
+                  : 'pointer',
             }}
           >
             Join Game
@@ -557,13 +601,15 @@ export default function PlayerView() {
         </div>
 
         {error && (
-          <div style={{ 
-            marginTop: '20px', 
-            padding: '15px', 
-            backgroundColor: '#fee', 
-            color: '#c00',
-            borderRadius: '5px',
-          }}>
+          <div
+            style={{
+              marginTop: '20px',
+              padding: '15px',
+              backgroundColor: '#fee',
+              color: '#c00',
+              borderRadius: '5px',
+            }}
+          >
             {error}
           </div>
         )}
@@ -572,34 +618,41 @@ export default function PlayerView() {
   }
 
   if (!game) {
-    return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;
+    return (
+      <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>
+    );
   }
 
-  const myPlayer = game.players.find(p => p.name === playerName);
+  const myPlayer = game.players.find((p) => p.name === playerName);
   const isMyTurn = myPlayer && game.currentPlayerPosition === myPlayer.position;
 
   const isShowdown = game.currentRound === 'showdown';
   const winnerPositions = Array.isArray(game.winners) ? game.winners : [];
   const amWinner = !!myPlayer && winnerPositions.includes(myPlayer.position);
 
-  const derivedMaxBet = validActions?.maxBet ?? validActions?.maxRaise ?? myPlayer?.chips ?? 0;
+  const derivedMaxBet =
+    validActions?.maxBet ?? validActions?.maxRaise ?? myPlayer?.chips ?? 0;
 
   return (
-    <div style={{ 
-      padding: '12px',
-      minHeight: '95vh',
-      backgroundColor: '#1a472a',
-      color: '#fff',
-      maxWidth: '600px',
-      margin: '0 auto',
-    }}>
-      <div style={{ 
-        textAlign: 'center', 
-        marginBottom: '12px',
-        backgroundColor: '#234a34',
-        padding: '10px',
-        borderRadius: '8px',
-      }}>
+    <div
+      style={{
+        padding: '12px',
+        minHeight: '95vh',
+        backgroundColor: '#1a472a',
+        color: '#fff',
+        maxWidth: '600px',
+        margin: '0 auto',
+      }}
+    >
+      <div
+        style={{
+          textAlign: 'center',
+          marginBottom: '12px',
+          backgroundColor: '#234a34',
+          padding: '10px',
+          borderRadius: '8px',
+        }}
+      >
         <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
           {playerName} • ${myPlayer?.chips || 0}
         </div>
@@ -610,12 +663,14 @@ export default function PlayerView() {
 
       {/* Hole Cards */}
       {myPlayer?.holeCards && myPlayer.holeCards.length > 0 && (
-        <div style={{ 
-          display: 'flex', 
-          gap: '10px', 
-          justifyContent: 'center',
-          marginBottom: '12px',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '10px',
+            justifyContent: 'center',
+            marginBottom: '12px',
+          }}
+        >
           {myPlayer.holeCards.map((card, idx) => (
             <div
               key={idx}
@@ -643,48 +698,65 @@ export default function PlayerView() {
 
       {/* Showdown */}
       {isShowdown && (
-        <div style={{
-          marginBottom: '20px',
-          padding: '16px',
-          backgroundColor: '#234a34',
-          borderRadius: '10px',
-          border: '2px solid #456'
-        }}>
+        <div
+          style={{
+            marginBottom: '20px',
+            padding: '16px',
+            backgroundColor: '#234a34',
+            borderRadius: '10px',
+            border: '2px solid #456',
+          }}
+        >
           <h3 style={{ textAlign: 'center', marginTop: 0 }}>Showdown</h3>
 
           {winnerPositions.length > 0 && (
-            <div style={{
-              textAlign: 'center',
-              marginBottom: '12px',
-              fontSize: '18px'
-            }}>
-              Winner{winnerPositions.length > 1 ? 's' : ''}: {' '}
+            <div
+              style={{
+                textAlign: 'center',
+                marginBottom: '12px',
+                fontSize: '18px',
+              }}
+            >
+              Winner{winnerPositions.length > 1 ? 's' : ''}:{' '}
               <strong>
                 {game.players
-                  .filter(p => winnerPositions.includes(p.position))
-                  .map(p => p.name)
+                  .filter((p) => winnerPositions.includes(p.position))
+                  .map((p) => p.name)
                   .join(', ')}
               </strong>
             </div>
           )}
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '12px'
-          }}>
-            {game.players.map(p => (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '12px',
+            }}
+          >
+            {game.players.map((p) => (
               <div
                 key={p.id}
                 style={{
-                  backgroundColor: winnerPositions.includes(p.position) ? '#2a5a3a' : '#1a472a',
-                  border: winnerPositions.includes(p.position) ? '2px solid gold' : '2px solid #456',
+                  backgroundColor: winnerPositions.includes(p.position)
+                    ? '#2a5a3a'
+                    : '#1a472a',
+                  border: winnerPositions.includes(p.position)
+                    ? '2px solid gold'
+                    : '2px solid #456',
                   borderRadius: '10px',
-                  padding: '12px'
+                  padding: '12px',
                 }}
               >
-                <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '18px' }}>
-                  {p.name}{winnerPositions.includes(p.position) ? ' 🏆' : ''}
+                <div
+                  style={{
+                    fontWeight: 'bold',
+                    marginBottom: '8px',
+                    fontSize: '18px',
+                  }}
+                >
+                  {p.name}
+                  {winnerPositions.includes(p.position) ? ' 🏆' : ''}
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   {(p.holeCards || []).length > 0 ? (
@@ -710,36 +782,42 @@ export default function PlayerView() {
                     ))
                   ) : (
                     <>
-                      <div style={{
-                        backgroundColor: '#0066cc',
-                        background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
-                        borderRadius: '8px',
-                        fontSize: '20px',
-                        fontWeight: 'bold',
-                        width: '44px',
-                        height: '64px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px solid rgba(255,255,255,0.85)',
-                        opacity: 0.85,
-                      }}>
+                      <div
+                        style={{
+                          backgroundColor: '#0066cc',
+                          background:
+                            'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+                          borderRadius: '8px',
+                          fontSize: '20px',
+                          fontWeight: 'bold',
+                          width: '44px',
+                          height: '64px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1px solid rgba(255,255,255,0.85)',
+                          opacity: 0.85,
+                        }}
+                      >
                         🂠
                       </div>
-                      <div style={{
-                        backgroundColor: '#0066cc',
-                        background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
-                        borderRadius: '8px',
-                        fontSize: '20px',
-                        fontWeight: 'bold',
-                        width: '44px',
-                        height: '64px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px solid rgba(255,255,255,0.85)',
-                        opacity: 0.85,
-                      }}>
+                      <div
+                        style={{
+                          backgroundColor: '#0066cc',
+                          background:
+                            'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+                          borderRadius: '8px',
+                          fontSize: '20px',
+                          fontWeight: 'bold',
+                          width: '44px',
+                          height: '64px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1px solid rgba(255,255,255,0.85)',
+                          opacity: 0.85,
+                        }}
+                      >
                         🂠
                       </div>
                     </>
@@ -761,7 +839,7 @@ export default function PlayerView() {
               border: 'none',
               borderRadius: '10px',
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
             }}
           >
             {amWinner ? '🏆 Next Hand' : 'Start Next Hand'}
@@ -770,45 +848,59 @@ export default function PlayerView() {
       )}
 
       {/* Fold button - positioned above pot to prevent accidental touches */}
-      {game.status === 'active' && isMyTurn && validActions?.canAct && validActions.canFold && (
-        <button
-          onClick={() => handleAction('fold')}
-          style={{
-            width: '100%',
-            padding: '15px',
-            fontSize: '18px',
-            backgroundColor: '#c00',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            marginBottom: '12px',
-          }}
-        >
-          Fold
-        </button>
-      )}
+      {game.status === 'active' &&
+        isMyTurn &&
+        validActions?.canAct &&
+        validActions.canFold && (
+          <button
+            onClick={() => handleAction('fold')}
+            style={{
+              width: '100%',
+              padding: '15px',
+              fontSize: '18px',
+              backgroundColor: '#c00',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              marginBottom: '12px',
+            }}
+          >
+            Fold
+          </button>
+        )}
 
       {/* Game Info */}
-      <div style={{ 
-        textAlign: 'center',
-        padding: '10px',
-        backgroundColor: '#234a34',
-        borderRadius: '8px',
-        marginBottom: '12px',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <span style={{ fontSize: '12px', opacity: 0.7 }}>Room: {game.roomCode}</span>
-          <span 
-            style={{ 
-              fontSize: '10px', 
-              padding: '2px 6px', 
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '10px',
+          backgroundColor: '#234a34',
+          borderRadius: '8px',
+          marginBottom: '12px',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '8px',
+          }}
+        >
+          <span style={{ fontSize: '12px', opacity: 0.7 }}>
+            Room: {game.roomCode}
+          </span>
+          <span
+            style={{
+              fontSize: '10px',
+              padding: '2px 6px',
               borderRadius: '4px',
               backgroundColor: wsConnected ? '#2a5a3a' : '#5a3a2a',
               border: `1px solid ${wsConnected ? '#4f4' : '#fa4'}`,
               color: wsConnected ? '#4f4' : '#fa4',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
             }}
             title={wsConnected ? 'Connected via WebSocket' : 'Polling fallback'}
           >
@@ -818,25 +910,40 @@ export default function PlayerView() {
         <div style={{ fontSize: '18px' }}>
           {game.pots && game.pots.length > 1 ? (
             <div>
-              <div>Pot: <strong>${game.pot}</strong></div>
+              <div>
+                Pot: <strong>${game.pot}</strong>
+              </div>
               {game.pots.map((pot, idx) => (
-                <div key={idx} style={{ fontSize: '14px', marginTop: '3px', opacity: 0.85 }}>
+                <div
+                  key={idx}
+                  style={{ fontSize: '14px', marginTop: '3px', opacity: 0.85 }}
+                >
                   {idx === 0 ? 'Main' : `Side ${idx}`}: ${pot.amount}
-                  {myPlayer && pot.eligiblePlayers.includes(myPlayer.position) && (
-                    <span style={{ color: '#0f0', marginLeft: '6px' }}>✓</span>
-                  )}
+                  {myPlayer &&
+                    pot.eligiblePlayers.includes(myPlayer.position) && (
+                      <span style={{ color: '#0f0', marginLeft: '6px' }}>
+                        ✓
+                      </span>
+                    )}
                 </div>
               ))}
             </div>
           ) : (
-            <div>Pot: <strong>${game.pot}</strong></div>
+            <div>
+              Pot: <strong>${game.pot}</strong>
+            </div>
           )}
         </div>
         {(game.currentBet > 0 || (myPlayer && myPlayer.currentBet > 0)) && (
           <div style={{ fontSize: '14px', marginTop: '6px', opacity: 0.9 }}>
             {game.currentBet > 0 && <span>To Call: ${game.currentBet}</span>}
             {myPlayer && myPlayer.currentBet > 0 && (
-              <span style={{ color: '#ff0', marginLeft: game.currentBet > 0 ? '10px' : '0' }}>
+              <span
+                style={{
+                  color: '#ff0',
+                  marginLeft: game.currentBet > 0 ? '10px' : '0',
+                }}
+              >
                 Your Bet: ${myPlayer.currentBet}
               </span>
             )}
@@ -867,7 +974,9 @@ export default function PlayerView() {
       {game.status === 'active' && (
         <div>
           {isMyTurn && validActions?.canAct ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+            >
               {validActions.canCheck && (
                 <button
                   onClick={() => handleAction('check')}
@@ -884,20 +993,28 @@ export default function PlayerView() {
                 >
                   Check
                 </button>
-              )}              
+              )}
               {validActions.canBet && validActions.minBet !== undefined && (
                 <div style={{ marginBottom: '10px' }}>
                   <div style={{ marginBottom: '10px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
+                    <div
+                      style={{
+                        fontSize: '18px',
+                        fontWeight: 'bold',
+                        marginBottom: '8px',
+                      }}
+                    >
                       Bet: ${Math.max(betAmount, validActions.minBet)}
                     </div>
                     {/* Horizontal Slider */}
-                    <div style={{ 
-                      marginBottom: '10px', 
-                      padding: '12px', 
-                      backgroundColor: '#2a5a3a',
-                      borderRadius: '8px',
-                    }}>
+                    <div
+                      style={{
+                        marginBottom: '10px',
+                        padding: '12px',
+                        backgroundColor: '#2a5a3a',
+                        borderRadius: '8px',
+                      }}
+                    >
                       <HorizontalSlider
                         value={Math.max(betAmount, validActions.minBet)}
                         min={validActions.minBet}
@@ -908,11 +1025,26 @@ export default function PlayerView() {
                         trackColor="#456"
                       />
                     </div>
-                    
+
                     {/* +/- Buttons */}
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', marginBottom: '8px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: '12px',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginBottom: '8px',
+                      }}
+                    >
                       <button
-                        onClick={() => setBetAmount(prev => Math.max(prev - (game.bigBlind || 10), validActions.minBet!))}
+                        onClick={() =>
+                          setBetAmount((prev) =>
+                            Math.max(
+                              prev - (game.bigBlind || 10),
+                              validActions.minBet!
+                            )
+                          )
+                        }
                         style={{
                           width: '60px',
                           height: '50px',
@@ -930,11 +1062,25 @@ export default function PlayerView() {
                       >
                         −
                       </button>
-                      <div style={{ fontSize: '13px', opacity: 0.75, minWidth: '80px', textAlign: 'center' }}>
+                      <div
+                        style={{
+                          fontSize: '13px',
+                          opacity: 0.75,
+                          minWidth: '80px',
+                          textAlign: 'center',
+                        }}
+                      >
                         +/− ${game.bigBlind || 10} (BB)
                       </div>
                       <button
-                        onClick={() => setBetAmount(prev => Math.min(prev + (game.bigBlind || 10), derivedMaxBet))}
+                        onClick={() =>
+                          setBetAmount((prev) =>
+                            Math.min(
+                              prev + (game.bigBlind || 10),
+                              derivedMaxBet
+                            )
+                          )
+                        }
                         style={{
                           width: '60px',
                           height: '50px',
@@ -955,7 +1101,12 @@ export default function PlayerView() {
                     </div>
                   </div>
                   <button
-                    onClick={() => handleAction('bet', Math.max(betAmount, validActions.minBet!))}
+                    onClick={() =>
+                      handleAction(
+                        'bet',
+                        Math.max(betAmount, validActions.minBet!)
+                      )
+                    }
                     style={{
                       width: '100%',
                       padding: '15px',
@@ -971,117 +1122,15 @@ export default function PlayerView() {
                     Bet ${Math.max(betAmount, validActions.minBet)}
                   </button>
                 </div>
-              )}              
-              {validActions.canCall && validActions.callAmount !== undefined && (
-                <button
-                  onClick={() => handleAction('call')}
-                  style={{
-                    padding: '15px',
-                    fontSize: '18px',
-                    backgroundColor: '#0a0',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  Call ${validActions.callAmount}
-                </button>
               )}
-              
-              {validActions.canRaise && validActions.minRaise !== undefined && validActions.maxRaise !== undefined && (
-                <div style={{ marginBottom: '10px' }}>
-                  <div style={{ marginBottom: '10px', textAlign: 'center' }}>
-                    {(() => {
-                      const minInc = validActions.minRaise!;
-                      const maxInc = validActions.maxRaise!;
-                      const inc = Math.min(Math.max(raiseAmount, minInc), maxInc);
-                      const raiseTo = game.currentBet + inc;
-
-                      return (
-                        <>
-                          <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
-                            Raise to: ${raiseTo}
-                          </div>
-                          {/* Horizontal Slider */}
-                          <div style={{ 
-                            marginBottom: '10px', 
-                            padding: '12px', 
-                            backgroundColor: '#2a5a3a',
-                            borderRadius: '8px',
-                          }}>
-                            <HorizontalSlider
-                              value={inc}
-                              min={validActions.minRaise}
-                              max={validActions.maxRaise}
-                              step={1}
-                              onChange={(value) => setRaiseAmount(value)}
-                              thumbColor="#f80"
-                              trackColor="#456"
-                            />
-                          </div>
-                          
-                          {/* +/- Buttons */}
-                          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', marginBottom: '8px' }}>
-                            <button
-                              onClick={() => setRaiseAmount(prev => Math.max(prev - (game.bigBlind || 10), minInc))}
-                              style={{
-                                width: '60px',
-                                height: '50px',
-                                fontSize: '24px',
-                                backgroundColor: '#f80',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              −
-                            </button>
-                            <div style={{ fontSize: '13px', opacity: 0.75, minWidth: '80px', textAlign: 'center' }}>
-                              +/− ${game.bigBlind || 10} (BB)
-                            </div>
-                            <button
-                              onClick={() => setRaiseAmount(prev => Math.min(prev + (game.bigBlind || 10), maxInc))}
-                              style={{
-                                width: '60px',
-                                height: '50px',
-                                fontSize: '24px',
-                                backgroundColor: '#f80',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              +
-                            </button>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
+              {validActions.canCall &&
+                validActions.callAmount !== undefined && (
                   <button
-                    onClick={() => {
-                      const minInc = validActions.minRaise!;
-                      const maxInc = validActions.maxRaise!;
-                      const inc = Math.min(Math.max(raiseAmount, minInc), maxInc);
-                      handleAction('raise', inc);
-                    }}
+                    onClick={() => handleAction('call')}
                     style={{
-                      width: '100%',
                       padding: '15px',
                       fontSize: '18px',
-                      backgroundColor: '#f80',
+                      backgroundColor: '#0a0',
                       color: '#fff',
                       border: 'none',
                       borderRadius: '8px',
@@ -1089,19 +1138,173 @@ export default function PlayerView() {
                       fontWeight: 'bold',
                     }}
                   >
-                    {(() => {
-                      const minInc = validActions.minRaise!;
-                      const maxInc = validActions.maxRaise!;
-                      const inc = Math.min(Math.max(raiseAmount, minInc), maxInc);
-                      return `Raise to $${game.currentBet + inc}`;
-                    })()}
+                    Call ${validActions.callAmount}
                   </button>
-                </div>
-              )}
+                )}
+
+              {validActions.canRaise &&
+                validActions.minRaise !== undefined &&
+                validActions.maxRaise !== undefined && (
+                  <div style={{ marginBottom: '10px' }}>
+                    <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+                      {(() => {
+                        const minInc = validActions.minRaise!;
+                        const maxInc = validActions.maxRaise!;
+                        const inc = Math.min(
+                          Math.max(raiseAmount, minInc),
+                          maxInc
+                        );
+                        const raiseTo = game.currentBet + inc;
+
+                        return (
+                          <>
+                            <div
+                              style={{
+                                fontSize: '18px',
+                                fontWeight: 'bold',
+                                marginBottom: '8px',
+                              }}
+                            >
+                              Raise to: ${raiseTo}
+                            </div>
+                            {/* Horizontal Slider */}
+                            <div
+                              style={{
+                                marginBottom: '10px',
+                                padding: '12px',
+                                backgroundColor: '#2a5a3a',
+                                borderRadius: '8px',
+                              }}
+                            >
+                              <HorizontalSlider
+                                value={inc}
+                                min={validActions.minRaise}
+                                max={validActions.maxRaise}
+                                step={1}
+                                onChange={(value) => setRaiseAmount(value)}
+                                thumbColor="#f80"
+                                trackColor="#456"
+                              />
+                            </div>
+
+                            {/* +/- Buttons */}
+                            <div
+                              style={{
+                                display: 'flex',
+                                gap: '12px',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginBottom: '8px',
+                              }}
+                            >
+                              <button
+                                onClick={() =>
+                                  setRaiseAmount((prev) =>
+                                    Math.max(
+                                      prev - (game.bigBlind || 10),
+                                      minInc
+                                    )
+                                  )
+                                }
+                                style={{
+                                  width: '60px',
+                                  height: '50px',
+                                  fontSize: '24px',
+                                  backgroundColor: '#f80',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  fontWeight: 'bold',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                −
+                              </button>
+                              <div
+                                style={{
+                                  fontSize: '13px',
+                                  opacity: 0.75,
+                                  minWidth: '80px',
+                                  textAlign: 'center',
+                                }}
+                              >
+                                +/− ${game.bigBlind || 10} (BB)
+                              </div>
+                              <button
+                                onClick={() =>
+                                  setRaiseAmount((prev) =>
+                                    Math.min(
+                                      prev + (game.bigBlind || 10),
+                                      maxInc
+                                    )
+                                  )
+                                }
+                                style={{
+                                  width: '60px',
+                                  height: '50px',
+                                  fontSize: '24px',
+                                  backgroundColor: '#f80',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  fontWeight: 'bold',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                +
+                              </button>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <button
+                      onClick={() => {
+                        const minInc = validActions.minRaise!;
+                        const maxInc = validActions.maxRaise!;
+                        const inc = Math.min(
+                          Math.max(raiseAmount, minInc),
+                          maxInc
+                        );
+                        handleAction('raise', inc);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '15px',
+                        fontSize: '18px',
+                        backgroundColor: '#f80',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {(() => {
+                        const minInc = validActions.minRaise!;
+                        const maxInc = validActions.maxRaise!;
+                        const inc = Math.min(
+                          Math.max(raiseAmount, minInc),
+                          maxInc
+                        );
+                        return `Raise to $${game.currentBet + inc}`;
+                      })()}
+                    </button>
+                  </div>
+                )}
             </div>
           ) : (
             <div>
-              {canRevealCard && game.currentRound && game.currentRound !== 'preflop' && game.currentRound !== 'showdown' ? (
+              {canRevealCard &&
+              game.currentRound &&
+              game.currentRound !== 'preflop' &&
+              game.currentRound !== 'showdown' ? (
                 <button
                   onClick={handleRevealCard}
                   style={{
@@ -1120,14 +1323,18 @@ export default function PlayerView() {
                   Reveal Next Card
                 </button>
               ) : null}
-              <div style={{ 
-                textAlign: 'center',
-                padding: '20px',
-                backgroundColor: '#456',
-                borderRadius: '10px',
-                fontSize: '18px',
-              }}>
-                {myPlayer?.status === 'folded' ? 'You folded' : 'Waiting for other players...'}
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '20px',
+                  backgroundColor: '#456',
+                  borderRadius: '10px',
+                  fontSize: '18px',
+                }}
+              >
+                {myPlayer?.status === 'folded'
+                  ? 'You folded'
+                  : 'Waiting for other players...'}
               </div>
             </div>
           )}
@@ -1135,20 +1342,28 @@ export default function PlayerView() {
       )}
 
       {game.status === 'completed' && (
-        <div style={{
-          textAlign: 'center',
-          padding: '20px',
-          backgroundColor: '#234',
-          borderRadius: '10px',
-          marginBottom: '20px',
-        }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '20px',
+            backgroundColor: '#234',
+            borderRadius: '10px',
+            marginBottom: '20px',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              marginBottom: '10px',
+            }}
+          >
             🎉 Game Over!
           </div>
           <div style={{ fontSize: '18px', marginBottom: '10px' }}>
-            {myPlayer && myPlayer.chips > 0 ? 
-              `You won with $${myPlayer.chips}!` : 
-              'Better luck next time!'}
+            {myPlayer && myPlayer.chips > 0
+              ? `You won with $${myPlayer.chips}!`
+              : 'Better luck next time!'}
           </div>
           <div style={{ fontSize: '14px', opacity: 0.7 }}>
             The game has ended. One player has all the chips.
@@ -1157,14 +1372,16 @@ export default function PlayerView() {
       )}
 
       {error && (
-        <div style={{ 
-          marginTop: '20px', 
-          padding: '15px', 
-          backgroundColor: '#fee', 
-          color: '#c00',
-          borderRadius: '5px',
-          textAlign: 'center',
-        }}>
+        <div
+          style={{
+            marginTop: '20px',
+            padding: '15px',
+            backgroundColor: '#fee',
+            color: '#c00',
+            borderRadius: '5px',
+            textAlign: 'center',
+          }}
+        >
           {error}
         </div>
       )}

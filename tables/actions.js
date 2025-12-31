@@ -20,23 +20,21 @@ CREATE TABLE actions (
 -- * hands via hand_id (fk_actions_hand_id_hands_id)
  * END_DDL
  */
-const { Model } = require('objection')
-const knex = require('../db')
-
+const { Model } = require('objection');
+const knex = require('../db');
 
 // Initialize knex connection for all models
 if (!Model.knex()) {
-  Model.knex(knex)
+  Model.knex(knex);
 }
 
 class Actions extends Model {
   static get tableName() {
-    return 'actions'
+    return 'actions';
   }
-  
 
   // TODO: Add jsonSchema based on DDL above
   // TODO: Add relationMappings if needed
 }
 
-module.exports = Actions
+module.exports = Actions;

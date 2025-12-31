@@ -3,6 +3,7 @@
 ## ✅ Completed Features
 
 ### Core Game Engine
+
 - [x] Poker hand evaluation (all hand rankings)
 - [x] Winner determination with tie handling
 - [x] Pot calculation with side pots for all-in players
@@ -11,6 +12,7 @@
 - [x] Game completion detection
 
 ### Critical Bug Fixes (This Session)
+
 1. **Winner Determination Bug** ✅
    - Fixed compareHands() to properly rank hands
    - Used rank-first comparison instead of direct value comparison
@@ -33,6 +35,7 @@
    - Auto-advance through turn and river before showdown
 
 ### Frontend Features
+
 - [x] Table view showing all players
 - [x] Player positions with chip counts
 - [x] Current turn indicator
@@ -48,6 +51,7 @@
   - Room code display
 
 ### Bot Players
+
 - [x] Single bot player script (conservative strategy)
 - [x] 2-player bot game with aggressive/conservative strategies
 - [x] 3-player bot game with dual aggressive + conservative strategies
@@ -60,10 +64,10 @@
 ## 🎮 How to Play
 
 ### Start a Game
+
 1. **Frontend**: Create a game
    - Visit `http://localhost:5173`
    - Create a new game or join a room
-   
 2. **Or use bot script**:
    ```bash
    bun create_test_game.js
@@ -72,6 +76,7 @@
 ### Play with Bots
 
 #### 2-Player Aggressive Game
+
 ```bash
 # Create game
 ROOM=$(bun create_test_game.js | grep "Room Code:" | awk '{print $NF}')
@@ -87,6 +92,7 @@ bun bots_play.js $ROOM
 **Duration**: ~3-5 minutes for game completion
 
 #### 3-Player Mixed Game
+
 ```bash
 # Create game
 ROOM=$(bun create_test_game.js | grep "Room Code:" | awk '{print $NF}')
@@ -103,6 +109,7 @@ bun bots_play_3p.js $ROOM
 **Duration**: ~2-4 minutes (2 aggressive bots eliminate conservative faster)
 
 ### Play Manually
+
 1. Create game via frontend
 2. Have 2-10 players join via their own browser tabs
 3. Players view table at `/table/{roomCode}`
@@ -124,6 +131,7 @@ bun bots_play_3p.js $ROOM
 ## 🔧 Architecture
 
 ### Backend (Bun + Express)
+
 - `backend/lib/game-state-machine.js` - Game flow & state transitions
 - `backend/lib/betting-logic.js` - Action validation
 - `backend/lib/poker-engine.js` - Hand evaluation
@@ -132,16 +140,19 @@ bun bots_play_3p.js $ROOM
 - `backend/routes/` - API endpoints
 
 ### Frontend (React + Vite)
+
 - `frontend/src/pages/TableView.tsx` - Game observation
 - `frontend/src/pages/PlayerView.tsx` - Player actions
 - Real-time polling with adaptive delays
 - WebSocket-ready architecture
 
 ### Database (SQLite + Knex)
+
 - Games, Players, Hands, Actions tables
 - Hand history & action logging
 
 ### Bot Scripts
+
 - `bots_play.js` - 2-player bot game
 - `bots_play_3p.js` - 3-player bot game
 - `create_test_game.js` - Game creation helper
@@ -149,7 +160,9 @@ bun bots_play_3p.js $ROOM
 ## 🎯 Key Implementation Details
 
 ### Manual Card Reveal (Instead of Auto-advance)
+
 When all-in situation occurs:
+
 1. Game detects only one player with chips remaining
 2. Player is offered "Reveal Next Card" button
 3. Clicking reveals next community card (turn or river)
@@ -157,12 +170,14 @@ When all-in situation occurs:
 5. This allows for **observable gameplay** while testing
 
 ### Elimination Logic
+
 - When a player's chips reach $0, they're marked `OUT`
 - Game completes when only one player has chips > 0
 - All hands are completed with proper showdown evaluation
 - Final results clearly displayed on overlay
 
 ### Chip Conservation
+
 - Total chips never created or destroyed
 - Starting chips: $3000 (2 players) or distributed for multiplayer
 - All chips properly awarded to winners
@@ -171,6 +186,7 @@ When all-in situation occurs:
 ## 📝 Usage Examples
 
 ### Run complete game end-to-end
+
 ```bash
 # Terminal 1
 cd /home/william/src/tries/2025-12-30-holdem
@@ -202,6 +218,7 @@ Then visit `http://localhost:5173/table/{ROOM_CODE}` to observe
 ## ✨ Summary
 
 A fully functional Texas Hold'em poker game with:
+
 - Complete poker logic and hand evaluation
 - Multi-player support (2-10 players)
 - Bot players for testing and demonstration
@@ -210,6 +227,7 @@ A fully functional Texas Hold'em poker game with:
 - Production-ready backend API
 
 The game successfully handles complex scenarios like:
+
 - Multiple all-in situations
 - Side pots with various player stack sizes
 - Three or more simultaneous players

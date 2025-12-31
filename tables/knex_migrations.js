@@ -10,23 +10,21 @@ CREATE TABLE knex_migrations (
 );
  * END_DDL
  */
-const { Model } = require('objection')
-const knex = require('../db')
-
+const { Model } = require('objection');
+const knex = require('../db');
 
 // Initialize knex connection for all models
 if (!Model.knex()) {
-  Model.knex(knex)
+  Model.knex(knex);
 }
 
 class KnexMigrations extends Model {
   static get tableName() {
-    return 'knex_migrations'
+    return 'knex_migrations';
   }
-  
 
   // TODO: Add jsonSchema based on DDL above
   // TODO: Add relationMappings if needed
 }
 
-module.exports = KnexMigrations
+module.exports = KnexMigrations;

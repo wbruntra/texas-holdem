@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -19,4 +19,4 @@ export default defineConfig({
       },
     },
   },
-})
+});

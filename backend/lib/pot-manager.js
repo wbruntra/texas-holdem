@@ -11,23 +11,26 @@ function calculatePots(players) {
   const contributions = players.map((p, idx) => ({
     position: idx,
     amount: p.totalBet || 0,
-    isActive: p.status === PLAYER_STATUS.ACTIVE || p.status === PLAYER_STATUS.ALL_IN,
-    isFolded: p.status === PLAYER_STATUS.FOLDED
+    isActive:
+      p.status === PLAYER_STATUS.ACTIVE || p.status === PLAYER_STATUS.ALL_IN,
+    isFolded: p.status === PLAYER_STATUS.FOLDED,
   }));
 
   // Separate active players from folded (folded contribute but can't win)
-  const activePlayers = contributions.filter(c => c.isActive);
+  const activePlayers = contributions.filter((c) => c.isActive);
   const foldedContributions = contributions
-    .filter(c => c.isFolded)
+    .filter((c) => c.isFolded)
     .reduce((sum, c) => sum + c.amount, 0);
 
   if (activePlayers.length === 0) {
     // Everyone folded (shouldn't happen but handle it)
-    return [{
-      amount: foldedContributions,
-      eligiblePlayers: [],
-      winners: null
-    }];
+    return [
+      {
+        amount: foldedContributions,
+        eligiblePlayers: [],
+        winners: null,
+      },
+    ];
   }
 
   // Sort active players by contribution (ascending)
@@ -44,17 +47,19 @@ function calculatePots(players) {
     if (increment > 0) {
       // Create a pot for this level
       const potAmount = increment * remainingPlayers.length;
-      const eligiblePositions = remainingPlayers.map(p => p.position).sort((a, b) => a - b);
+      const eligiblePositions = remainingPlayers
+        .map((p) => p.position)
+        .sort((a, b) => a - b);
 
       pots.push({
         amount: potAmount,
         eligiblePlayers: eligiblePositions,
-        winners: null
+        winners: null,
       });
     }
 
     // Remove players who are tapped out at this level
-    remainingPlayers = remainingPlayers.filter(p => p.amount > currentLevel);
+    remainingPlayers = remainingPlayers.filter((p) => p.amount > currentLevel);
     prevLevel = currentLevel;
   }
 
@@ -75,11 +80,14 @@ function calculatePots(players) {
  * @returns {Array} Updated pots with winners assigned
  */
 function distributePots(pots, players, communityCards, evaluateHand) {
-  const results = pots.map(pot => {
+  const results = pots.map((pot) => {
     // Get eligible players who can win this pot
     const eligiblePlayers = pot.eligiblePlayers
-      .map(pos => ({ position: pos, player: players[pos] }))
-      .filter(({ player }) => player && player.holeCards && player.holeCards.length === 2);
+      .map((pos) => ({ position: pos, player: players[pos] }))
+      .filter(
+        ({ player }) =>
+          player && player.holeCards && player.holeCards.length === 2
+      );
 
     if (eligiblePlayers.length === 0) {
       // No eligible players (shouldn't happen)
@@ -103,14 +111,14 @@ function distributePots(pots, players, communityCards, evaluateHand) {
 
     // Find all players with the best hand (could be a tie)
     const winners = evaluations
-      .filter(e => compareHands(e.hand, bestHand) === 0)
-      .map(e => e.position);
+      .filter((e) => compareHands(e.hand, bestHand) === 0)
+      .map((e) => e.position);
 
     return {
       ...pot,
       winners,
       winAmount: Math.floor(pot.amount / winners.length), // Each winner gets equal share
-      winningRankName: bestHand.rankName // Include hand rank name for display
+      winningRankName: bestHand.rankName, // Include hand rank name for display
     };
   });
 
@@ -124,9 +132,9 @@ function distributePots(pots, players, communityCards, evaluateHand) {
  * @returns {Array} Updated players with chips awarded
  */
 function awardPots(pots, players) {
-  const updatedPlayers = players.map(p => ({ ...p }));
+  const updatedPlayers = players.map((p) => ({ ...p }));
 
-  pots.forEach(pot => {
+  pots.forEach((pot) => {
     if (pot.winners && pot.winners.length > 0) {
       const amountPerWinner = Math.floor(pot.amount / pot.winners.length);
       const remainder = pot.amount % pot.winners.length;
@@ -155,5 +163,5 @@ module.exports = {
   calculatePots,
   distributePots,
   awardPots,
-  getTotalPot
+  getTotalPot,
 };

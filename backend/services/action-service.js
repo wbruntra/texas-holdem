@@ -4,8 +4,16 @@
 
 const { v4: uuidv4 } = require('uuid');
 const db = require('../../db');
-const { validateAction, processAction, getValidActions } = require('../lib/betting-logic');
-const { getGameById, saveGameState, advanceRoundIfReady } = require('./game-service');
+const {
+  validateAction,
+  processAction,
+  getValidActions,
+} = require('../lib/betting-logic');
+const {
+  getGameById,
+  saveGameState,
+  advanceRoundIfReady,
+} = require('./game-service');
 const { getPlayerById } = require('./player-service');
 const { ACTION_TYPE, PLAYER_STATUS } = require('../lib/game-constants');
 const { getNextActingPosition } = require('../lib/game-state-machine');
@@ -14,7 +22,10 @@ async function normalizeTurnIfNeeded(gameId) {
   const game = await getGameById(gameId);
   if (!game || game.status !== 'active') return game;
 
-  if (game.currentPlayerPosition === null || game.currentPlayerPosition === undefined) {
+  if (
+    game.currentPlayerPosition === null ||
+    game.currentPlayerPosition === undefined
+  ) {
     return game;
   }
 
@@ -48,7 +59,7 @@ async function submitAction(playerId, action, amount = 0) {
   if (!player) {
     throw new Error('Player not found');
   }
-  
+
   // Get game state
   let game = await getGameById(player.gameId);
   if (!game) {
@@ -57,39 +68,39 @@ async function submitAction(playerId, action, amount = 0) {
 
   // Heal old/broken states where turn points at ALL_IN/FOLDED.
   game = (await normalizeTurnIfNeeded(game.id)) || game;
-  
+
   if (game.status !== 'active') {
     throw new Error('Game is not active');
   }
-  
+
   // Find player position in game state
-  const playerPosition = game.players.findIndex(p => p.id === playerId);
+  const playerPosition = game.players.findIndex((p) => p.id === playerId);
   if (playerPosition === -1) {
     throw new Error('Player not in game');
   }
-  
+
   // Validate and process action
   const validation = validateAction(game, playerPosition, action, amount);
   if (!validation.valid) {
     throw new Error(validation.error);
   }
-  
+
   const newState = processAction(game, playerPosition, action, amount);
-  
+
   // Save updated state
   await saveGameState(game.id, newState);
-  
+
   // Record action in history
   if (game.currentRound) {
     await recordAction(game.id, playerId, action, amount, game.currentRound);
   }
-  
+
   // Check if we should advance to next round
   let finalState = await advanceRoundIfReady(game.id);
-  
+
   // Normalize turn again after advancing (in case current player is now ALL_IN/OUT)
-  finalState = await normalizeTurnIfNeeded(finalState.id) || finalState;
-  
+  finalState = (await normalizeTurnIfNeeded(finalState.id)) || finalState;
+
   return finalState;
 }
 
@@ -99,13 +110,12 @@ async function submitAction(playerId, action, amount = 0) {
  * @returns {Promise<Object>} Valid actions
  */
 async function getPlayerValidActions(playerId) {
-  
   // Get player
   const player = await getPlayerById(playerId);
   if (!player) {
     throw new Error('Player not found');
   }
-  
+
   // Get game state
   let game = await getGameById(player.gameId);
   if (!game) {
@@ -114,17 +124,17 @@ async function getPlayerValidActions(playerId) {
 
   // Heal old/broken states where turn points at ALL_IN/FOLDED.
   game = (await normalizeTurnIfNeeded(game.id)) || game;
-  
+
   if (game.status !== 'active') {
     return { canAct: false, reason: 'Game not active' };
   }
-  
+
   // Find player position
-  const playerPosition = game.players.findIndex(p => p.id === playerId);
+  const playerPosition = game.players.findIndex((p) => p.id === playerId);
   if (playerPosition === -1) {
     return { canAct: false, reason: 'Player not in game' };
   }
-  
+
   return getValidActions(game, playerPosition);
 }
 
@@ -142,20 +152,20 @@ async function recordAction(gameId, playerId, actionType, amount, round) {
     .where({ game_id: gameId })
     .orderBy('hand_number', 'desc')
     .first();
-  
+
   if (!hand) {
     // Hand not yet created (will be created at showdown)
     // We could create it here or just skip recording until hand exists
     return;
   }
-  
+
   await db('actions').insert({
     id: uuidv4(),
     hand_id: hand.id,
     player_id: playerId,
     action_type: actionType,
     amount,
-    round
+    round,
   });
 }
 
@@ -168,14 +178,14 @@ async function getHandActions(handId) {
   const actions = await db('actions')
     .where({ hand_id: handId })
     .orderBy('created_at');
-  
-  return actions.map(a => ({
+
+  return actions.map((a) => ({
     id: a.id,
     playerId: a.player_id,
     actionType: a.action_type,
     amount: a.amount,
     round: a.round,
-    timestamp: a.created_at
+    timestamp: a.created_at,
   }));
 }
 
@@ -202,7 +212,7 @@ async function revealCard(playerId) {
   }
 
   // Find player position in game state
-  const playerPosition = game.players.findIndex(p => p.id === playerId);
+  const playerPosition = game.players.findIndex((p) => p.id === playerId);
   if (playerPosition === -1) {
     throw new Error('Player not in game');
   }
@@ -211,7 +221,9 @@ async function revealCard(playerId) {
   const { canRevealCard } = require('../lib/betting-logic');
   const validation = canRevealCard(game, playerPosition);
   if (!validation.canReveal) {
-    throw new Error(validation.error || 'Cannot reveal card in current game state');
+    throw new Error(
+      validation.error || 'Cannot reveal card in current game state'
+    );
   }
 
   // Reveal the card
@@ -241,16 +253,16 @@ async function getGameActions(gameId, handNumber = null) {
   let query = db('actions')
     .join('hands', 'actions.hand_id', 'hands.id')
     .where('hands.game_id', gameId);
-  
+
   if (handNumber !== null) {
     query = query.where('hands.hand_number', handNumber);
   }
-  
+
   const actions = await query
     .select('actions.*', 'hands.hand_number')
     .orderBy('actions.created_at');
-  
-  return actions.map(a => ({
+
+  return actions.map((a) => ({
     id: a.id,
     handId: a.hand_id,
     handNumber: a.hand_number,
@@ -258,7 +270,7 @@ async function getGameActions(gameId, handNumber = null) {
     actionType: a.action_type,
     amount: a.amount,
     round: a.round,
-    timestamp: a.created_at
+    timestamp: a.created_at,
   }));
 }
 
@@ -269,5 +281,5 @@ module.exports = {
   getHandActions,
   getGameActions,
   normalizeTurnIfNeeded,
-  revealCard
+  revealCard,
 };

@@ -71,11 +71,13 @@
 ## Performance Impact
 
 **Before (per player)**:
+
 - Poll `GET /api/games/:id` every 600-1800ms
 - Poll `GET /api/games/:id/actions/valid` when it's your turn
 - For 3 players: ~200+ requests/minute total
 
 **After (per player)**:
+
 - Receive state updates **only when state changes**
 - Still poll valid actions (Phase 3 will eliminate this)
 - For typical hand: ~20 WS pushes vs ~60 REST polls per player
@@ -102,6 +104,7 @@
 ## Rollback
 
 If issues arise:
+
 1. Set `WS_ENABLED=false` in backend → disables WebSocket server
 2. Frontend automatically falls back to polling
 3. System works exactly as before Phase 1
