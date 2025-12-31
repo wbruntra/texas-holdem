@@ -150,10 +150,13 @@ export default function PlayerView() {
 
     // WebSocket connection logic
     const connectWebSocket = () => {
-      // Connect directly to backend to ensure cookies are sent properly
-      // Vite proxy doesn't forward cookies on WebSocket upgrade
+      // In development: connect directly to backend (Vite proxy doesn't forward cookies)
+      // In production: use same domain/port as the page
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//localhost:${BACKEND_LOCAL_PORT}/ws`;
+      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const wsUrl = isDevelopment 
+        ? `${protocol}//localhost:${BACKEND_LOCAL_PORT}/ws`
+        : `${protocol}//${window.location.host}/ws`;
       
       console.log('[PlayerView] Connecting to WebSocket:', wsUrl);
       ws = new WebSocket(wsUrl);
