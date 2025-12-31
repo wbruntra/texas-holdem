@@ -6,6 +6,9 @@ export default function Home() {
   const [roomCode, setRoomCode] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
+  const [showGameSettings, setShowGameSettings] = useState(false)
+  const [bigBlind, setBigBlind] = useState(10)
+  const [startingChips, setStartingChips] = useState(1000)
   const navigate = useNavigate()
 
   const getErrorMessage = (err: unknown, fallback: string) => {
@@ -21,10 +24,11 @@ export default function Home() {
     setError('')
 
     try {
+      const smallBlind = Math.floor(bigBlind / 2)
       const response = await axios.post('/api/games', {
-        smallBlind: 5,
-        bigBlind: 10,
-        startingChips: 1000,
+        smallBlind,
+        bigBlind,
+        startingChips,
       })
 
       const roomCode = response.data.roomCode
@@ -33,7 +37,19 @@ export default function Home() {
       setError(getErrorMessage(err, 'Failed to create game'))
     } finally {
       setCreating(false)
+      setShowGameSettings(false)
     }
+  }
+
+  const handleShowSettings = () => {
+    setShowGameSettings(true)
+    setError('')
+  }
+
+  const handleCancelSettings = () => {
+    setShowGameSettings(false)
+    setBigBlind(10)
+    setStartingChips(1000)
   }
 
   const handleJoinGame = () => {
@@ -63,7 +79,7 @@ export default function Home() {
           Start a new game and show the table on this screen
         </p>
         <button
-          onClick={handleCreateGame}
+          onClick={handleShowSettings}
           disabled={creating}
           style={{
             padding: '12px 24px',
@@ -125,6 +141,119 @@ export default function Home() {
           }}
         >
           {error}
+        </div>
+      )}
+
+      {showGameSettings && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={handleCancelSettings}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: '24px',
+              borderRadius: '8px',
+              maxWidth: '400px',
+              width: '90%',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: '20px' }}>Game Settings</h2>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label
+                htmlFor="bigBlind"
+                style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}
+              >
+                Big Blind:
+              </label>
+              <input
+                id="bigBlind"
+                type="number"
+                min="2"
+                step="2"
+                value={bigBlind}
+                onChange={(e) => setBigBlind(parseInt(e.target.value) || 2)}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  fontSize: '16px',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
+                Small Blind will be {Math.floor(bigBlind / 2)}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label
+                htmlFor="startingChips"
+                style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}
+              >
+                Starting Chips:
+              </label>
+              <input
+                id="startingChips"
+                type="number"
+                min="100"
+                step="100"
+                value={startingChips}
+                onChange={(e) => setStartingChips(parseInt(e.target.value) || 100)}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  fontSize: '16px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={handleCancelSettings}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                  backgroundColor: '#f0f0f0',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateGame}
+                disabled={creating || bigBlind < 2 || startingChips < 100}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '16px',
+                  cursor:
+                    creating || bigBlind < 2 || startingChips < 100 ? 'not-allowed' : 'pointer',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                }}
+              >
+                {creating ? 'Creating...' : 'Create Game'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
