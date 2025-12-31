@@ -162,21 +162,29 @@ export default function Home() {
         >
           <div
             style={{
-              backgroundColor: 'white',
+              backgroundColor: '#1a1a1a',
+              color: 'rgba(255, 255, 255, 0.87)',
               padding: '24px',
               borderRadius: '8px',
               maxWidth: '400px',
               width: '90%',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginTop: 0, marginBottom: '20px' }}>Game Settings</h2>
+            <h2 style={{ marginTop: 0, marginBottom: '20px', color: 'rgba(255, 255, 255, 0.87)' }}>
+              Game Settings
+            </h2>
 
             <div style={{ marginBottom: '16px' }}>
               <label
                 htmlFor="bigBlind"
-                style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}
+                style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontWeight: 'bold',
+                  color: 'rgba(255, 255, 255, 0.87)',
+                }}
               >
                 Big Blind:
               </label>
@@ -192,9 +200,14 @@ export default function Home() {
                   padding: '8px',
                   fontSize: '16px',
                   boxSizing: 'border-box',
+                  color: 'rgba(255, 255, 255, 0.87)',
+                  backgroundColor: '#2a2a2a',
+                  border: '1px solid #444',
                 }}
               />
-              <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
+              <div
+                style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '4px' }}
+              >
                 Small Blind will be {Math.floor(bigBlind / 2)}
               </div>
             </div>
@@ -202,7 +215,12 @@ export default function Home() {
             <div style={{ marginBottom: '24px' }}>
               <label
                 htmlFor="startingChips"
-                style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}
+                style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontWeight: 'bold',
+                  color: 'rgba(255, 255, 255, 0.87)',
+                }}
               >
                 Starting Chips:
               </label>
@@ -218,6 +236,9 @@ export default function Home() {
                   padding: '8px',
                   fontSize: '16px',
                   boxSizing: 'border-box',
+                  color: 'rgba(255, 255, 255, 0.87)',
+                  backgroundColor: '#2a2a2a',
+                  border: '1px solid #444',
                 }}
               />
             </div>
@@ -229,8 +250,9 @@ export default function Home() {
                   padding: '10px 20px',
                   fontSize: '16px',
                   cursor: 'pointer',
-                  backgroundColor: '#f0f0f0',
-                  border: '1px solid #ccc',
+                  backgroundColor: '#2a2a2a',
+                  color: 'rgba(255, 255, 255, 0.87)',
+                  border: '1px solid #444',
                   borderRadius: '4px',
                 }}
               >
@@ -248,6 +270,7 @@ export default function Home() {
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
+                  opacity: creating || bigBlind < 2 || startingChips < 100 ? 0.5 : 1,
                 }}
               >
                 {creating ? 'Creating...' : 'Create Game'}
