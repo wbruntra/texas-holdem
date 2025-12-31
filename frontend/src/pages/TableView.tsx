@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
+import { QRCodeSVG } from 'qrcode.react'
 import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config'
 
 interface Player {
@@ -723,14 +724,29 @@ export default function TableView() {
               marginBottom: '20px',
               textAlign: 'center',
               fontSize: '16px',
-              padding: '16px',
+              padding: '24px',
               backgroundColor: '#456',
               borderRadius: '8px',
             }}
           >
-            Waiting for players to join...
-            <div style={{ marginTop: '8px', fontSize: '13px', opacity: 0.8 }}>
-              Share code: <strong>{game.roomCode}</strong>
+            <div style={{ marginBottom: '16px' }}>Waiting for players to join...</div>
+            <div
+              style={{
+                display: 'inline-block',
+                padding: '16px',
+                backgroundColor: 'white',
+                borderRadius: '8px',
+                marginBottom: '12px',
+              }}
+            >
+              <QRCodeSVG
+                value={`${window.location.origin}/player/${game.roomCode}`}
+                size={200}
+                level="M"
+              />
+            </div>
+            <div style={{ fontSize: '18px', opacity: 0.9 }}>
+              Scan to join or use code: <strong>{game.roomCode}</strong>
             </div>
           </div>
         )}
