@@ -61,6 +61,7 @@ export default function PlayerView() {
   const [betAmount, setBetAmount] = useState<number>(0);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [canRevealCard, setCanRevealCard] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
 
   const playerNameStorageKey = roomCode ? `holdem:${roomCode}:playerName` : null;
 
@@ -136,94 +137,198 @@ export default function PlayerView() {
     checkExistingAuth();
   }, [roomCode, playerName, playerNameStorageKey]);
 
-  // Adaptive polling:
-  // - Always fetch game state
-  // - Only fetch valid actions when it's our turn
-  // - Poll slower when it's not our turn
-  // - Poll much slower when tab is hidden
+  // WebSocket connection for real-time game state updates
+  // Falls back to polling if WebSocket unavailable
   useEffect(() => {
-    if (!joined || !game?.id) return;
+    if (!joined || !game?.id || !roomCode) return;
 
     const gameId = game.id;
-    let cancelled = false;
-    let timeoutId: number | undefined;
+    let ws: WebSocket | null = null;
+    let pollInterval: NodeJS.Timeout | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let isSubscribed = false;
 
-    const scheduleNext = (delayMs: number) => {
-      if (cancelled) return;
-      timeoutId = window.setTimeout(tick, delayMs);
-    };
+    // WebSocket connection logic
+    const connectWebSocket = () => {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      console.log('[PlayerView] Connecting to WebSocket:', wsUrl);
+      ws = new WebSocket(wsUrl);
 
-    const tick = async () => {
-      if (cancelled) return;
-
-      const isHidden = typeof document !== 'undefined' && document.hidden;
-      if (isHidden) {
-        // Keep UI from going stale forever, but don't hammer the server.
-        scheduleNext(5000);
-        return;
-      }
-
-      try {
-        const response = await axios.get(`/api/games/${gameId}`, {
-          withCredentials: true,
-        });
-
-        const nextGame: GameState = response.data;
-        setGame(nextGame);
-
-        const me = playerName
-          ? nextGame.players.find(p => p.name === playerName)
-          : undefined;
-
-        const isMyTurnNow =
-          !!me &&
-          nextGame.status === 'active' &&
-          nextGame.currentPlayerPosition !== null &&
-          nextGame.currentPlayerPosition === (me?.position ?? -1);
-
-        // Check if we can reveal a card
-        const canReveal = checkCanRevealCard(nextGame, playerName);
-        setCanRevealCard(canReveal);
-
-        if (isMyTurnNow) {
-          try {
-            const actionsResponse = await axios.get(
-              `/api/games/${gameId}/actions/valid`,
-              { withCredentials: true }
-            );
-            setValidActions(actionsResponse.data);
-          } catch (err: unknown) {
-            if (!(axios.isAxiosError(err) && err.response?.status === 403)) {
-              setError(getApiErrorMessage(err, 'Failed to load actions'));
-            }
-          }
-        } else {
-          // Clear actions when it's not our turn (avoid stale buttons)
-          setValidActions(prev => (prev ? null : prev));
-        }
-
+      ws.onopen = () => {
+        console.log('[PlayerView] WebSocket connected');
+        setWsConnected(true);
         setError('');
-        scheduleNext(isMyTurnNow ? 600 : 1800);
-      } catch (err: unknown) {
-        // Don't show errors for 403s (not our turn)
-        if (axios.isAxiosError(err) && err.response?.status === 403) {
-          scheduleNext(2000);
-          return;
+
+        // Subscribe to player stream
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'subscribe',
+            payload: {
+              roomCode,
+              stream: 'player',
+              gameId // Include gameId as fallback auth
+            }
+          }));
         }
-        setError(getApiErrorMessage(err, 'Failed to load game'));
-        scheduleNext(2000);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          console.log('[PlayerView] WebSocket message:', message.type);
+
+          switch (message.type) {
+            case 'hello':
+              console.log('[PlayerView] Server hello:', message.payload);
+              break;
+
+            case 'subscribed':
+              console.log('[PlayerView] Subscribed to player stream');
+              isSubscribed = true;
+              // Stop polling when WS is active
+              if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+              }
+              break;
+
+            case 'game_state':
+              console.log('[PlayerView] Game state update:', message.payload.reason);
+              const nextGame: GameState = message.payload.state;
+              setGame(nextGame);
+
+              const me = playerName
+                ? nextGame.players.find(p => p.name === playerName)
+                : undefined;
+
+              const isMyTurnNow =
+                !!me &&
+                nextGame.status === 'active' &&
+                nextGame.currentPlayerPosition !== null &&
+                nextGame.currentPlayerPosition === (me?.position ?? -1);
+
+              // Check if we can reveal a card
+              const canReveal = checkCanRevealCard(nextGame, playerName);
+              setCanRevealCard(canReveal);
+
+              // Fetch valid actions if it's our turn (Phase 3 will push these)
+              if (isMyTurnNow) {
+                fetchValidActions(gameId);
+              } else {
+                setValidActions(prev => (prev ? null : prev));
+              }
+
+              setError('');
+              break;
+
+            case 'error':
+              console.error('[PlayerView] WebSocket error:', message.payload.error);
+              setError(message.payload.error);
+              break;
+          }
+        } catch (err) {
+          console.error('[PlayerView] Failed to parse WebSocket message:', err);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('[PlayerView] WebSocket error:', error);
+        setWsConnected(false);
+      };
+
+      ws.onclose = () => {
+        console.log('[PlayerView] WebSocket disconnected');
+        setWsConnected(false);
+        isSubscribed = false;
+
+        // Fall back to polling
+        if (!pollInterval) {
+          startPolling();
+        }
+
+        // Attempt to reconnect after 3 seconds
+        reconnectTimeout = setTimeout(() => {
+          console.log('[PlayerView] Attempting to reconnect...');
+          connectWebSocket();
+        }, 3000);
+      };
+    };
+
+    // Helper to fetch valid actions
+    const fetchValidActions = async (gid: string) => {
+      try {
+        const actionsResponse = await axios.get(
+          `/api/games/${gid}/actions/valid`,
+          { withCredentials: true }
+        );
+        setValidActions(actionsResponse.data);
+      } catch (err: unknown) {
+        if (!(axios.isAxiosError(err) && err.response?.status === 403)) {
+          console.error('[PlayerView] Failed to fetch valid actions:', err);
+        }
       }
     };
 
-    tick();
+    // Polling fallback logic
+    const startPolling = () => {
+      const tick = async () => {
+        try {
+          const response = await axios.get(`/api/games/${gameId}`, {
+            withCredentials: true,
+          });
 
+          const nextGame: GameState = response.data;
+          setGame(nextGame);
+
+          const me = playerName
+            ? nextGame.players.find(p => p.name === playerName)
+            : undefined;
+
+          const isMyTurnNow =
+            !!me &&
+            nextGame.status === 'active' &&
+            nextGame.currentPlayerPosition !== null &&
+            nextGame.currentPlayerPosition === (me?.position ?? -1);
+
+          const canReveal = checkCanRevealCard(nextGame, playerName);
+          setCanRevealCard(canReveal);
+
+          if (isMyTurnNow) {
+            await fetchValidActions(gameId);
+          } else {
+            setValidActions(prev => (prev ? null : prev));
+          }
+
+          setError('');
+        } catch (err: unknown) {
+          if (!(axios.isAxiosError(err) && err.response?.status === 403)) {
+            setError(getApiErrorMessage(err, 'Failed to load game'));
+          }
+        }
+      };
+
+      tick(); // Initial fetch
+      pollInterval = setInterval(tick, 1500);
+    };
+
+    // Try WebSocket first
+    connectWebSocket();
+
+    // Cleanup
     return () => {
-      cancelled = true;
-      if (timeoutId !== undefined) {
-        clearTimeout(timeoutId);
+      if (ws) {
+        ws.close();
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
       }
     };
-  }, [joined, game?.id, playerName]);
+  }, [joined, game?.id, roomCode, playerName]);
 
   const handleJoin = async () => {
     if (!roomCode || !playerName.trim() || !password.trim()) return;
@@ -675,6 +780,23 @@ export default function PlayerView() {
         borderRadius: '8px',
         marginBottom: '12px',
       }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <span style={{ fontSize: '12px', opacity: 0.7 }}>Room: {game.roomCode}</span>
+          <span 
+            style={{ 
+              fontSize: '10px', 
+              padding: '2px 6px', 
+              borderRadius: '4px',
+              backgroundColor: wsConnected ? '#2a5a3a' : '#5a3a2a',
+              border: `1px solid ${wsConnected ? '#4f4' : '#fa4'}`,
+              color: wsConnected ? '#4f4' : '#fa4',
+              fontWeight: 'bold'
+            }}
+            title={wsConnected ? 'Connected via WebSocket' : 'Polling fallback'}
+          >
+            {wsConnected ? '⚡ WS' : '🔄 POLL'}
+          </span>
+        </div>
         <div style={{ fontSize: '18px' }}>
           {game.pots && game.pots.length > 1 ? (
             <div>

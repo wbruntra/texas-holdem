@@ -190,7 +190,7 @@ async function main() {
         }
         
         // Wait before next poll
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
       } catch (error) {
         consecutiveErrors++;
@@ -204,7 +204,7 @@ async function main() {
           console.error('⚠️  Error (will retry):', error.message);
         }
         
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }
     

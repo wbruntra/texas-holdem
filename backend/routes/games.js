@@ -3,6 +3,7 @@ const router = express.Router();
 const gameService = require('../services/game-service');
 const playerService = require('../services/player-service');
 const actionService = require('../services/action-service');
+const gameEvents = require('../lib/game-events');
 
 const SHOWDOWN_ROUND = 'showdown';
 
@@ -198,6 +199,9 @@ router.post('/:gameId/join', async (req, res, next) => {
     // Set session
     req.session.playerId = player.id;
     
+    // Emit game update event
+    gameEvents.emitGameUpdate(req.params.gameId, 'join');
+    
     res.status(201).json({
       player,
       message: 'Joined game successfully'
@@ -253,6 +257,9 @@ router.post('/:gameId/start', requireAuth, loadPlayer, async (req, res, next) =>
     
     const game = await gameService.startGame(req.params.gameId);
     
+    // Emit game update event
+    gameEvents.emitGameUpdate(req.params.gameId, 'start');
+    
     res.json(game);
   } catch (error) {
     next(error);
@@ -293,6 +300,9 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
       }))
     };
     
+    // Emit game update event
+    gameEvents.emitGameUpdate(req.params.gameId, 'action');
+    
     res.json(sanitizedState);
   } catch (error) {
     if (error instanceof Error) {
@@ -325,6 +335,9 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
         holeCards: isShowdown || p.id === req.player.id ? p.holeCards : []
       }))
     };
+    
+    // Emit game update event
+    gameEvents.emitGameUpdate(req.params.gameId, 'reveal');
     
     res.json(sanitizedState);
   } catch (error) {
@@ -388,6 +401,9 @@ router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next
       }))
     };
 
+    // Emit game update event
+    gameEvents.emitGameUpdate(req.params.gameId, 'next_hand');
+
     res.json(sanitizedState);
   } catch (error) {
     next(error);
@@ -405,10 +421,15 @@ router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) =>
       return res.status(403).json({ error: 'Not authorized for this game' });
     }
     
+    const gameId = req.player.gameId;
+    
     await playerService.leaveGame(req.player.id);
     
     // Clear session
     req.session = null;
+    
+    // Emit game update event
+    gameEvents.emitGameUpdate(gameId, 'leave');
     
     res.json({ message: 'Left game successfully' });
   } catch (error) {

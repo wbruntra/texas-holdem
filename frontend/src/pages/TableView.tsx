@@ -41,6 +41,7 @@ export default function TableView() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [showGameOverModal, setShowGameOverModal] = useState(true);
+  const [wsConnected, setWsConnected] = useState(false);
 
   const getApiErrorMessage = (err: unknown, fallback: string) => {
     if (!axios.isAxiosError(err)) return fallback;
@@ -51,22 +52,130 @@ export default function TableView() {
   useEffect(() => {
     if (!roomCode) return;
 
-    const fetchGame = async () => {
-      try {
-        const response = await axios.get(`/api/games/room/${roomCode}/state`);
-        setGame(response.data);
+    let ws: WebSocket | null = null;
+    let pollInterval: NodeJS.Timeout | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let isSubscribed = false;
+
+    // WebSocket connection logic
+    const connectWebSocket = () => {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      console.log('[TableView] Connecting to WebSocket:', wsUrl);
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log('[TableView] WebSocket connected');
+        setWsConnected(true);
         setError('');
-      } catch (err: unknown) {
-        setError(getApiErrorMessage(err, 'Failed to load game'));
-      } finally {
-        setLoading(false);
-      }
+
+        // Subscribe to table stream
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'subscribe',
+            payload: {
+              roomCode,
+              stream: 'table'
+            }
+          }));
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          console.log('[TableView] WebSocket message:', message.type);
+
+          switch (message.type) {
+            case 'hello':
+              console.log('[TableView] Server hello:', message.payload);
+              break;
+
+            case 'subscribed':
+              console.log('[TableView] Subscribed to table stream');
+              isSubscribed = true;
+              setLoading(false);
+              // Stop polling when WS is active
+              if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+              }
+              break;
+
+            case 'game_state':
+              console.log('[TableView] Game state update:', message.payload.reason);
+              setGame(message.payload.state);
+              setError('');
+              setLoading(false);
+              break;
+
+            case 'error':
+              console.error('[TableView] WebSocket error:', message.payload.error);
+              setError(message.payload.error);
+              break;
+          }
+        } catch (err) {
+          console.error('[TableView] Failed to parse WebSocket message:', err);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('[TableView] WebSocket error:', error);
+        setWsConnected(false);
+      };
+
+      ws.onclose = () => {
+        console.log('[TableView] WebSocket disconnected');
+        setWsConnected(false);
+        isSubscribed = false;
+
+        // Fall back to polling
+        if (!pollInterval) {
+          startPolling();
+        }
+
+        // Attempt to reconnect after 3 seconds
+        reconnectTimeout = setTimeout(() => {
+          console.log('[TableView] Attempting to reconnect...');
+          connectWebSocket();
+        }, 3000);
+      };
     };
 
-    fetchGame();
-    const interval = setInterval(fetchGame, 2000);
+    // Polling fallback logic
+    const startPolling = () => {
+      const fetchGame = async () => {
+        try {
+          const response = await axios.get(`/api/games/room/${roomCode}/state`);
+          setGame(response.data);
+          setError('');
+          setLoading(false);
+        } catch (err: unknown) {
+          setError(getApiErrorMessage(err, 'Failed to load game'));
+          setLoading(false);
+        }
+      };
 
-    return () => clearInterval(interval);
+      fetchGame(); // Initial fetch
+      pollInterval = setInterval(fetchGame, 2000);
+    };
+
+    // Try WebSocket first
+    connectWebSocket();
+
+    // Cleanup
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
   }, [roomCode]);
 
   const formatCard = (card: { rank: string; suit: string }) => {
@@ -152,8 +261,22 @@ export default function TableView() {
           borderRadius: '8px',
           border: '1px solid #456',
         }}>
-          <div style={{ fontSize: '14px', opacity: 0.9 }}>
+          <div style={{ fontSize: '14px', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '8px' }}>
             Room: <strong>{game.roomCode}</strong>
+            <span 
+              style={{ 
+                fontSize: '10px', 
+                padding: '2px 6px', 
+                borderRadius: '4px',
+                backgroundColor: wsConnected ? '#2a5a3a' : '#5a3a2a',
+                border: `1px solid ${wsConnected ? '#4f4' : '#fa4'}`,
+                color: wsConnected ? '#4f4' : '#fa4',
+                fontWeight: 'bold'
+              }}
+              title={wsConnected ? 'Connected via WebSocket' : 'Polling fallback'}
+            >
+              {wsConnected ? '⚡ WS' : '🔄 POLL'}
+            </span>
           </div>
           <div style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'center' }}>
             {game.currentRound ? game.currentRound.charAt(0).toUpperCase() + game.currentRound.slice(1) : 'Waiting'}

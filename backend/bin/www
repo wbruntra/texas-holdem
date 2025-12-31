@@ -7,6 +7,7 @@
 var app = require('../app')
 var debug = require('debug')('backend:server')
 var http = require('http')
+var wsService = require('../services/websocket-service')
 
 const config = require('@scaffold/shared/config')
 console.log(`Backend will run on port: ${config.BACKEND_LOCAL_PORT}`)
@@ -23,6 +24,17 @@ app.set('port', port)
  */
 
 var server = http.createServer(app)
+
+/**
+ * Initialize WebSocket server (if enabled)
+ */
+const WS_ENABLED = process.env.WS_ENABLED !== 'false' // Default: enabled
+if (WS_ENABLED) {
+  wsService.initialize(server)
+  console.log('WebSocket server enabled')
+} else {
+  console.log('WebSocket server disabled (set WS_ENABLED=true to enable)')
+}
 
 /**
  * Listen on provided port, on all network interfaces.
