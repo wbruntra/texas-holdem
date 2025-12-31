@@ -339,7 +339,8 @@ export default function PlayerView() {
     }
   }, [joined, game?.id, roomCode, playerName])
 
-  const handleJoin = async () => {
+  const handleJoin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     if (!roomCode || !playerName.trim() || !password.trim()) return
 
     try {
@@ -529,39 +530,52 @@ export default function PlayerView() {
         <h1>Join Game</h1>
         <p>Room: {roomCode}</p>
 
-        <div style={{ marginTop: '30px' }}>
+        <form
+          onSubmit={handleJoin}
+          style={{
+            marginTop: '30px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
           <input
             type="text"
             placeholder="Your Name"
             value={playerName}
+            maxLength={10}
             onChange={(e) => setPlayerName(e.target.value)}
             style={{
               width: '100%',
+              maxWidth: '200px',
               padding: '15px',
               fontSize: '18px',
               marginBottom: '15px',
+              boxSizing: 'border-box',
             }}
           />
 
           <input
-            type="password"
-            placeholder="Password (min 4 chars)"
+            type="text"
+            placeholder="Security Word (min 4 chars)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleJoin()}
             style={{
               width: '100%',
+              maxWidth: '200px',
               padding: '15px',
               fontSize: '18px',
               marginBottom: '15px',
+              boxSizing: 'border-box',
             }}
           />
 
           <button
-            onClick={handleJoin}
+            type="submit"
             disabled={!playerName.trim() || password.length < 4}
             style={{
               width: '100%',
+              maxWidth: '200px',
               padding: '15px',
               fontSize: '18px',
               cursor: !playerName.trim() || password.length < 4 ? 'not-allowed' : 'pointer',
@@ -569,7 +583,7 @@ export default function PlayerView() {
           >
             Join Game
           </button>
-        </div>
+        </form>
 
         {error && (
           <div
