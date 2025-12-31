@@ -145,9 +145,8 @@ export default function PlayerView() {
 
     const gameId = game.id;
     let ws: WebSocket | null = null;
-    let pollInterval: NodeJS.Timeout | null = null;
-    let reconnectTimeout: NodeJS.Timeout | null = null;
-    let isSubscribed = false;
+    let pollInterval: number | null = null;
+    let reconnectTimeout: number | null = null;
 
     // WebSocket connection logic
     const connectWebSocket = () => {
@@ -195,7 +194,6 @@ export default function PlayerView() {
 
             case 'subscribed':
               console.log('[PlayerView] Subscribed to player stream');
-              isSubscribed = true;
               // Stop polling when WS is active
               if (pollInterval) {
                 clearInterval(pollInterval);
@@ -250,7 +248,6 @@ export default function PlayerView() {
       ws.onclose = () => {
         console.log('[PlayerView] WebSocket disconnected');
         setWsConnected(false);
-        isSubscribed = false;
 
         // Fall back to polling
         if (!pollInterval) {
@@ -258,7 +255,7 @@ export default function PlayerView() {
         }
 
         // Attempt to reconnect after 3 seconds
-        reconnectTimeout = setTimeout(() => {
+        reconnectTimeout = window.setTimeout(() => {
           console.log('[PlayerView] Attempting to reconnect...');
           connectWebSocket();
         }, 3000);
@@ -319,7 +316,7 @@ export default function PlayerView() {
       };
 
       tick(); // Initial fetch
-      pollInterval = setInterval(tick, 1500);
+      pollInterval = window.setInterval(tick, 1500);
     };
 
     // Try WebSocket first
@@ -998,8 +995,6 @@ export default function PlayerView() {
                       const maxInc = validActions.maxRaise!;
                       const inc = Math.min(Math.max(raiseAmount, minInc), maxInc);
                       const raiseTo = game.currentBet + inc;
-                      const minRaiseTo = game.currentBet + minInc;
-                      const maxRaiseTo = game.currentBet + maxInc;
 
                       return (
                         <>

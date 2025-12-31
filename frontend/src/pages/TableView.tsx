@@ -54,9 +54,8 @@ export default function TableView() {
     if (!roomCode) return;
 
     let ws: WebSocket | null = null;
-    let pollInterval: NodeJS.Timeout | null = null;
-    let reconnectTimeout: NodeJS.Timeout | null = null;
-    let isSubscribed = false;
+    let pollInterval: number | null = null;
+    let reconnectTimeout: number | null = null;
 
     // WebSocket connection logic
     const connectWebSocket = () => {
@@ -97,7 +96,6 @@ export default function TableView() {
 
             case 'subscribed':
               console.log('[TableView] Subscribed to table stream');
-              isSubscribed = true;
               setLoading(false);
               // Stop polling when WS is active
               if (pollInterval) {
@@ -131,7 +129,6 @@ export default function TableView() {
       ws.onclose = () => {
         console.log('[TableView] WebSocket disconnected');
         setWsConnected(false);
-        isSubscribed = false;
 
         // Fall back to polling
         if (!pollInterval) {
@@ -139,7 +136,7 @@ export default function TableView() {
         }
 
         // Attempt to reconnect after 3 seconds
-        reconnectTimeout = setTimeout(() => {
+        reconnectTimeout = window.setTimeout(() => {
           console.log('[TableView] Attempting to reconnect...');
           connectWebSocket();
         }, 3000);
@@ -161,7 +158,7 @@ export default function TableView() {
       };
 
       fetchGame(); // Initial fetch
-      pollInterval = setInterval(fetchGame, 2000);
+      pollInterval = window.setInterval(fetchGame, 2000);
     };
 
     // Try WebSocket first

@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface VerticalSliderProps {
   value: number;
   min: number;
