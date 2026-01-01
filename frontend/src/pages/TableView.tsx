@@ -156,15 +156,39 @@ export default function TableView() {
   }, [roomCode])
 
   if (loading) {
-    return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>
+    return (
+      <div className="container d-flex flex-column justify-content-center align-items-center min-vh-100 text-white">
+        <div className="spinner-border text-primary mb-3" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <h2>Loading room...</h2>
+      </div>
+    )
   }
 
   if (error) {
-    return <div style={{ padding: '50px', textAlign: 'center', color: '#c00' }}>{error}</div>
+    return (
+      <div className="container d-flex flex-column justify-content-center align-items-center min-vh-100 text-white text-center">
+        <div className="alert alert-danger px-5 py-4 shadow">
+          <h3 className="h4 mb-3">Error</h3>
+          <p className="mb-4">{error}</p>
+          <button onClick={() => window.location.reload()} className="btn btn-outline-danger">
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (!game) {
-    return <div style={{ padding: '50px', textAlign: 'center' }}>Game not found</div>
+    return (
+      <div className="container d-flex flex-column justify-content-center align-items-center min-vh-100 text-white">
+        <h2 className="mb-4">Game not found</h2>
+        <a href="/" className="btn btn-primary">
+          Go Home
+        </a>
+      </div>
+    )
   }
 
   return (
@@ -172,50 +196,40 @@ export default function TableView() {
       <PokerTableScene game={game} wsConnected={wsConnected}>
         {game.status === 'waiting' && (
           <div
+            className="modal show d-block"
             style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.65)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
+              backgroundColor: 'rgba(0,0,0,0.85)',
               backdropFilter: 'blur(8px)',
+              zIndex: 1000,
             }}
           >
-            <div
-              className="text-center p-5 rounded"
-              style={{
-                backgroundColor: '#1a1a1a',
-                border: '1px solid #333',
-                boxShadow: '0 0 50px rgba(0,0,0,0.5)',
-                color: '#fff',
-              }}
-            >
-              <h2 className="mb-4 fw-bold">Waiting for Players</h2>
-              <div
-                className="d-inline-flex p-3 rounded mb-4"
-                style={{
-                  backgroundColor: 'white',
-                }}
-              >
-                <QRCodeSVG
-                  value={`${window.location.protocol}//${window.location.host}/player/${game.roomCode}`}
-                  size={240}
-                  level="M"
-                />
-              </div>
-              <div className="fs-5 mb-2" style={{ opacity: 0.8 }}>
-                Scan to join
-              </div>
-              <div className="fs-3 fw-bold text-warning" style={{ letterSpacing: '2px' }}>
-                {game.roomCode}
-              </div>
-              <div className="mt-4 small opacity-50">
-                {game.players.length} player{game.players.length !== 1 ? 's' : ''} joined
+            <div className="modal-dialog modal-dialog-centered modal-lg">
+              <div className="modal-content bg-dark text-white border-secondary shadow-lg py-5 px-3">
+                <div className="text-center">
+                  <h2 className="mb-4 display-6 fw-bold">Waiting for Players</h2>
+
+                  <div className="bg-white p-3 rounded-4 d-inline-block shadow mb-4">
+                    <QRCodeSVG
+                      value={`${window.location.protocol}//${window.location.host}/player/${game.roomCode}`}
+                      size={280}
+                      level="H"
+                    />
+                  </div>
+
+                  <div className="h4 text-secondary mb-2">Scan to join</div>
+                  <div
+                    className="display-4 fw-bold text-warning mb-4"
+                    style={{ letterSpacing: '4px' }}
+                  >
+                    {game.roomCode}
+                  </div>
+
+                  <hr className="border-secondary w-50 mx-auto mb-4" />
+
+                  <div className="h5 text-info">
+                    {game.players.length} player{game.players.length !== 1 ? 's' : ''} joined
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -225,95 +239,51 @@ export default function TableView() {
       {/* Game Over Modal */}
       {game.status === 'completed' && showGameOverModal && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            backdropFilter: 'blur(3px)',
-          }}
+          className="modal show d-block"
+          style={{ backgroundColor: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(4px)', zIndex: 1100 }}
         >
-          <div
-            style={{
-              textAlign: 'center',
-              backgroundColor: '#1a1a1a',
-              padding: '40px 50px',
-              borderRadius: '12px',
-              boxShadow: '0 0 40px rgba(255, 215, 0, 0.3)',
-              border: '2px solid #FFD700',
-              position: 'relative',
-              maxWidth: '500px',
-            }}
-          >
-            <button
-              onClick={() => setShowGameOverModal(false)}
-              style={{
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: '#FFD700',
-                fontSize: '28px',
-                cursor: 'pointer',
-                padding: '0',
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              title="Close"
-            >
-              ✕
-            </button>
-            <div style={{ fontSize: '56px', marginBottom: '16px' }}>🏆</div>
+          <div className="modal-dialog modal-dialog-centered">
             <div
-              style={{
-                fontSize: '36px',
-                fontWeight: 'bold',
-                marginBottom: '24px',
-                color: '#FFD700',
-                textShadow: '0 0 15px rgba(255, 215, 0, 0.4)',
-              }}
+              className="modal-content bg-dark text-white border-warning shadow-lg p-4"
+              style={{ border: '2px solid gold' }}
             >
-              GAME OVER!
-            </div>
-            <div style={{ fontSize: '16px', marginBottom: '20px', opacity: 0.9 }}>
-              Final Chip Count
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                marginBottom: '24px',
-              }}
-            >
-              {game.players.map((player) => (
-                <div
-                  key={player.name}
-                  style={{
-                    fontSize: '14px',
-                    padding: '12px 16px',
-                    backgroundColor: player.chips > 0 ? '#1a3a1a' : '#2a1a1a',
-                    borderRadius: '6px',
-                    border: player.chips > 0 ? '1px solid #0f0' : '1px solid #f00',
-                    color: player.chips > 0 ? '#4f4' : '#aaa',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {player.name}: ${player.chips}
+              <button
+                onClick={() => setShowGameOverModal(false)}
+                className="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                aria-label="Close"
+              ></button>
+
+              <div className="modal-body text-center p-4">
+                <div className="display-1 mb-3">🏆</div>
+                <h2 className="display-6 fw-bold text-warning mb-4">GAME OVER!</h2>
+
+                <p className="small text-secondary mb-4 uppercase text-uppercase fw-bold">
+                  Final Chip Count
+                </p>
+
+                <div className="d-flex flex-column gap-2 mb-5">
+                  {[...game.players]
+                    .sort((a, b) => b.chips - a.chips)
+                    .map((player) => (
+                      <div
+                        key={player.name}
+                        className={`d-flex justify-content-between p-3 rounded border ${
+                          player.chips > 0
+                            ? 'bg-success bg-opacity-10 border-success text-success'
+                            : 'bg-danger bg-opacity-10 border-danger text-secondary'
+                        }`}
+                      >
+                        <span className="fw-bold">{player.name}</span>
+                        <span className="fw-bold">${player.chips}</span>
+                      </div>
+                    ))}
                 </div>
-              ))}
+
+                <div className="small text-secondary border-top border-secondary pt-3 mt-2">
+                  Room: <span className="text-light">{game.roomCode}</span>
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: '12px', color: '#aaa' }}>Room: {game.roomCode}</div>
           </div>
         </div>
       )}

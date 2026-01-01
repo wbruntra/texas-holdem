@@ -60,301 +60,174 @@ export default function Home() {
 
   return (
     <div
-      style={{
-        maxWidth: '600px',
-        margin: '0 auto',
-        padding: '20px',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        boxSizing: 'border-box',
-        backgroundColor: '#1a472a',
-        color: '#fff',
-      }}
+      className="container d-flex flex-column justify-content-center min-vh-100 py-5"
+      style={{ maxWidth: '600px' }}
     >
-      <h1 style={{ marginTop: '0', marginBottom: '1.5rem' }}>Texas Hold'em</h1>
-
-      <div style={{ marginTop: '2rem' }}>
-        <h2 style={{ fontSize: '1.5em', marginBottom: '0.5rem' }}>Create New Game</h2>
-        <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
-          Start a new game and show the table on this screen
-        </p>
-        <button
-          onClick={handleShowSettings}
-          disabled={creating}
-          style={{
-            padding: '12px 24px',
-            fontSize: '16px',
-            cursor: creating ? 'not-allowed' : 'pointer',
-            width: '100%',
-            maxWidth: '300px',
-          }}
-        >
-          {creating ? 'Creating...' : 'Create Game'}
-        </button>
+      <div className="text-center mb-5">
+        <h1 className="display-4 fw-bold text-white mb-2">Texas Hold'em</h1>
+        <p className="lead text-secondary">A simple multiplayer poker game</p>
       </div>
 
-      <div style={{ marginTop: '3rem' }}>
-        <h2 style={{ fontSize: '1.5em', marginBottom: '0.5rem' }}>Join Existing Game</h2>
-        <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
-          Enter room code to join as a player
-        </p>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <input
-            type="text"
-            placeholder="Room Code"
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-            onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
-            style={{
-              padding: '12px',
-              fontSize: '16px',
-              width: '140px',
-              textTransform: 'uppercase',
-              boxSizing: 'border-box',
-            }}
-            className="text-center"
-          />
+      <div className="card bg-dark text-white border-secondary mb-4 shadow">
+        <div className="card-body p-4">
+          <h2 className="h4 mb-3">Create New Game</h2>
+          <p className="text-secondary mb-4">
+            Start a new game and show the table on this screen.
+          </p>
           <button
-            onClick={handleJoinGame}
-            disabled={!roomCode.trim()}
-            style={{
-              padding: '12px 24px',
-              fontSize: '16px',
-              cursor: !roomCode.trim() ? 'not-allowed' : 'pointer',
-              flex: '0 0 auto',
-            }}
+            onClick={handleShowSettings}
+            disabled={creating}
+            className="btn btn-primary btn-lg w-100 fw-bold"
           >
-            Join
+            {creating ? (
+              <>
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Creating...
+              </>
+            ) : (
+              'Create Game'
+            )}
           </button>
         </div>
       </div>
 
-      {error && (
-        <div
-          style={{
-            marginTop: '1.5rem',
-            padding: '12px',
-            backgroundColor: '#fee',
-            color: '#c00',
-            borderRadius: '5px',
-            fontSize: '14px',
-          }}
-        >
-          {error}
+      <div className="card bg-dark text-white border-secondary shadow">
+        <div className="card-body p-4 text-center">
+          <h2 className="h4 mb-3 text-start">Join Existing Game</h2>
+          <p className="text-secondary mb-4 text-start">
+            Enter room code to join as a player on your device.
+          </p>
+          <div className="input-group input-group-lg">
+            <input
+              type="text"
+              placeholder="Room Code"
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+              onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
+              className="form-control text-center bg-dark text-white border-secondary fw-bold"
+              style={{ letterSpacing: '4px' }}
+            />
+            <button
+              onClick={handleJoinGame}
+              disabled={!roomCode.trim()}
+              className="btn btn-success px-4 fw-bold"
+            >
+              Join
+            </button>
+          </div>
         </div>
-      )}
+      </div>
+
+      {error && <div className="alert alert-danger mt-4 py-3 shadow-sm text-center">{error}</div>}
 
       {showGameSettings && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
+          className="modal show d-block"
+          style={{ backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)' }}
           onClick={handleCancelSettings}
         >
-          <div
-            style={{
-              backgroundColor: '#1a1a1a',
-              color: 'rgba(255, 255, 255, 0.87)',
-              padding: '48px',
-              borderRadius: '8px',
-              maxWidth: '400px',
-              width: '90%',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 style={{ marginTop: 0, marginBottom: '20px', color: 'rgba(255, 255, 255, 0.87)' }}>
-              Game Settings
-            </h2>
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content bg-dark text-white border-secondary shadow-lg">
+              <div className="modal-header border-secondary">
+                <h5 className="modal-title fw-bold">Game Settings</h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={handleCancelSettings}
+                ></button>
+              </div>
+              <div className="modal-body p-4">
+                <div className="mb-4 text-center">
+                  <label htmlFor="bigBlind" className="form-label fw-bold d-block mb-3">
+                    Big Blind Amount
+                  </label>
+                  <div className="d-flex gap-3 align-items-center justify-content-center">
+                    <button
+                      type="button"
+                      onClick={() => setBigBlind((prev) => Math.max(2, prev - 2))}
+                      className="btn btn-outline-secondary rounded-circle"
+                      style={{ width: '48px', height: '48px', fontSize: '24px', lineHeight: 0 }}
+                    >
+                      −
+                    </button>
+                    <input
+                      id="bigBlind"
+                      type="number"
+                      min="2"
+                      step="2"
+                      value={bigBlind}
+                      onChange={(e) => setBigBlind(parseInt(e.target.value) || 2)}
+                      className="form-control form-control-lg bg-black text-white border-secondary text-center fw-bold"
+                      style={{ maxWidth: '120px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBigBlind((prev) => prev + 2)}
+                      className="btn btn-outline-secondary rounded-circle"
+                      style={{ width: '48px', height: '48px', fontSize: '24px', lineHeight: 0 }}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="small text-secondary mt-3">
+                    Small Blind will be{' '}
+                    <span className="text-info">${Math.floor(bigBlind / 2)}</span>
+                  </div>
+                </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label
-                htmlFor="bigBlind"
-                style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontWeight: 'bold',
-                  color: 'rgba(255, 255, 255, 0.87)',
-                }}
-              >
-                Big Blind:
-              </label>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div className="mb-4 text-center">
+                  <label htmlFor="startingChips" className="form-label fw-bold d-block mb-3">
+                    Starting Chips
+                  </label>
+                  <div className="d-flex gap-3 align-items-center justify-content-center">
+                    <button
+                      type="button"
+                      onClick={() => setStartingChips((prev) => Math.max(100, prev - 100))}
+                      className="btn btn-outline-secondary rounded-circle"
+                      style={{ width: '48px', height: '48px', fontSize: '24px', lineHeight: 0 }}
+                    >
+                      −
+                    </button>
+                    <input
+                      id="startingChips"
+                      type="number"
+                      min="100"
+                      step="100"
+                      value={startingChips}
+                      onChange={(e) => setStartingChips(parseInt(e.target.value) || 100)}
+                      className="form-control form-control-lg bg-black text-white border-secondary text-center fw-bold"
+                      style={{ maxWidth: '120px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setStartingChips((prev) => prev + 100)}
+                      className="btn btn-outline-secondary rounded-circle"
+                      style={{ width: '48px', height: '48px', fontSize: '24px', lineHeight: 0 }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer border-secondary p-3">
                 <button
-                  type="button"
-                  onClick={() => setBigBlind((prev) => Math.max(2, prev - 2))}
-                  style={{
-                    backgroundColor: '#444',
-                    color: '#fff',
-                    border: '1px solid #666',
-                    width: '40px',
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    padding: 0,
-                  }}
+                  onClick={handleCancelSettings}
+                  className="btn btn-link text-secondary text-decoration-none me-auto"
                 >
-                  -
+                  Cancel
                 </button>
-                <input
-                  id="bigBlind"
-                  type="number"
-                  min="2"
-                  step="2"
-                  value={bigBlind}
-                  onChange={(e) => setBigBlind(parseInt(e.target.value) || 2)}
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    fontSize: '16px',
-                    boxSizing: 'border-box',
-                    color: 'rgba(255, 255, 255, 0.87)',
-                    backgroundColor: '#2a2a2a',
-                    border: '1px solid #444',
-                    textAlign: 'center',
-                  }}
-                />
                 <button
-                  type="button"
-                  onClick={() => setBigBlind((prev) => prev + 2)}
-                  style={{
-                    backgroundColor: '#444',
-                    color: '#fff',
-                    border: '1px solid #666',
-                    width: '40px',
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    padding: 0,
-                  }}
+                  onClick={handleCreateGame}
+                  disabled={creating || bigBlind < 2 || startingChips < 100}
+                  className="btn btn-primary px-4 fw-bold"
                 >
-                  +
+                  {creating ? 'Creating...' : 'Create Game'}
                 </button>
               </div>
-              <div
-                style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '4px' }}
-              >
-                Small Blind will be {Math.floor(bigBlind / 2)}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '24px' }}>
-              <label
-                htmlFor="startingChips"
-                style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontWeight: 'bold',
-                  color: 'rgba(255, 255, 255, 0.87)',
-                }}
-              >
-                Starting Chips:
-              </label>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => setStartingChips((prev) => Math.max(100, prev - 100))}
-                  style={{
-                    backgroundColor: '#444',
-                    color: '#fff',
-                    border: '1px solid #666',
-                    width: '40px',
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    padding: 0,
-                  }}
-                >
-                  -
-                </button>
-                <input
-                  id="startingChips"
-                  type="number"
-                  min="100"
-                  step="100"
-                  value={startingChips}
-                  onChange={(e) => setStartingChips(parseInt(e.target.value) || 100)}
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    fontSize: '16px',
-                    boxSizing: 'border-box',
-                    color: 'rgba(255, 255, 255, 0.87)',
-                    backgroundColor: '#2a2a2a',
-                    border: '1px solid #444',
-                    textAlign: 'center',
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setStartingChips((prev) => prev + 100)}
-                  style={{
-                    backgroundColor: '#444',
-                    color: '#fff',
-                    border: '1px solid #666',
-                    width: '40px',
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    padding: 0,
-                  }}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={handleCancelSettings}
-                style={{
-                  padding: '10px 20px',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  backgroundColor: '#2a2a2a',
-                  color: 'rgba(255, 255, 255, 0.87)',
-                  border: '1px solid #444',
-                  borderRadius: '4px',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateGame}
-                disabled={creating || bigBlind < 2 || startingChips < 100}
-                style={{
-                  padding: '10px 20px',
-                  fontSize: '16px',
-                  cursor:
-                    creating || bigBlind < 2 || startingChips < 100 ? 'not-allowed' : 'pointer',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  opacity: creating || bigBlind < 2 || startingChips < 100 ? 0.5 : 1,
-                }}
-              >
-                {creating ? 'Creating...' : 'Create Game'}
-              </button>
             </div>
           </div>
         </div>
