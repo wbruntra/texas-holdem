@@ -527,6 +527,66 @@ async function recordHandHistory(gameId, gameState) {
 }
 
 /**
+ * Reset a game to initial state with same settings
+ * @param {string} gameId - Game ID
+ */
+async function resetGame(gameId) {
+  const game = await db('games').where({ id: gameId }).first()
+  if (!game) {
+    throw new Error('Game not found')
+  }
+
+  // Get all players
+  const players = await db('players').where({ game_id: gameId }).orderBy('position')
+
+  if (players.length === 0) {
+    throw new Error('No players in game')
+  }
+
+  // Reset game state
+  await db('games').where({ id: gameId }).update({
+    status: GAME_STATUS.WAITING,
+    dealer_position: 0,
+    current_round: null,
+    pot: 0,
+    community_cards: null,
+    current_bet: 0,
+    current_player_position: null,
+    hand_number: 0,
+    last_raise: 0,
+    deck: null,
+    winners: null,
+    pots: null,
+    updated_at: new Date(),
+  })
+
+  // Reset all players to starting chips
+  await db('players').where({ game_id: gameId }).update({
+    chips: game.starting_chips,
+    current_bet: 0,
+    hole_cards: null,
+    status: 'active',
+    is_dealer: false,
+    is_small_blind: false,
+    is_big_blind: false,
+    last_action: null,
+    total_bet: 0,
+    updated_at: new Date(),
+  })
+
+  // Delete hand and action history for this game
+  await db('actions')
+    .whereIn(
+      'player_id',
+      players.map((p) => p.id),
+    )
+    .delete()
+  await db('hands').where({ game_id: gameId }).delete()
+
+  return await getGameById(gameId)
+}
+
+/**
  * Delete a game
  * @param {string} gameId - Game ID
  */
@@ -547,5 +607,6 @@ module.exports = {
   createHandRecord,
   completeHandRecord,
   recordHandHistory,
+  resetGame,
   deleteGame,
 }

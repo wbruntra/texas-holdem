@@ -86,14 +86,14 @@ export default function PlayerSeat({ game, player, index, style }: Props) {
       </div>
 
       {/* Cards Display */}
-      {/* Only show cards if not folded, or if folded but we want to show them temporarily (logic depends on game, usually folded = hidden/mucked) */}
+      {/* Only show cards if not folded */}
       {!isFolded && (isActive || isAllIn || isShowdown) && (
         <div className="hand-container">
-          {/* Logic for hole cards:
-              If showdown and we have cards, show them face up.
-              Else if active/all-in (and not showdown or no cards revealed), show backs. 
-          */}
-          {isShowdown && player.holeCards && player.holeCards.length > 0 ? (
+          {/* Security principle: Backend controls what we receive.
+              If we have hole cards, show them face-up.
+              If not, show card backs.
+              The backend will only send cards when they should be visible. */}
+          {player.holeCards && player.holeCards.length > 0 ? (
             player.holeCards.slice(0, 2).map((card, i) => (
               <div
                 key={i}
@@ -103,7 +103,7 @@ export default function PlayerSeat({ game, player, index, style }: Props) {
                   transform:
                     i === 0 ? 'rotate(-6deg) translateX(4px)' : 'rotate(6deg) translateX(-4px)',
                   zIndex: i === 0 ? 1 : 2,
-                  marginTop: i === 1 ? '4px' : '0', // Slight vertical offset for natural look? Or just rotation.
+                  marginTop: i === 1 ? '4px' : '0',
                 }}
               >
                 {formatCard(card)}
@@ -111,7 +111,7 @@ export default function PlayerSeat({ game, player, index, style }: Props) {
             ))
           ) : (
             <>
-              {/* Card Backs for active players hole cards */}
+              {/* Card Backs - shown when backend doesn't send cards */}
               <div
                 className="poker-card-small poker-card-back"
                 style={{ transform: 'rotate(-6deg) translateX(4px)', zIndex: 1 }}

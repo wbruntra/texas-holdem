@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
 import { QRCodeSVG } from 'qrcode.react'
 import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config'
 
 import PokerTableScene from '../components/table/PokerTableScene'
+import GameOverModal from '../components/GameOverModal'
 import type { GameState } from '../components/table/types'
+import { useSoundEffects } from '../hooks/useSoundEffects'
 
 export default function TableView() {
   const { roomCode } = useParams<{ roomCode: string }>()
@@ -14,12 +16,57 @@ export default function TableView() {
   const [loading, setLoading] = useState(true)
   const [showGameOverModal, setShowGameOverModal] = useState(true)
   const [wsConnected, setWsConnected] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
+  const { playCheckSound, playBetSound, playCardFlipSound } = useSoundEffects()
+  const previousActionsRef = useRef<Map<string, string | null>>(new Map())
+  const previousCommunityCardsCountRef = useRef(0)
 
   const getApiErrorMessage = (err: unknown, fallback: string) => {
     if (!axios.isAxiosError(err)) return fallback
     const data = err.response?.data as { error?: string } | undefined
     return data?.error || fallback
   }
+
+  // Watch for player actions and play sounds
+  useEffect(() => {
+    if (!game) return
+
+    game.players.forEach((player) => {
+      const previousAction = previousActionsRef.current.get(player.id)
+      const currentAction = player.lastAction
+
+      // Only play sound if action has changed
+      if (currentAction && currentAction !== previousAction) {
+        const action = currentAction.toLowerCase()
+
+        if (action === 'check') {
+          playCheckSound()
+        } else if (action === 'bet' || action === 'raise' || action === 'call') {
+          playBetSound()
+        }
+      }
+
+      // Update the previous action
+      if (currentAction) {
+        previousActionsRef.current.set(player.id, currentAction)
+      }
+    })
+  }, [game, playCheckSound, playBetSound])
+
+  // Watch for community cards being revealed and play sound
+  useEffect(() => {
+    if (!game) return
+
+    const currentCardsCount = game.communityCards?.length || 0
+    const previousCardsCount = previousCommunityCardsCountRef.current
+
+    // Play sound when new cards are revealed
+    if (currentCardsCount > previousCardsCount) {
+      playCardFlipSound()
+    }
+
+    previousCommunityCardsCountRef.current = currentCardsCount
+  }, [game, playCardFlipSound])
 
   useEffect(() => {
     if (!roomCode) return
@@ -155,6 +202,23 @@ export default function TableView() {
     }
   }, [roomCode])
 
+  const handleResetGame = async () => {
+    if (!roomCode) return
+
+    setIsResetting(true)
+    try {
+      await axios.post(`/api/games/room/${roomCode}/reset`)
+      // Game state will be updated via WebSocket or polling
+      setShowGameOverModal(false)
+    } catch (err: unknown) {
+      const errorMsg = getApiErrorMessage(err, 'Failed to reset game')
+      setError(errorMsg)
+      alert(errorMsg)
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="container d-flex flex-column justify-content-center align-items-center min-vh-100 text-white">
@@ -236,57 +300,13 @@ export default function TableView() {
         )}
       </PokerTableScene>
 
-      {/* Game Over Modal */}
-      {game.status === 'completed' && showGameOverModal && (
-        <div
-          className="modal show d-block"
-          style={{ backgroundColor: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(4px)', zIndex: 1100 }}
-        >
-          <div className="modal-dialog modal-dialog-centered">
-            <div
-              className="modal-content bg-dark text-white border-warning shadow-lg p-4"
-              style={{ border: '2px solid gold' }}
-            >
-              <button
-                onClick={() => setShowGameOverModal(false)}
-                className="btn-close btn-close-white position-absolute top-0 end-0 m-3"
-                aria-label="Close"
-              ></button>
-
-              <div className="modal-body text-center p-4">
-                <div className="display-1 mb-3">🏆</div>
-                <h2 className="display-6 fw-bold text-warning mb-4">GAME OVER!</h2>
-
-                <p className="small text-secondary mb-4 uppercase text-uppercase fw-bold">
-                  Final Chip Count
-                </p>
-
-                <div className="d-flex flex-column gap-2 mb-5">
-                  {[...game.players]
-                    .sort((a, b) => b.chips - a.chips)
-                    .map((player) => (
-                      <div
-                        key={player.name}
-                        className={`d-flex justify-content-between p-3 rounded border ${
-                          player.chips > 0
-                            ? 'bg-success bg-opacity-10 border-success text-success'
-                            : 'bg-danger bg-opacity-10 border-danger text-secondary'
-                        }`}
-                      >
-                        <span className="fw-bold">{player.name}</span>
-                        <span className="fw-bold">${player.chips}</span>
-                      </div>
-                    ))}
-                </div>
-
-                <div className="small text-secondary border-top border-secondary pt-3 mt-2">
-                  Room: <span className="text-light">{game.roomCode}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <GameOverModal
+        game={game}
+        isOpen={game.status === 'completed' && showGameOverModal}
+        onClose={() => setShowGameOverModal(false)}
+        onResetGame={handleResetGame}
+        isResetting={isResetting}
+      />
     </>
   )
 }

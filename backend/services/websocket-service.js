@@ -293,10 +293,21 @@ class WebSocketService {
   }
 
   /**
-   * Sanitize game state for table view (public, no hole cards except showdown)
+   * Sanitize game state for table view (public, no hole cards except when rules allow)
+   * Cards are revealed when:
+   * 1. It's showdown, OR
+   * 2. Only one player has chips and others are all-in (standard poker rules)
    */
   sanitizeTableState(game) {
     const isShowdown = game.currentRound === SHOWDOWN_ROUND
+
+    // Check if cards should be revealed due to all-in situation
+    const playersWithChips = game.players.filter(
+      (p) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
+    )
+    const allInPlayers = game.players.filter((p) => p.status === 'all_in')
+    const shouldRevealAllCards =
+      isShowdown || (playersWithChips.length === 1 && allInPlayers.length > 0)
 
     return {
       id: game.id,
@@ -322,10 +333,11 @@ class WebSocketService {
         currentBet: p.currentBet,
         status: p.status,
         holeCards:
-          isShowdown &&
-          (game.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in').length >
-            1 ||
-            p.showCards)
+          (shouldRevealAllCards &&
+            (game.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in').length >
+              1 ||
+              p.showCards)) ||
+          p.showCards
             ? p.holeCards || []
             : [],
         lastAction: p.lastAction || null,

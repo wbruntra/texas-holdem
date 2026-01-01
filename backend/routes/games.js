@@ -301,6 +301,33 @@ router.post('/:gameId/start', requireAuth, loadPlayer, async (req, res, next) =>
 })
 
 /**
+ * POST /api/games/room/:roomCode/reset
+ * Reset the game to initial state (no auth required for table view)
+ */
+router.post('/room/:roomCode/reset', async (req, res, next) => {
+  try {
+    const game = await gameService.getGameByRoomCode(req.params.roomCode)
+
+    if (!game) {
+      return res.status(404).json({ error: 'Game not found' })
+    }
+
+    if (game.status !== 'completed') {
+      return res.status(400).json({ error: 'Can only reset completed games' })
+    }
+
+    const resetGame = await gameService.resetGame(game.id)
+
+    // Emit game update event
+    gameEvents.emitGameUpdate(game.id, 'reset')
+
+    res.json(resetGame)
+  } catch (error) {
+    next(error)
+  }
+})
+
+/**
  * POST /api/games/:gameId/actions
  * Submit a player action
  */
