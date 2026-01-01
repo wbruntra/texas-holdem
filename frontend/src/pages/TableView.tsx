@@ -68,6 +68,13 @@ export default function TableView() {
     previousCommunityCardsCountRef.current = currentCardsCount
   }, [game, playCardFlipSound])
 
+  // Show game over modal when game becomes completed
+  useEffect(() => {
+    if (game?.status === 'completed') {
+      setShowGameOverModal(true)
+    }
+  }, [game?.status])
+
   useEffect(() => {
     if (!roomCode) return
 
