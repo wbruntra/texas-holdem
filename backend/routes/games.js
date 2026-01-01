@@ -4,6 +4,7 @@ const gameService = require('../services/game-service')
 const playerService = require('../services/player-service')
 const actionService = require('../services/action-service')
 const gameEvents = require('../lib/game-events')
+const { isBettingRoundComplete, shouldAutoAdvance } = require('../lib/game-state-machine')
 
 const SHOWDOWN_ROUND = 'showdown'
 
@@ -452,8 +453,9 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
       return res.status(404).json({ error: 'Game not found' })
     }
 
-    // Check if betting is complete (currentPlayerPosition should be null)
-    if (game.currentPlayerPosition !== null) {
+    // Check if betting is complete or if we should auto-advance (all-in situation)
+    // Allow advance if: betting complete (no one to act) OR should auto-advance (all-in)
+    if (!isBettingRoundComplete(game) && !shouldAutoAdvance(game)) {
       return res.status(400).json({ error: 'Betting round not complete' })
     }
 
