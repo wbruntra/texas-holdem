@@ -96,6 +96,11 @@ export function usePlayerGame(roomCode: string | undefined) {
       return false
     }
 
+    // Betting must be complete (no one has more actions to take)
+    if (gameState.currentPlayerPosition !== null) {
+      return false
+    }
+
     // Count players with chips
     const playersWithChips = gameState.players.filter(
       (p) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
