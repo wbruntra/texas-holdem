@@ -525,10 +525,16 @@ export default function PlayerView() {
     return (
       <div
         style={{
-          maxWidth: '400px',
-          margin: '50px auto',
+          maxWidth: '600px',
+          margin: '0 auto',
           padding: '20px',
           textAlign: 'center',
+          minHeight: '100vh',
+          backgroundColor: '#1a472a',
+          color: '#fff',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
         }}
       >
         <h2>Checking authentication...</h2>
@@ -539,7 +545,20 @@ export default function PlayerView() {
   // Join screen
   if (!joined) {
     return (
-      <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
+      <div
+        style={{
+          maxWidth: '600px',
+          margin: '0 auto',
+          padding: '20px',
+          minHeight: '100vh',
+          backgroundColor: '#1a472a',
+          color: '#fff',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
         <h1>Join Game</h1>
         <p>Room: {roomCode}</p>
 
@@ -616,7 +635,19 @@ export default function PlayerView() {
   }
 
   if (!game) {
-    return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>
+    return (
+      <div
+        style={{
+          padding: '50px',
+          textAlign: 'center',
+          minHeight: '100vh',
+          backgroundColor: '#1a472a',
+          color: '#fff',
+        }}
+      >
+        Loading...
+      </div>
+    )
   }
 
   const myPlayer = game.players.find((p) => p.name === playerName)
@@ -632,7 +663,7 @@ export default function PlayerView() {
     <div
       style={{
         padding: '12px',
-        minHeight: '95vh',
+        minHeight: '100vh',
         backgroundColor: '#1a472a',
         color: '#fff',
         maxWidth: '600px',

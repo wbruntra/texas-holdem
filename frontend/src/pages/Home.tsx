@@ -69,6 +69,8 @@ export default function Home() {
         flexDirection: 'column',
         justifyContent: 'center',
         boxSizing: 'border-box',
+        backgroundColor: '#1a472a',
+        color: '#fff',
       }}
     >
       <h1 style={{ marginTop: '0', marginBottom: '1.5rem' }}>Texas Hold'em</h1>
