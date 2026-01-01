@@ -19,6 +19,7 @@ CREATE TABLE players (
     updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     password_hash varchar(255) NOT NULL,
     total_bet INTEGER NOT NULL DEFAULT '0',
+    show_cards boolean NOT NULL DEFAULT '0',
     PRIMARY KEY (id),
     CONSTRAINT fk_players_game_id_games_id FOREIGN KEY (game_id) REFERENCES games(id)
 );

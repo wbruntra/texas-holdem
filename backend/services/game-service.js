@@ -211,8 +211,6 @@ async function saveGameState(gameId, state) {
         dealer_position: state.dealerPosition,
         current_round: state.currentRound,
         pot: state.pot,
-        pots:
-          Array.isArray(state.pots) && state.pots.length > 0 ? JSON.stringify(state.pots) : null,
         community_cards:
           state.communityCards.length > 0 ? JSON.stringify(state.communityCards) : null,
         deck: state.deck && state.deck.length > 0 ? JSON.stringify(state.deck) : null,
@@ -281,20 +279,10 @@ async function advanceOneRound(gameId) {
   // Advance one round
   if (shouldContinueToNextRound(gameState)) {
     gameState = advanceRound(gameState)
-
-    // Recalculate pots after advancing
-    gameState.pots = calculatePots(gameState.players)
-    gameState.pot = getTotalPot(gameState.pots)
-
     await saveGameState(gameId, gameState)
   } else {
-    // Go to showdown
+    // Go to showdown - processShowdown will calculate pots internally
     gameState = advanceRound(gameState)
-
-    // Final pot calculation
-    gameState.pots = calculatePots(gameState.players)
-    gameState.pot = getTotalPot(gameState.pots)
-
     gameState = processShowdown(gameState)
     await saveGameState(gameId, gameState)
 
@@ -348,10 +336,6 @@ async function advanceRoundIfReady(gameId) {
     if (shouldContinueToNextRound(gameState)) {
       gameState = advanceRound(gameState)
 
-      // Recalculate pots after each round
-      gameState.pots = calculatePots(gameState.players)
-      gameState.pot = getTotalPot(gameState.pots)
-
       // If auto-advancing, add timestamp for when this round's cards were revealed
       if (shouldAutoAdvanceNow) {
         gameState.autoAdvanceTimestamp = Date.now()
@@ -365,13 +349,8 @@ async function advanceRoundIfReady(gameId) {
         await new Promise((resolve) => setTimeout(resolve, 2000))
       }
     } else {
-      // Go to showdown
+      // Go to showdown - processShowdown will calculate pots internally
       gameState = advanceRound(gameState)
-
-      // Final pot calculation
-      gameState.pots = calculatePots(gameState.players)
-      gameState.pot = getTotalPot(gameState.pots)
-
       gameState = processShowdown(gameState)
       await saveGameState(gameId, gameState)
 
@@ -489,7 +468,6 @@ async function completeHandRecord(gameId, gameState) {
     .update({
       winners: gameState.winners ? JSON.stringify(gameState.winners) : null,
       pot_amount: gameState.pot,
-      pots: gameState.pots ? JSON.stringify(gameState.pots) : null,
       community_cards: JSON.stringify(gameState.communityCards),
       player_stacks_end: JSON.stringify(playerStacksEnd),
       completed_at: new Date(),
@@ -556,7 +534,6 @@ async function resetGame(gameId) {
     last_raise: 0,
     deck: null,
     winners: null,
-    pots: null,
     updated_at: new Date(),
   })
 

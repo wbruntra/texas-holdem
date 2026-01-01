@@ -8,6 +8,7 @@ const Keygrip = require('keygrip')
 const gameService = require('../services/game-service')
 const playerService = require('../services/player-service')
 const gameEvents = require('../lib/game-events')
+const { calculatePots } = require('../lib/pot-manager')
 
 const SHOWDOWN_ROUND = 'showdown'
 
@@ -319,7 +320,7 @@ class WebSocketService {
       dealerPosition: game.dealerPosition,
       currentRound: game.currentRound,
       pot: game.pot,
-      pots: game.pots || [],
+      pots: calculatePots(game.players),
       currentBet: game.currentBet,
       currentPlayerPosition: game.currentPlayerPosition,
       handNumber: game.handNumber,
@@ -362,7 +363,7 @@ class WebSocketService {
       dealerPosition: game.dealerPosition,
       currentRound: game.currentRound,
       pot: game.pot,
-      pots: game.pots || [],
+      pots: calculatePots(game.players),
       currentBet: game.currentBet,
       currentPlayerPosition: game.currentPlayerPosition,
       handNumber: game.handNumber,

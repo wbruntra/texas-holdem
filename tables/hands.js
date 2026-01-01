@@ -16,6 +16,7 @@ CREATE TABLE hands (
     player_hole_cards TEXT,
     player_stacks_start TEXT,
     player_stacks_end TEXT,
+    pots TEXT,
     small_blind INTEGER,
     big_blind INTEGER,
     PRIMARY KEY (id),

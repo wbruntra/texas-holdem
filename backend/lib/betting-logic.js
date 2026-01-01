@@ -367,12 +367,18 @@ function getValidActions(state, playerPosition) {
   const allInPlayers = state.players.filter((p) => p.status === PLAYER_STATUS.ALL_IN)
 
   // If only this player has chips and there are all-in players, they should reveal cards
+  // BUT ONLY if this player has already matched the current bet!
+  // Otherwise, they must get a chance to respond to the all-in bet first
   if (playersWithChips.length === 1 && allInPlayers.length > 0) {
-    return {
-      canAct: false,
-      canReveal: true,
-      reason: 'All other players are all-in. Reveal cards to continue.',
+    // Check if this player has matched the current bet
+    if (player.currentBet >= state.currentBet) {
+      return {
+        canAct: false,
+        canReveal: true,
+        reason: 'All other players are all-in. Reveal cards to continue.',
+      }
     }
+    // If player hasn't matched the bet yet, they must act first (call/fold/raise)
   }
 
   const callAmount = state.currentBet - player.currentBet

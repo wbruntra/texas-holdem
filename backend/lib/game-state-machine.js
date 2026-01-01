@@ -48,6 +48,7 @@ function createGameState(config = {}) {
     deck: [],
     handNumber: 0,
     lastRaise: 0,
+    showdownProcessed: false,
   }
 }
 
@@ -365,6 +366,13 @@ function advanceRound(state) {
  * @returns {Object} Updated game state with winners
  */
 function processShowdown(state) {
+  // Guard against double processing: showdown payout must be idempotent.
+  // We cannot rely on `state.pot === 0` because other code may recalculate `pot`
+  // from `totalBet` (or rehydrate older state), which would repopulate the pot.
+  if (state.showdownProcessed) {
+    return state
+  }
+
   const eligiblePlayers = state.players.filter(
     (p) => p.status === PLAYER_STATUS.ACTIVE || p.status === PLAYER_STATUS.ALL_IN,
   )
@@ -376,9 +384,9 @@ function processShowdown(state) {
   // If only one player remains, they win all pots
   if (eligiblePlayers.length === 1) {
     const winner = eligiblePlayers[0]
-    const players = state.players.map((p) =>
-      p.id === winner.id ? { ...p, chips: p.chips + state.pot } : p,
-    )
+    const players = state.players
+      .map((p) => (p.id === winner.id ? { ...p, chips: p.chips + state.pot } : { ...p }))
+      .map((p) => ({ ...p, currentBet: 0, totalBet: 0 }))
 
     // Create a single pot with "Won by fold" designation
     const pots = [
@@ -396,11 +404,13 @@ function processShowdown(state) {
       pot: 0,
       pots: pots,
       winners: [winner.position],
+      showdownProcessed: true,
     }
   }
 
-  // Calculate pots if not already done
-  let pots = state.pots && state.pots.length > 0 ? state.pots : calculatePots(state.players)
+  // Always calculate pots fresh from players.totalBet (never reuse state.pots)
+  // This prevents double-award bugs from stale pot data
+  let pots = calculatePots(state.players)
 
   // If pots are empty (likely from old games without totalBet tracking),
   // fall back to simple pot distribution
@@ -418,15 +428,18 @@ function processShowdown(state) {
         const bonus = winnerIndex === 0 ? remainder : 0
         return { ...p, chips: p.chips + potShare + bonus }
       }
-      return p
+      return { ...p }
     })
+
+    const clearedPlayers = players.map((p) => ({ ...p, currentBet: 0, totalBet: 0 }))
 
     return {
       ...state,
-      players,
+      players: clearedPlayers,
       pot: 0,
       pots: [],
       winners: eligiblePlayers.map((p) => p.position),
+      showdownProcessed: true,
     }
   }
 
@@ -435,6 +448,7 @@ function processShowdown(state) {
 
   // Award chips to winners
   const players = awardPots(pots, state.players)
+  const clearedPlayers = players.map((p) => ({ ...p, currentBet: 0, totalBet: 0 }))
 
   // Collect all unique winners across all pots
   const allWinners = new Set()
@@ -451,10 +465,11 @@ function processShowdown(state) {
   return {
     ...state,
     status: gameStatus,
-    players,
+    players: clearedPlayers,
     pot: 0,
     pots: pots, // Keep pots with winners for display
     winners: Array.from(allWinners),
+    showdownProcessed: true,
   }
 }
 
