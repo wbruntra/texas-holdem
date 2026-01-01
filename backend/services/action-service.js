@@ -95,6 +95,15 @@ async function submitAction(playerId, action, amount = 0) {
     await advanceRoundIfReady(game.id)
   }
 
+  // SAFE AUTO-ADVANCE (no all-ins and betting complete)
+  // If no players are all-in and betting is complete (currentPlayerPosition is null),
+  // we can safely auto-advance and reveal all remaining cards at once.
+  // This only happens if betting round completed normally (not due to a fold).
+  if (allInPlayers.length === 0 && newState.currentPlayerPosition === null) {
+    // No all-ins and betting is complete, safe to auto-advance
+    await advanceRoundIfReady(game.id)
+  }
+
   // Get fresh state to return
   const finalState = await getGameById(game.id)
 
