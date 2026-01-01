@@ -307,6 +307,8 @@ async function replayGame(roomCode, specificHandNumber = null) {
       })
     }
   }
+
+  process.exit(0)
 }
 
 async function main() {
