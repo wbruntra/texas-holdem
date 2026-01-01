@@ -3,8 +3,8 @@
  */
 exports.up = function(knex) {
   return knex.schema.createTable('hands', function(table) {
-    table.uuid('id').primary().defaultTo(knex.raw('(lower(hex(randomblob(16))))'));
-    table.uuid('game_id').notNullable().references('id').inTable('games').onDelete('CASCADE');
+    table.increments('id').primary();
+    table.integer('game_id').unsigned().notNullable().references('id').inTable('games').onDelete('CASCADE')
     table.integer('hand_number').notNullable();
     table.integer('dealer_position').notNullable();
     table.json('winners').nullable(); // Array of player IDs

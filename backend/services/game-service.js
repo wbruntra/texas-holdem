@@ -2,7 +2,6 @@
  * Game Service - Handles game creation, state management, and persistence
  */
 
-const { v4: uuidv4 } = require('uuid')
 const db = require('../../db')
 const {
   createGameState,
@@ -51,10 +50,7 @@ async function createGame(config = {}) {
     throw new Error('Failed to generate unique room code')
   }
 
-  const gameId = uuidv4()
-
-  await db('games').insert({
-    id: gameId,
+  const [gameId] = await db('games').insert({
     room_code: roomCode,
     status: GAME_STATUS.WAITING,
     small_blind: smallBlind,
@@ -175,6 +171,23 @@ async function startGame(gameId) {
   // Save updated state to database
   await saveGameState(gameId, newState)
 
+  // Create hand record at start with initial state
+  await createHandRecord(gameId, newState)
+
+  // Record blind posts as actions
+  const { recordBlindPost } = require('./action-service')
+  const players = newState.players
+
+  const sbPlayer = players.find((p) => p.isSmallBlind)
+  const bbPlayer = players.find((p) => p.isBigBlind)
+
+  if (sbPlayer && sbPlayer.currentBet > 0) {
+    await recordBlindPost(gameId, sbPlayer.id, 'small_blind', sbPlayer.currentBet)
+  }
+  if (bbPlayer && bbPlayer.currentBet > 0) {
+    await recordBlindPost(gameId, bbPlayer.id, 'big_blind', bbPlayer.currentBet)
+  }
+
   return getGameById(gameId)
 }
 
@@ -234,6 +247,58 @@ async function saveGameState(gameId, state) {
  * @param {string} gameId - Game ID
  * @returns {Promise<Object>} Updated game state
  */
+/**
+ * Advance exactly one round (for manual button clicks)
+ * Does NOT auto-advance through multiple rounds
+ * @param {string} gameId - Game ID
+ * @returns {Promise<Object>} Updated game state
+ */
+async function advanceOneRound(gameId) {
+  const game = await getGameById(gameId)
+  if (!game) {
+    throw new Error('Game not found')
+  }
+
+  let gameState = game
+
+  // Check if betting is complete
+  if (!isBettingRoundComplete(gameState) && !shouldAutoAdvance(gameState)) {
+    // Betting not complete, cannot advance
+    return gameState
+  }
+
+  if (gameState.currentRound === ROUND.SHOWDOWN) {
+    // Already at showdown
+    return gameState
+  }
+
+  // Advance one round
+  if (shouldContinueToNextRound(gameState)) {
+    gameState = advanceRound(gameState)
+
+    // Recalculate pots after advancing
+    gameState.pots = calculatePots(gameState.players)
+    gameState.pot = getTotalPot(gameState.pots)
+
+    await saveGameState(gameId, gameState)
+  } else {
+    // Go to showdown
+    gameState = advanceRound(gameState)
+
+    // Final pot calculation
+    gameState.pots = calculatePots(gameState.players)
+    gameState.pot = getTotalPot(gameState.pots)
+
+    gameState = processShowdown(gameState)
+    await saveGameState(gameId, gameState)
+
+    // Complete hand record with final state
+    await completeHandRecord(gameId, gameState)
+  }
+
+  return gameState
+}
+
 async function advanceRoundIfReady(gameId) {
   const game = await getGameById(gameId)
   if (!game) {
@@ -280,8 +345,8 @@ async function advanceRoundIfReady(gameId) {
       gameState = processShowdown(gameState)
       await saveGameState(gameId, gameState)
 
-      // Record hand history
-      await recordHandHistory(gameId, gameState)
+      // Complete hand record with final state
+      await completeHandRecord(gameId, gameState)
       break
     }
   }
@@ -307,27 +372,124 @@ async function startNextHand(gameId) {
   const newState = startNewHand(game)
   await saveGameState(gameId, newState)
 
+  // Create hand record at start
+  await createHandRecord(gameId, newState)
+
+  // Record blind posts as actions
+  const { recordBlindPost } = require('./action-service')
+  const players = newState.players
+
+  const sbPlayer = players.find((p) => p.isSmallBlind)
+  const bbPlayer = players.find((p) => p.isBigBlind)
+
+  if (sbPlayer && sbPlayer.currentBet > 0) {
+    await recordBlindPost(gameId, sbPlayer.id, 'small_blind', sbPlayer.currentBet)
+  }
+  if (bbPlayer && bbPlayer.currentBet > 0) {
+    await recordBlindPost(gameId, bbPlayer.id, 'big_blind', bbPlayer.currentBet)
+  }
+
   return getGameById(gameId)
 }
 
 /**
- * Record hand history
+ * Create hand record at start of hand
  * @param {string} gameId - Game ID
- * @param {Object} gameState - Game state after showdown
+ * @param {Object} gameState - Game state at hand start
+ * @returns {Promise<string>} Hand ID
  */
-async function recordHandHistory(gameId, gameState) {
-  const handId = uuidv4()
+async function createHandRecord(gameId, gameState) {
+  // Capture player stacks at start
+  const playerStacksStart = gameState.players.map((p) => ({
+    player_id: p.id,
+    position: p.position,
+    name: p.name,
+    chips: p.chips,
+  }))
 
-  await db('hands').insert({
-    id: handId,
+  // Capture hole cards for each player
+  const playerHoleCards = {}
+  gameState.players.forEach((p) => {
+    if (p.holeCards && p.holeCards.length > 0) {
+      playerHoleCards[p.id] = p.holeCards
+    }
+  })
+
+  const [handId] = await db('hands').insert({
     game_id: gameId,
     hand_number: gameState.handNumber,
     dealer_position: gameState.dealerPosition,
-    winners: gameState.winners ? JSON.stringify(gameState.winners) : null,
-    pot_amount: gameState.pot,
-    community_cards: JSON.stringify(gameState.communityCards),
-    completed_at: new Date(),
+    deck: gameState.deck ? JSON.stringify(gameState.deck) : null,
+    player_hole_cards: JSON.stringify(playerHoleCards),
+    player_stacks_start: JSON.stringify(playerStacksStart),
+    small_blind: gameState.smallBlind,
+    big_blind: gameState.bigBlind,
+    community_cards: JSON.stringify([]),
   })
+
+  return handId
+}
+
+/**
+ * Update hand record at completion (showdown)
+ * @param {string} gameId - Game ID
+ * @param {Object} gameState - Game state after showdown
+ */
+async function completeHandRecord(gameId, gameState) {
+  const hand = await db('hands').where({ game_id: gameId }).orderBy('hand_number', 'desc').first()
+
+  if (!hand) {
+    console.error('No hand record found to complete')
+    return
+  }
+
+  // Capture player stacks at end
+  const playerStacksEnd = gameState.players.map((p) => ({
+    player_id: p.id,
+    position: p.position,
+    chips: p.chips,
+  }))
+
+  await db('hands')
+    .where({ id: hand.id })
+    .update({
+      winners: gameState.winners ? JSON.stringify(gameState.winners) : null,
+      pot_amount: gameState.pot,
+      pots: gameState.pots ? JSON.stringify(gameState.pots) : null,
+      community_cards: JSON.stringify(gameState.communityCards),
+      player_stacks_end: JSON.stringify(playerStacksEnd),
+      completed_at: new Date(),
+      updated_at: new Date(),
+    })
+}
+
+/**
+ * Record hand history (legacy - kept for compatibility)
+ * @param {string} gameId - Game ID
+ * @param {Object} gameState - Game state after showdown
+ * @deprecated Use createHandRecord at start and completeHandRecord at end
+ */
+async function recordHandHistory(gameId, gameState) {
+  // For backwards compatibility, check if hand already exists
+  const existingHand = await db('hands')
+    .where({ game_id: gameId, hand_number: gameState.handNumber })
+    .first()
+
+  if (existingHand) {
+    // Hand was created at start, just complete it
+    await completeHandRecord(gameId, gameState)
+  } else {
+    // Old flow - create complete record at once
+    await db('hands').insert({
+      game_id: gameId,
+      hand_number: gameState.handNumber,
+      dealer_position: gameState.dealerPosition,
+      winners: gameState.winners ? JSON.stringify(gameState.winners) : null,
+      pot_amount: gameState.pot,
+      community_cards: JSON.stringify(gameState.communityCards),
+      completed_at: new Date(),
+    })
+  }
 }
 
 /**
@@ -346,7 +508,10 @@ module.exports = {
   startGame,
   saveGameState,
   advanceRoundIfReady,
+  advanceOneRound,
   startNextHand,
+  createHandRecord,
+  completeHandRecord,
   recordHandHistory,
   deleteGame,
 }

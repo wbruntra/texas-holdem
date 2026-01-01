@@ -337,6 +337,53 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
 })
 
 /**
+ * POST /api/games/:gameId/advance
+ * Advance to next round when betting is complete (any player can trigger)
+ */
+router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) => {
+  try {
+    // Verify player is in this game
+    if (req.player.gameId !== req.params.gameId) {
+      return res.status(403).json({ error: 'Not authorized for this game' })
+    }
+
+    const game = await gameService.getGameById(req.params.gameId)
+    if (!game) {
+      return res.status(404).json({ error: 'Game not found' })
+    }
+
+    // Check if betting is complete (currentPlayerPosition should be null)
+    if (game.currentPlayerPosition !== null) {
+      return res.status(400).json({ error: 'Betting round not complete' })
+    }
+
+    // Advance exactly one round (not auto-advance through all)
+    const nextState = await gameService.advanceOneRound(req.params.gameId)
+
+    const isShowdown = nextState.currentRound === SHOWDOWN_ROUND
+
+    // Return game state with only this player's hole cards visible
+    const sanitizedState = {
+      ...nextState,
+      players: nextState.players.map((p) => ({
+        ...p,
+        holeCards: isShowdown || p.id === req.player.id ? p.holeCards : [],
+      })),
+    }
+
+    // Emit game update event
+    gameEvents.emitGameUpdate(req.params.gameId, 'advance')
+
+    res.json(sanitizedState)
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(400).json({ error: error.message || 'Cannot advance round' })
+    }
+    next(error)
+  }
+})
+
+/**
  * GET /api/games/:gameId/actions/valid
  * Get valid actions for current player
  */

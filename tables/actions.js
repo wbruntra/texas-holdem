@@ -2,12 +2,13 @@
  * actions Table DDL:
  * BEGIN_DDL
 CREATE TABLE actions (
-    id char(36) DEFAULT lower(hex(randomblob(16))),
-    hand_id char(36) NOT NULL,
-    player_id char(36) NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hand_id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
     action_type TEXT NOT NULL,
     amount INTEGER NOT NULL DEFAULT '0',
     round TEXT NOT NULL,
+    sequence_number INTEGER NOT NULL DEFAULT '0',
     created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),

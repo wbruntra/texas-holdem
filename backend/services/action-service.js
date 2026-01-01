@@ -2,7 +2,6 @@
  * Action Service - Handles player actions (bet, raise, fold, etc.)
  */
 
-const { v4: uuidv4 } = require('uuid')
 const db = require('../../db')
 const { validateAction, processAction, getValidActions } = require('../lib/betting-logic')
 const { getGameById, saveGameState, advanceRoundIfReady } = require('./game-service')
@@ -84,13 +83,16 @@ async function submitAction(playerId, action, amount = 0) {
     await recordAction(game.id, playerId, action, amount, game.currentRound)
   }
 
-  // Check if we should advance to next round
-  let finalState = await advanceRoundIfReady(game.id)
+  // Do NOT auto-advance - wait for explicit deal-flop/turn/river/showdown call
+  // This gives players time to see what happened before new cards appear
 
-  // Normalize turn again after advancing (in case current player is now ALL_IN/OUT)
-  finalState = (await normalizeTurnIfNeeded(finalState.id)) || finalState
+  // Get fresh state to return
+  const finalState = await getGameById(game.id)
 
-  return finalState
+  // Normalize turn if needed (in case current player is now ALL_IN/OUT)
+  const normalizedState = (await normalizeTurnIfNeeded(finalState.id)) || finalState
+
+  return normalizedState
 }
 
 /**
@@ -140,19 +142,38 @@ async function recordAction(gameId, playerId, actionType, amount, round) {
   const hand = await db('hands').where({ game_id: gameId }).orderBy('hand_number', 'desc').first()
 
   if (!hand) {
-    // Hand not yet created (will be created at showdown)
-    // We could create it here or just skip recording until hand exists
+    // Hand not yet created - this shouldn't happen in new flow
+    console.warn('No hand record found for action', { gameId, playerId, actionType })
     return
   }
 
+  // Get next sequence number for this hand
+  const lastAction = await db('actions')
+    .where({ hand_id: hand.id })
+    .orderBy('sequence_number', 'desc')
+    .first()
+
+  const sequenceNumber = lastAction ? lastAction.sequence_number + 1 : 1
+
   await db('actions').insert({
-    id: uuidv4(),
     hand_id: hand.id,
     player_id: playerId,
     action_type: actionType,
     amount,
     round,
+    sequence_number: sequenceNumber,
   })
+}
+
+/**
+ * Record blind post action
+ * @param {string} gameId - Game ID
+ * @param {string} playerId - Player ID
+ * @param {string} blindType - 'small_blind' or 'big_blind'
+ * @param {number} amount - Blind amount
+ */
+async function recordBlindPost(gameId, playerId, blindType, amount) {
+  await recordAction(gameId, playerId, blindType, amount, 'preflop')
 }
 
 /**
@@ -161,7 +182,10 @@ async function recordAction(gameId, playerId, actionType, amount, round) {
  * @returns {Promise<Array>} Array of actions
  */
 async function getHandActions(handId) {
-  const actions = await db('actions').where({ hand_id: handId }).orderBy('created_at')
+  const actions = await db('actions')
+    .where({ hand_id: handId })
+    .orderBy('sequence_number')
+    .orderBy('created_at')
 
   return actions.map((a) => ({
     id: a.id,
@@ -169,6 +193,7 @@ async function getHandActions(handId) {
     actionType: a.action_type,
     amount: a.amount,
     round: a.round,
+    sequenceNumber: a.sequence_number,
     timestamp: a.created_at,
   }))
 }
@@ -242,6 +267,8 @@ async function getGameActions(gameId, handNumber = null) {
 
   const actions = await query
     .select('actions.*', 'hands.hand_number')
+    .orderBy('hands.hand_number')
+    .orderBy('actions.sequence_number')
     .orderBy('actions.created_at')
 
   return actions.map((a) => ({
@@ -252,6 +279,7 @@ async function getGameActions(gameId, handNumber = null) {
     actionType: a.action_type,
     amount: a.amount,
     round: a.round,
+    sequenceNumber: a.sequence_number,
     timestamp: a.created_at,
   }))
 }
@@ -260,6 +288,7 @@ module.exports = {
   submitAction,
   getPlayerValidActions,
   recordAction,
+  recordBlindPost,
   getHandActions,
   getGameActions,
   normalizeTurnIfNeeded,

@@ -3,7 +3,7 @@
  */
 exports.up = function(knex) {
   return knex.schema.createTable('games', function(table) {
-    table.uuid('id').primary().defaultTo(knex.raw('(lower(hex(randomblob(16))))'));
+    table.increments('id').primary();
     table.string('room_code', 6).notNullable().unique();
     table.enum('status', ['waiting', 'active', 'completed']).notNullable().defaultTo('waiting');
     table.integer('small_blind').notNullable().defaultTo(5);

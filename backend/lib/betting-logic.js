@@ -213,7 +213,54 @@ function processAction(state, playerPosition, action, amount = 0) {
 
   players[playerPosition] = player
 
-  // Move to next player
+  // Check if betting round is complete
+  const activePlayers = players.filter(
+    (p) => p.status === PLAYER_STATUS.ACTIVE || p.status === PLAYER_STATUS.ALL_IN,
+  )
+
+  if (activePlayers.length === 0) {
+    // Everyone folded or is out - betting complete
+    return {
+      ...state,
+      players,
+      pot: newPot,
+      currentBet: newCurrentBet,
+      lastRaise: newLastRaise,
+      currentPlayerPosition: null,
+    }
+  }
+
+  const playersWhoCanAct = activePlayers.filter((p) => p.status === PLAYER_STATUS.ACTIVE)
+
+  if (playersWhoCanAct.length === 0) {
+    // Only all-in players remain - betting complete
+    return {
+      ...state,
+      players,
+      pot: newPot,
+      currentBet: newCurrentBet,
+      lastRaise: newLastRaise,
+      currentPlayerPosition: null,
+    }
+  }
+
+  // Check if all players who can act have equal bets and have acted
+  const allBetsEqual = playersWhoCanAct.every((p) => p.currentBet === newCurrentBet)
+  const allHaveActed = playersWhoCanAct.every((p) => p.lastAction !== null)
+
+  if (allBetsEqual && allHaveActed) {
+    // Betting complete
+    return {
+      ...state,
+      players,
+      pot: newPot,
+      currentBet: newCurrentBet,
+      lastRaise: newLastRaise,
+      currentPlayerPosition: null,
+    }
+  }
+
+  // Move to next player who can act
   const nextPlayerPosition = getNextPlayerToAct(players, playerPosition)
 
   return {

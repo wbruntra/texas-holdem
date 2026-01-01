@@ -2,7 +2,6 @@
  * Player Service - Handles player management
  */
 
-const { v4: uuidv4 } = require('uuid')
 const bcrypt = require('bcryptjs')
 const db = require('../../db')
 
@@ -54,11 +53,9 @@ async function joinGame(gameId, playerName, password) {
   const position = players.length > 0 ? players[0].position + 1 : 0
 
   // Create player
-  const playerId = uuidv4()
   const passwordHash = await bcrypt.hash(password, 8)
 
-  await db('players').insert({
-    id: playerId,
+  const [playerId] = await db('players').insert({
     game_id: gameId,
     name: playerName,
     position,

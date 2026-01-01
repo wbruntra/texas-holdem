@@ -2,8 +2,8 @@
  * players Table DDL:
  * BEGIN_DDL
 CREATE TABLE players (
-    id char(36) DEFAULT lower(hex(randomblob(16))),
-    game_id char(36) NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_id INTEGER NOT NULL,
     name varchar(255) NOT NULL,
     position INTEGER NOT NULL,
     chips INTEGER NOT NULL DEFAULT '1000',

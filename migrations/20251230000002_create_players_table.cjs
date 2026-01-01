@@ -3,8 +3,8 @@
  */
 exports.up = function(knex) {
   return knex.schema.createTable('players', function(table) {
-    table.uuid('id').primary().defaultTo(knex.raw('(lower(hex(randomblob(16))))'));
-    table.uuid('game_id').notNullable().references('id').inTable('games').onDelete('CASCADE');
+    table.increments('id').primary();
+    table.integer('game_id').unsigned().notNullable().references('id').inTable('games').onDelete('CASCADE')
     table.string('name').notNullable();
     table.integer('position').notNullable();
     table.integer('chips').notNullable().defaultTo(1000);

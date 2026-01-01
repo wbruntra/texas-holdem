@@ -2,8 +2,8 @@
  * hands Table DDL:
  * BEGIN_DDL
 CREATE TABLE hands (
-    id char(36) DEFAULT lower(hex(randomblob(16))),
-    game_id char(36) NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_id INTEGER NOT NULL,
     hand_number INTEGER NOT NULL,
     dealer_position INTEGER NOT NULL,
     winners json,
@@ -12,6 +12,13 @@ CREATE TABLE hands (
     completed_at datetime,
     created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deck TEXT,
+    player_hole_cards TEXT,
+    player_stacks_start TEXT,
+    player_stacks_end TEXT,
+    pots TEXT,
+    small_blind INTEGER,
+    big_blind INTEGER,
     PRIMARY KEY (id),
     CONSTRAINT fk_hands_game_id_games_id FOREIGN KEY (game_id) REFERENCES games(id)
 );

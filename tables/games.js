@@ -2,7 +2,7 @@
  * games Table DDL:
  * BEGIN_DDL
 CREATE TABLE games (
-    id char(36) DEFAULT lower(hex(randomblob(16))),
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     room_code varchar(6) NOT NULL,
     status TEXT NOT NULL DEFAULT 'waiting',
     small_blind INTEGER NOT NULL DEFAULT '5',

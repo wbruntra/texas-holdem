@@ -464,6 +464,19 @@ export default function PlayerView() {
     }
   }
 
+  const handleAdvanceRound = async () => {
+    if (!game?.id) return
+
+    try {
+      const res = await axios.post(`/api/games/${game.id}/advance`, {}, { withCredentials: true })
+      setGame(res.data)
+      setError('')
+      setValidActions(null)
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Failed to advance round'))
+    }
+  }
+
   const checkCanRevealCard = (gameState: GameState, myPlayerName: string | null) => {
     if (!myPlayerName || gameState.status !== 'active') {
       return false
@@ -1259,6 +1272,35 @@ export default function PlayerView() {
                   }}
                 >
                   Reveal Next Card
+                </button>
+              ) : null}
+              {game.currentPlayerPosition === null &&
+              myPlayer &&
+              myPlayer.status !== 'folded' &&
+              myPlayer.status !== 'out' &&
+              game.currentRound !== 'showdown' ? (
+                <button
+                  onClick={handleAdvanceRound}
+                  style={{
+                    width: '100%',
+                    padding: '15px',
+                    fontSize: '18px',
+                    backgroundColor: '#4a90e2',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    marginBottom: '15px',
+                  }}
+                >
+                  {game.currentRound === 'preflop'
+                    ? 'Deal Flop'
+                    : game.currentRound === 'flop'
+                      ? 'Deal Turn'
+                      : game.currentRound === 'turn'
+                        ? 'Deal River'
+                        : 'Go to Showdown'}
                 </button>
               ) : null}
               <div
