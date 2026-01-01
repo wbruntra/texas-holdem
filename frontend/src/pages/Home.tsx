@@ -114,6 +114,7 @@ export default function Home() {
               textTransform: 'uppercase',
               boxSizing: 'border-box',
             }}
+            className="text-center"
           />
           <button
             onClick={handleJoinGame}

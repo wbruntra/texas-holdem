@@ -10,6 +10,7 @@
   /* Bootstrap specific overrides */
   --bs-body-bg: #1a472a;
   --bs-body-color: #ffffff;
+  --bs-body-font-family: 'Oswald', Helvetica, Arial, sans-serif;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -32,6 +33,7 @@ body {
   min-height: 100vh;
   background-color: var(--bs-body-bg);
   color: var(--bs-body-color);
+  font-family: var(--bs-body-font-family);
 }
 
 h1 {

@@ -181,7 +181,7 @@
   display: flex;
   justify-content: center;
   position: absolute;
-  top: 85%; /* Overlap bottom edge only */
+  top: 92%; /* Overlap bottom edge only */
   left: 50%;
   transform: translateX(-50%);
   z-index: 5; /* Behind pill? No, usually in front or partially behind. Prompt says "Overlap the bottom edge". If z-index is lower than pill, it's behind. If higher, on top. Usually cards are held in front or behind. Let's try *on top* of the bottom edge. */
