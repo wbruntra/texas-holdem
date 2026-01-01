@@ -116,6 +116,7 @@ async function getGameById(gameId) {
       isBigBlind: p.is_big_blind === 1,
       lastAction: p.last_action,
       connected: p.connected === 1,
+      showCards: p.show_cards === 1,
     })),
   }
 
@@ -239,6 +240,7 @@ async function saveGameState(gameId, state) {
           is_dealer: player.isDealer ? 1 : 0,
           is_small_blind: player.isSmallBlind ? 1 : 0,
           is_big_blind: player.isBigBlind ? 1 : 0,
+          show_cards: player.showCards ? 1 : 0,
           last_action: player.lastAction,
           updated_at: new Date(),
         })

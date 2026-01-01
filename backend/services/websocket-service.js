@@ -321,7 +321,13 @@ class WebSocketService {
         chips: p.chips,
         currentBet: p.currentBet,
         status: p.status,
-        holeCards: isShowdown ? p.holeCards || [] : [],
+        holeCards:
+          isShowdown &&
+          (game.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in').length >
+            1 ||
+            p.showCards)
+            ? p.holeCards || []
+            : [],
         lastAction: p.lastAction || null,
         connected: p.connected,
       })),
@@ -358,7 +364,14 @@ class WebSocketService {
         currentBet: p.currentBet,
         totalBet: p.totalBet || 0,
         status: p.status,
-        holeCards: isShowdown || p.id === playerId ? p.holeCards || [] : [],
+        holeCards:
+          (isShowdown &&
+            (game.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in').length >
+              1 ||
+              p.showCards)) ||
+          p.id === playerId
+            ? p.holeCards || []
+            : [],
         lastAction: p.lastAction || null,
         connected: p.connected,
         isDealer: p.isDealer,

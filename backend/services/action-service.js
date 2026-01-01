@@ -83,8 +83,17 @@ async function submitAction(playerId, action, amount = 0) {
     await recordAction(game.id, playerId, action, amount, game.currentRound)
   }
 
-  // Do NOT auto-advance - wait for explicit deal-flop/turn/river/showdown call
-  // This gives players time to see what happened before new cards appear
+  // CHECK FOR WIN BY FOLD
+  // If only one active player remains and NO ONE is all-in, the hand is over.
+  // We should auto-advance to Showdown effectively immediately so the winner gets the pot.
+  // We don't need to "wait for players to see what happened" because "Fold" -> "Winner" is immediate.
+  const activePlayers = newState.players.filter((p) => p.status === PLAYER_STATUS.ACTIVE)
+  const allInPlayers = newState.players.filter((p) => p.status === PLAYER_STATUS.ALL_IN)
+
+  if (activePlayers.length === 1 && allInPlayers.length === 0) {
+    // Everyone else folded. Advance to finish the hand.
+    await advanceRoundIfReady(game.id)
+  }
 
   // Get fresh state to return
   const finalState = await getGameById(game.id)

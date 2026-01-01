@@ -101,6 +101,7 @@ async function getPlayerById(playerId) {
     isBigBlind: player.is_big_blind === 1,
     lastAction: player.last_action,
     connected: player.connected === 1,
+    showCards: player.show_cards === 1,
   }
 }
 
@@ -178,6 +179,15 @@ async function authenticatePlayer(gameId, playerName, password) {
   return getPlayerById(player.id)
 }
 
+/**
+ * Update player showCards status
+ */
+async function setShowCards(playerId, showCards) {
+  await db('players')
+    .where({ id: playerId })
+    .update({ show_cards: showCards ? 1 : 0, updated_at: new Date() })
+}
+
 module.exports = {
   joinGame,
   getPlayerById,
@@ -185,4 +195,5 @@ module.exports = {
   leaveGame,
   updateConnectionStatus,
   getAllPlayersInGame: getPlayersInGame,
+  setShowCards,
 }

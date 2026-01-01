@@ -5,6 +5,7 @@ interface PlayerShowdownProps {
   winnerPositions: number[]
   amWinner: boolean
   onNextHand: () => Promise<void>
+  onToggleShowCards: (show: boolean) => Promise<void>
 }
 
 export default function PlayerShowdown({
@@ -12,6 +13,7 @@ export default function PlayerShowdown({
   winnerPositions,
   amWinner,
   onNextHand,
+  onToggleShowCards,
 }: PlayerShowdownProps) {
   const getSuitClass = (suit: string) => {
     return suit === 'hearts' || suit === 'diamonds' ? 'card-red' : 'card-black'
@@ -84,6 +86,24 @@ export default function PlayerShowdown({
             </div>
           ))}
         </div>
+
+        {amWinner &&
+          game.players.filter((p) => p.status === 'active' || p.status === 'all_in').length ===
+            1 && (
+            <div className="text-center mt-3">
+              <button
+                onClick={() => {
+                  const me = game.players.find((p) => winnerPositions.includes(p.position))
+                  if (me) onToggleShowCards(!me.showCards)
+                }}
+                className="btn btn-outline-info btn-sm"
+              >
+                {game.players.find((p) => winnerPositions.includes(p.position))?.showCards
+                  ? '🙈 Hide Cards'
+                  : '👁️ Reveal Cards'}
+              </button>
+            </div>
+          )}
 
         <button
           onClick={onNextHand}

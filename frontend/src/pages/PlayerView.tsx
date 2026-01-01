@@ -24,6 +24,7 @@ export default function PlayerView() {
     nextHand,
     revealCard,
     advanceRound,
+    toggleShowCards,
   } = usePlayerGame(roomCode)
 
   const [raiseAmount, setRaiseAmount] = useState<number>(0)
@@ -205,6 +206,7 @@ export default function PlayerView() {
           winnerPositions={winnerPositions}
           amWinner={amWinner}
           onNextHand={nextHand}
+          onToggleShowCards={toggleShowCards}
         />
       )}
 
@@ -385,19 +387,25 @@ export default function PlayerView() {
                     onClick={advanceRound}
                     className="btn btn-primary btn-lg w-100 py-3 fw-bold mb-3 shadow"
                   >
-                    {game.currentRound === 'preflop'
-                      ? '🎲 Deal Flop'
-                      : game.currentRound === 'flop'
-                        ? '🎲 Deal Turn'
-                        : game.currentRound === 'turn'
-                          ? '🎲 Deal River'
-                          : '👁️ Go to Showdown'}
-                  </button>
-                ) : null}
+                    {(() => {
+                      const activeCount = game.players.filter((p) => p.status === 'active').length
+                      const allInCount = game.players.filter((p) => p.status === 'all_in').length
+                      if (activeCount <= 1 && allInCount === 0) return '🏆 Claim Pot'
 
-                <div className="alert alert-secondary py-3">
-                  {myPlayer?.status === 'folded' ? 'You folded' : 'Waiting for other players...'}
-                </div>
+                      return game.currentRound === 'preflop'
+                        ? '🎲 Deal Flop'
+                        : game.currentRound === 'flop'
+                          ? '🎲 Deal Turn'
+                          : game.currentRound === 'turn'
+                            ? '🎲 Deal River'
+                            : '👁️ Go to Showdown'
+                    })()}
+                  </button>
+                ) : (
+                  <div className="alert alert-secondary py-3">
+                    {myPlayer?.status === 'folded' ? 'You folded' : 'Waiting for other players...'}
+                  </div>
+                )}
               </div>
             )}
           </div>

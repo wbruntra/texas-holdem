@@ -10,6 +10,7 @@ export interface Player {
   currentBet: number
   status: string
   holeCards?: Array<{ rank: string; suit: string }>
+  showCards?: boolean
 }
 
 export interface Pot {
@@ -100,6 +101,15 @@ export function usePlayerGame(roomCode: string | undefined) {
 
     // Can only reveal if I'm the only one with chips
     if (playersWithChips.length !== 1) {
+      return false
+    }
+
+    // Checking if there are any all-in players.
+    // If everyone else folded (no all-in), then the hand is won.
+    // Revealing cards ("rabbit hunting") shouldn't be a primary option here,
+    // and definitely shouldn't be the only option alongside "Deal Turn".
+    const allInPlayers = gameState.players.filter((p) => p.status === 'all_in')
+    if (allInPlayers.length === 0) {
       return false
     }
 
@@ -462,6 +472,20 @@ export function usePlayerGame(roomCode: string | undefined) {
     }
   }
 
+  const toggleShowCards = async (showCards: boolean) => {
+    if (!game?.id) return
+    try {
+      await axios.post(
+        `/api/games/${game.id}/show-cards`,
+        { showCards },
+        { withCredentials: true },
+      )
+      setError('')
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Failed to toggle card reveal'))
+    }
+  }
+
   return {
     game,
     validActions,
@@ -478,5 +502,6 @@ export function usePlayerGame(roomCode: string | undefined) {
     nextHand,
     revealCard,
     advanceRound,
+    toggleShowCards,
   }
 }

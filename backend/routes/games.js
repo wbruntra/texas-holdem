@@ -129,7 +129,13 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
         chips: p.chips,
         currentBet: p.currentBet,
         status: p.status,
-        holeCards: isShowdown ? p.holeCards || [] : [],
+        holeCards:
+          isShowdown &&
+          (game.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in').length >
+            1 ||
+            p.showCards)
+            ? p.holeCards || []
+            : [],
         lastAction: p.lastAction || null,
         connected: p.connected,
       })),
@@ -186,7 +192,14 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
       communityCards: visibleCommunityCards,
       players: game.players.map((p) => ({
         ...p,
-        holeCards: isShowdown || p.id === currentPlayerId ? p.holeCards : [],
+        holeCards:
+          (isShowdown &&
+            (game.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in').length >
+              1 ||
+              p.showCards)) ||
+          p.id === currentPlayerId
+            ? p.holeCards
+            : [],
       })),
     }
 
@@ -320,7 +333,14 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
       communityCards: visibleCommunityCards,
       players: gameState.players.map((p) => ({
         ...p,
-        holeCards: isShowdown || p.id === req.player.id ? p.holeCards : [],
+        holeCards:
+          (isShowdown &&
+            (gameState.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in')
+              .length > 1 ||
+              p.showCards)) ||
+          p.id === req.player.id
+            ? p.holeCards
+            : [],
       })),
     }
 
@@ -371,7 +391,14 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
       communityCards: visibleCommunityCards,
       players: gameState.players.map((p) => ({
         ...p,
-        holeCards: isShowdown || p.id === req.player.id ? p.holeCards : [],
+        holeCards:
+          (isShowdown &&
+            (gameState.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in')
+              .length > 1 ||
+              p.showCards)) ||
+          p.id === req.player.id
+            ? p.holeCards
+            : [],
       })),
     }
 
@@ -433,7 +460,14 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
       communityCards: visibleCommunityCards,
       players: nextState.players.map((p) => ({
         ...p,
-        holeCards: isShowdown || p.id === req.player.id ? p.holeCards : [],
+        holeCards:
+          (isShowdown &&
+            (nextState.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in')
+              .length > 1 ||
+              p.showCards)) ||
+          p.id === req.player.id
+            ? p.holeCards
+            : [],
       })),
     }
 
@@ -531,6 +565,40 @@ router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next
  * POST /api/games/:gameId/leave
  * Leave the game
  */
+/**
+ * POST /api/games/:gameId/show-cards
+ * Toggle revealing hole cards during showdown
+ */
+router.post('/:gameId/show-cards', requireAuth, loadPlayer, async (req, res, next) => {
+  try {
+    const gameId = parseInt(req.params.gameId, 10)
+    const { showCards } = req.body
+
+    const game = await gameService.getGameById(gameId)
+    if (!game) {
+      return res.status(404).json({ error: 'Game not found' })
+    }
+
+    if (game.currentRound !== SHOWDOWN_ROUND) {
+      return res.status(400).json({ error: 'Not in showdown' })
+    }
+
+    // Verify player is in this game
+    if (req.player.gameId !== gameId) {
+      return res.status(403).json({ error: 'Not authorized for this game' })
+    }
+
+    await playerService.setShowCards(req.player.id, showCards)
+
+    // Emit game update event
+    gameEvents.emitGameUpdate(gameId, 'show_cards')
+
+    res.json({ success: true, showCards })
+  } catch (error) {
+    next(error)
+  }
+})
+
 router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)

@@ -36,6 +36,7 @@ function createGameState(config = {}) {
       isSmallBlind: false,
       isBigBlind: false,
       lastAction: null,
+      showCards: false,
     })),
     dealerPosition: 0,
     currentRound: null,
@@ -76,6 +77,7 @@ function startNewHand(state) {
     isDealer: false,
     isSmallBlind: false,
     isBigBlind: false,
+    showCards: false,
   }))
 
   // Rotate dealer button
