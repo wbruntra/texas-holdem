@@ -1,114 +1,82 @@
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import HorizontalSlider from '../components/HorizontalSlider'
-import { usePlayerGame } from '../hooks/usePlayerGame'
+import type { GameState, Player, ValidActions } from '../hooks/usePlayerGameLogic'
+import HorizontalSlider from './HorizontalSlider'
+import {
+  buttonBaseStyle,
+  buttonStyles,
+  containerStyles,
+  cardStyles,
+  inputStyles,
+  loaderStyles,
+  errorStyles,
+} from '../styles/playerViewStyles'
 
-export default function PlayerView() {
-  const { roomCode } = useParams<{ roomCode: string }>()
+interface PlayerViewDisplayProps {
+  checkingAuth: boolean
+  joined: boolean
+  game: GameState | null
+  myPlayer: Player | undefined
+  isMyTurn: boolean
+  isShowdown: boolean
+  amWinner: boolean
+  wsConnected: boolean
+  validActions: ValidActions | null
+  betAmount: number
+  raiseAmount: number
+  canRevealCard: boolean
+  error: string
+  playerName: string
+  password: string
+  onPlayerNameChange: (name: string) => void
+  onPasswordChange: (password: string) => void
+  onJoin: (name: string, password: string) => void
+  onStartGame: () => void
+  onFold: () => void
+  onCheck: () => void
+  onBet: (amount: number) => void
+  onCall: () => void
+  onRaise: (amount: number) => void
+  onNextHand: () => void
+  onRevealCard: () => void
+  onAdvanceRound: () => void
+  onBetAmountChange: (amount: number) => void
+  onRaiseAmountChange: (amount: number) => void
+}
 
-  const {
-    game,
-    validActions,
-    playerName,
-    setPlayerName,
-    joined,
-    error,
-    checkingAuth,
-    canRevealCard,
-    wsConnected,
-    joinGame,
-    startGame,
-    performAction,
-    nextHand,
-    revealCard,
-    advanceRound,
-  } = usePlayerGame(roomCode)
-
-  const [password, setPassword] = useState('')
-  const [raiseAmount, setRaiseAmount] = useState<number>(0)
-  const [betAmount, setBetAmount] = useState<number>(0)
-
-  // Global styles for polished buttons
-  const buttonBaseStyle = {
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    fontWeight: 'bold' as const,
-    transition: 'all 0.2s ease',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-  }
-
-  const buttonHoverStyle = `
-    button:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    }
-    button:active:not(:disabled) {
-      transform: translateY(0);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-    }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  `
-
-  // Initialize bet/raise amounts when validActions change
-  useEffect(() => {
-    if (!validActions) return
-
-    if (validActions.canBet && validActions.minBet !== undefined) {
-      const minBet = validActions.minBet
-      setBetAmount((prev) => (prev >= minBet ? prev : minBet))
-    }
-    if (validActions.canRaise && validActions.minRaise !== undefined) {
-      const minRaise = validActions.minRaise
-      setRaiseAmount((prev) => (prev >= minRaise ? prev : minRaise))
-    }
-  }, [validActions])
-
-  const handleJoin = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
-    await joinGame(password)
-  }
-
-  const handleAction = async (action: string, amount?: number) => {
-    await performAction(action, amount)
-    setRaiseAmount(0)
-    setBetAmount(0)
-  }
-
-  const formatCard = (card: { rank: string; suit: string }) => {
-    const suitSymbols: Record<string, string> = {
-      hearts: '♥',
-      diamonds: '♦',
-      clubs: '♣',
-      spades: '♠',
-    }
-    return `${card.rank}${suitSymbols[card.suit] || card.suit}`
-  }
-
-  const getSuitColor = (suit: string) => {
-    return suit === 'hearts' || suit === 'diamonds' ? '#d00' : '#000'
-  }
-
+export default function PlayerViewDisplay({
+  checkingAuth,
+  joined,
+  game,
+  myPlayer,
+  isMyTurn,
+  isShowdown,
+  amWinner,
+  wsConnected,
+  validActions,
+  betAmount,
+  raiseAmount,
+  canRevealCard,
+  error,
+  playerName,
+  password,
+  onPlayerNameChange,
+  onPasswordChange,
+  onJoin,
+  onStartGame,
+  onFold,
+  onCheck,
+  onBet,
+  onCall,
+  onRaise,
+  onNextHand,
+  onRevealCard,
+  onAdvanceRound,
+  onBetAmountChange,
+  onRaiseAmountChange,
+}: PlayerViewDisplayProps) {
   // Show loading while checking authentication
   if (checkingAuth) {
     return (
-      <div
-        style={{
-          maxWidth: '600px',
-          margin: '0 auto',
-          padding: '20px',
-          textAlign: 'center',
-          minHeight: '100vh',
-          backgroundColor: '#1a472a',
-          color: '#fff',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-        }}
-      >
+      <div style={loaderStyles.container}>
         <h2>Checking authentication...</h2>
       </div>
     )
@@ -117,25 +85,15 @@ export default function PlayerView() {
   // Join screen
   if (!joined) {
     return (
-      <div
-        style={{
-          maxWidth: '600px',
-          margin: '0 auto',
-          padding: '20px',
-          minHeight: '100vh',
-          backgroundColor: '#1a472a',
-          color: '#fff',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
+      <div style={loaderStyles.container}>
         <h1>Join Game</h1>
-        <p>Room: {roomCode}</p>
+        <p>Room: {game?.roomCode}</p>
 
         <form
-          onSubmit={handleJoin}
+          onSubmit={(e) => {
+            e.preventDefault()
+            onJoin(playerName, password)
+          }}
           style={{
             marginTop: '30px',
             display: 'flex',
@@ -148,111 +106,65 @@ export default function PlayerView() {
             placeholder="Your Name"
             value={playerName}
             maxLength={10}
-            onChange={(e) => setPlayerName(e.target.value)}
-            style={{
-              width: '100%',
-              maxWidth: '200px',
-              padding: '15px',
-              fontSize: '18px',
-              marginBottom: '15px',
-              boxSizing: 'border-box',
-            }}
+            onChange={(e) => onPlayerNameChange(e.target.value)}
+            style={inputStyles.text}
           />
 
           <input
             type="text"
             placeholder="Security Word (min 4 chars)"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{
-              width: '100%',
-              maxWidth: '200px',
-              padding: '15px',
-              fontSize: '18px',
-              marginBottom: '15px',
-              boxSizing: 'border-box',
-            }}
+            onChange={(e) => onPasswordChange(e.target.value)}
+            style={inputStyles.password}
           />
 
           <button
             type="submit"
             disabled={!playerName.trim() || password.length < 4}
             style={{
+              ...buttonBaseStyle,
               width: '100%',
               maxWidth: '200px',
               padding: '15px',
               fontSize: '18px',
-              cursor: !playerName.trim() || password.length < 4 ? 'not-allowed' : 'pointer',
+              ...buttonStyles.primary,
             }}
           >
             Join Game
           </button>
         </form>
 
-        {error && (
-          <div
-            style={{
-              marginTop: '20px',
-              padding: '15px',
-              backgroundColor: '#fee',
-              color: '#c00',
-              borderRadius: '5px',
-            }}
-          >
-            {error}
-          </div>
-        )}
+        {error && <div style={errorStyles}>{error}</div>}
       </div>
     )
   }
 
   if (!game) {
-    return (
-      <div
-        style={{
-          padding: '50px',
-          textAlign: 'center',
-          minHeight: '100vh',
-          backgroundColor: '#1a472a',
-          color: '#fff',
-        }}
-      >
-        Loading...
-      </div>
-    )
+    return <div style={{ ...loaderStyles.container, minHeight: '100vh' }}>Loading...</div>
   }
 
-  const myPlayer = game.players.find((p) => p.name === playerName)
-  const isMyTurn = myPlayer && game.currentPlayerPosition === myPlayer.position
-
-  const isShowdown = game.currentRound === 'showdown'
-  const winnerPositions = Array.isArray(game.winners) ? game.winners : []
-  const amWinner = !!myPlayer && winnerPositions.includes(myPlayer.position)
-
   const derivedMaxBet = validActions?.maxBet ?? validActions?.maxRaise ?? myPlayer?.chips ?? 0
+  const winnerPositions = Array.isArray(game.winners) ? game.winners : []
 
   return (
-    <div
-      style={{
-        padding: '12px',
-        minHeight: '100vh',
-        backgroundColor: '#1a472a',
-        color: '#fff',
-        maxWidth: '600px',
-        margin: '0 auto',
-      }}
-    >
-      <style>{buttonHoverStyle}</style>
-      <div
-        style={{
-          textAlign: 'center',
-          marginBottom: '12px',
-          backgroundColor: '#234a34',
-          padding: '12px',
-          borderRadius: '10px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-        }}
-      >
+    <div style={containerStyles.main}>
+      <style>{`
+        button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        button:active:not(:disabled) {
+          transform: translateY(0);
+          box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+        button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      `}</style>
+
+      {/* Header */}
+      <div style={containerStyles.header}>
         <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
           {playerName} • ${myPlayer?.chips || 0}
         </div>
@@ -264,30 +176,14 @@ export default function PlayerView() {
       {/* Hole Cards */}
       {myPlayer?.holeCards && myPlayer.holeCards.length > 0 && (
         <div
-          style={{
-            display: 'flex',
-            gap: '10px',
-            justifyContent: 'center',
-            marginBottom: '12px',
-          }}
+          style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '12px' }}
         >
           {myPlayer.holeCards.map((card, idx) => (
             <div
               key={idx}
               style={{
-                backgroundColor: '#fff',
-                color: getSuitColor(card.suit),
-                padding: '12px 8px',
-                borderRadius: '8px',
-                fontSize: '32px',
-                fontWeight: 'bold',
-                width: '60px',
-                height: '88px',
-                textAlign: 'center',
-                boxShadow: '0 4px 8px rgba(0,0,0,0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                ...cardStyles.holeCard,
+                color: card.suit === 'hearts' || card.suit === 'diamonds' ? '#d00' : '#000',
               }}
             >
               {formatCard(card)}
@@ -310,13 +206,7 @@ export default function PlayerView() {
           <h3 style={{ textAlign: 'center', marginTop: 0 }}>Showdown</h3>
 
           {winnerPositions.length > 0 && (
-            <div
-              style={{
-                textAlign: 'center',
-                marginBottom: '12px',
-                fontSize: '18px',
-              }}
-            >
+            <div style={{ textAlign: 'center', marginBottom: '12px', fontSize: '18px' }}>
               Winner{winnerPositions.length > 1 ? 's' : ''}:{' '}
               <strong>
                 {game.players
@@ -346,13 +236,7 @@ export default function PlayerView() {
                   padding: '12px',
                 }}
               >
-                <div
-                  style={{
-                    fontWeight: 'bold',
-                    marginBottom: '8px',
-                    fontSize: '18px',
-                  }}
-                >
+                <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '18px' }}>
                   {p.name}
                   {winnerPositions.includes(p.position) ? ' 🏆' : ''}
                 </div>
@@ -362,17 +246,9 @@ export default function PlayerView() {
                       <div
                         key={idx}
                         style={{
-                          backgroundColor: '#fff',
-                          color: getSuitColor(card.suit),
-                          borderRadius: '8px',
-                          fontSize: '20px',
-                          fontWeight: 'bold',
-                          width: '44px',
-                          height: '64px',
-                          textAlign: 'center',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          ...cardStyles.showdownCard,
+                          color:
+                            card.suit === 'hearts' || card.suit === 'diamonds' ? '#d00' : '#000',
                         }}
                       >
                         {formatCard(card)}
@@ -380,42 +256,8 @@ export default function PlayerView() {
                     ))
                   ) : (
                     <>
-                      <div
-                        style={{
-                          backgroundColor: '#0066cc',
-                          background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
-                          borderRadius: '8px',
-                          fontSize: '20px',
-                          fontWeight: 'bold',
-                          width: '44px',
-                          height: '64px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: '1px solid rgba(255,255,255,0.85)',
-                          opacity: 0.85,
-                        }}
-                      >
-                        🂠
-                      </div>
-                      <div
-                        style={{
-                          backgroundColor: '#0066cc',
-                          background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
-                          borderRadius: '8px',
-                          fontSize: '20px',
-                          fontWeight: 'bold',
-                          width: '44px',
-                          height: '64px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: '1px solid rgba(255,255,255,0.85)',
-                          opacity: 0.85,
-                        }}
-                      >
-                        🂠
-                      </div>
+                      <div style={cardStyles.faceDownCard}>🂠</div>
+                      <div style={cardStyles.faceDownCard}>🂠</div>
                     </>
                   )}
                 </div>
@@ -424,18 +266,19 @@ export default function PlayerView() {
           </div>
 
           <button
-            onClick={nextHand}
+            onClick={onNextHand}
             style={{
+              ...buttonBaseStyle,
               width: '100%',
               marginTop: '14px',
               padding: '16px',
               fontSize: '18px',
-              backgroundColor: amWinner ? 'gold' : '#4CAF50',
-              color: amWinner ? '#000' : '#fff',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
+              ...(amWinner
+                ? {
+                    background: 'linear-gradient(135deg, #ffc107 0%, #ffb300 100%)',
+                    color: '#000',
+                  }
+                : buttonStyles.primary),
             }}
           >
             {amWinner ? '🏆 Next Hand' : 'Start Next Hand'}
@@ -443,18 +286,17 @@ export default function PlayerView() {
         </div>
       )}
 
-      {/* Fold button - positioned above pot to prevent accidental touches */}
+      {/* Fold button */}
       {game.status === 'active' && isMyTurn && validActions?.canAct && validActions.canFold && (
         <button
-          onClick={() => handleAction('fold')}
+          onClick={onFold}
           style={{
             ...buttonBaseStyle,
             width: '100%',
             padding: '16px',
             fontSize: '18px',
-            background: 'linear-gradient(135deg, #d32f2f 0%, #c62828 100%)',
-            color: '#fff',
             marginBottom: '12px',
+            ...buttonStyles.danger,
           }}
         >
           🚫 Fold
@@ -462,15 +304,7 @@ export default function PlayerView() {
       )}
 
       {/* Game Info */}
-      <div
-        style={{
-          textAlign: 'center',
-          padding: '10px',
-          backgroundColor: '#234a34',
-          borderRadius: '8px',
-          marginBottom: '12px',
-        }}
-      >
+      <div style={containerStyles.gameInfo}>
         <div
           style={{
             display: 'flex',
@@ -536,14 +370,13 @@ export default function PlayerView() {
       {/* Actions */}
       {game.status === 'waiting' && (
         <button
-          onClick={startGame}
+          onClick={onStartGame}
           style={{
             ...buttonBaseStyle,
             width: '100%',
             padding: '20px',
             fontSize: '20px',
-            background: 'linear-gradient(135deg, #43a047 0%, #2e7d32 100%)',
-            color: '#fff',
+            ...buttonStyles.primary,
           }}
         >
           🎮 Start Game
@@ -556,52 +389,39 @@ export default function PlayerView() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {validActions.canCheck && (
                 <button
-                  onClick={() => handleAction('check')}
+                  onClick={onCheck}
                   style={{
                     ...buttonBaseStyle,
                     padding: '16px',
                     fontSize: '18px',
-                    background: 'linear-gradient(135deg, #43a047 0%, #388e3c 100%)',
-                    color: '#fff',
+                    ...buttonStyles.secondary,
                   }}
                 >
                   ✓ Check
                 </button>
               )}
+
               {validActions.canBet && validActions.minBet !== undefined && (
                 <div style={{ marginBottom: '10px' }}>
                   <div style={{ marginBottom: '10px', textAlign: 'center' }}>
-                    <div
-                      style={{
-                        fontSize: '18px',
-                        fontWeight: 'bold',
-                        marginBottom: '8px',
-                      }}
-                    >
+                    <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
                       Bet: ${Math.max(betAmount, validActions.minBet)}
                     </div>
-                    {/* Horizontal Slider */}
+
                     <div
-                      style={{
-                        marginBottom: '12px',
-                        padding: '16px',
-                        background: 'linear-gradient(135deg, #2a5a3a 0%, #1f4a2f 100%)',
-                        borderRadius: '12px',
-                        boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.3)',
-                      }}
+                      style={{ ...containerStyles.sliderContainer, ...containerStyles.betSlider }}
                     >
                       <HorizontalSlider
                         value={Math.max(betAmount, validActions.minBet)}
                         min={validActions.minBet}
                         max={derivedMaxBet}
                         step={1}
-                        onChange={(value) => setBetAmount(value)}
+                        onChange={onBetAmountChange}
                         thumbColor="#43a047"
                         trackColor="#2c3e50"
                       />
                     </div>
 
-                    {/* +/- Buttons */}
                     <div
                       style={{
                         display: 'flex',
@@ -613,8 +433,8 @@ export default function PlayerView() {
                     >
                       <button
                         onClick={() =>
-                          setBetAmount((prev) =>
-                            Math.max(prev - (game.bigBlind || 10), validActions.minBet!),
+                          onBetAmountChange(
+                            Math.max(betAmount - (game.bigBlind || 10), validActions.minBet!),
                           )
                         }
                         style={{
@@ -622,12 +442,11 @@ export default function PlayerView() {
                           width: '64px',
                           height: '54px',
                           fontSize: '28px',
-                          background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                          color: '#fff',
                           borderRadius: '12px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          ...buttonStyles.bet,
                         }}
                       >
                         −
@@ -645,8 +464,8 @@ export default function PlayerView() {
                       </div>
                       <button
                         onClick={() =>
-                          setBetAmount((prev) =>
-                            Math.min(prev + (game.bigBlind || 10), derivedMaxBet),
+                          onBetAmountChange(
+                            Math.min(betAmount + (game.bigBlind || 10), derivedMaxBet),
                           )
                         }
                         style={{
@@ -654,12 +473,11 @@ export default function PlayerView() {
                           width: '64px',
                           height: '54px',
                           fontSize: '28px',
-                          background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                          color: '#fff',
                           borderRadius: '12px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          ...buttonStyles.bet,
                         }}
                       >
                         +
@@ -667,29 +485,28 @@ export default function PlayerView() {
                     </div>
                   </div>
                   <button
-                    onClick={() => handleAction('bet', Math.max(betAmount, validActions.minBet!))}
+                    onClick={() => onBet(Math.max(betAmount, validActions.minBet!))}
                     style={{
                       ...buttonBaseStyle,
                       width: '100%',
                       padding: '16px',
                       fontSize: '19px',
-                      background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                      color: '#fff',
+                      ...buttonStyles.bet,
                     }}
                   >
                     💰 Bet ${Math.max(betAmount, validActions.minBet)}
                   </button>
                 </div>
               )}
+
               {validActions.canCall && validActions.callAmount !== undefined && (
                 <button
-                  onClick={() => handleAction('call')}
+                  onClick={onCall}
                   style={{
                     ...buttonBaseStyle,
                     padding: '16px',
                     fontSize: '18px',
-                    background: 'linear-gradient(135deg, #43a047 0%, #388e3c 100%)',
-                    color: '#fff',
+                    ...buttonStyles.secondary,
                   }}
                 >
                   📞 Call ${validActions.callAmount}
@@ -710,22 +527,15 @@ export default function PlayerView() {
                         return (
                           <>
                             <div
-                              style={{
-                                fontSize: '18px',
-                                fontWeight: 'bold',
-                                marginBottom: '8px',
-                              }}
+                              style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}
                             >
                               Raise to: ${raiseTo}
                             </div>
-                            {/* Horizontal Slider */}
+
                             <div
                               style={{
-                                marginBottom: '12px',
-                                padding: '16px',
-                                background: 'linear-gradient(135deg, #5a3a2a 0%, #4a2f1f 100%)',
-                                borderRadius: '12px',
-                                boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.3)',
+                                ...containerStyles.sliderContainer,
+                                ...containerStyles.raiseSlider,
                               }}
                             >
                               <HorizontalSlider
@@ -733,13 +543,12 @@ export default function PlayerView() {
                                 min={validActions.minRaise}
                                 max={validActions.maxRaise}
                                 step={1}
-                                onChange={(value) => setRaiseAmount(value)}
+                                onChange={onRaiseAmountChange}
                                 thumbColor="#ff9800"
                                 trackColor="#2c3e50"
                               />
                             </div>
 
-                            {/* +/- Buttons */}
                             <div
                               style={{
                                 display: 'flex',
@@ -751,8 +560,8 @@ export default function PlayerView() {
                             >
                               <button
                                 onClick={() =>
-                                  setRaiseAmount((prev) =>
-                                    Math.max(prev - (game.bigBlind || 10), minInc),
+                                  onRaiseAmountChange(
+                                    Math.max(raiseAmount - (game.bigBlind || 10), minInc),
                                   )
                                 }
                                 style={{
@@ -760,12 +569,11 @@ export default function PlayerView() {
                                   width: '64px',
                                   height: '54px',
                                   fontSize: '28px',
-                                  background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
-                                  color: '#fff',
                                   borderRadius: '12px',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
+                                  ...buttonStyles.raise,
                                 }}
                               >
                                 −
@@ -783,8 +591,8 @@ export default function PlayerView() {
                               </div>
                               <button
                                 onClick={() =>
-                                  setRaiseAmount((prev) =>
-                                    Math.min(prev + (game.bigBlind || 10), maxInc),
+                                  onRaiseAmountChange(
+                                    Math.min(raiseAmount + (game.bigBlind || 10), maxInc),
                                   )
                                 }
                                 style={{
@@ -792,12 +600,11 @@ export default function PlayerView() {
                                   width: '64px',
                                   height: '54px',
                                   fontSize: '28px',
-                                  background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
-                                  color: '#fff',
                                   borderRadius: '12px',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
+                                  ...buttonStyles.raise,
                                 }}
                               >
                                 +
@@ -812,15 +619,14 @@ export default function PlayerView() {
                         const minInc = validActions.minRaise!
                         const maxInc = validActions.maxRaise!
                         const inc = Math.min(Math.max(raiseAmount, minInc), maxInc)
-                        handleAction('raise', inc)
+                        onRaise(inc)
                       }}
                       style={{
                         ...buttonBaseStyle,
                         width: '100%',
                         padding: '16px',
                         fontSize: '19px',
-                        background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
-                        color: '#fff',
+                        ...buttonStyles.raise,
                       }}
                     >
                       {(() => {
@@ -840,18 +646,17 @@ export default function PlayerView() {
               game.currentRound !== 'preflop' &&
               game.currentRound !== 'showdown' ? (
                 <button
-                  onClick={revealCard}
+                  onClick={onRevealCard}
                   style={{
                     ...buttonBaseStyle,
                     width: '100%',
                     padding: '16px',
                     fontSize: '18px',
-                    background: 'linear-gradient(135deg, #00acc1 0%, #0097a7 100%)',
-                    color: '#fff',
                     marginBottom: '15px',
+                    ...buttonStyles.special,
                   }}
                 >
-                  🃏 Reveal Next Card
+                  🎴 Reveal Next Card
                 </button>
               ) : null}
               {game.currentPlayerPosition === null &&
@@ -860,15 +665,14 @@ export default function PlayerView() {
               myPlayer.status !== 'out' &&
               game.currentRound !== 'showdown' ? (
                 <button
-                  onClick={advanceRound}
+                  onClick={onAdvanceRound}
                   style={{
                     ...buttonBaseStyle,
                     width: '100%',
                     padding: '16px',
                     fontSize: '18px',
-                    background: 'linear-gradient(135deg, #5e35b1 0%, #512da8 100%)',
-                    color: '#fff',
                     marginBottom: '15px',
+                    ...buttonStyles.advance,
                   }}
                 >
                   {game.currentRound === 'preflop'
@@ -906,13 +710,7 @@ export default function PlayerView() {
             marginBottom: '20px',
           }}
         >
-          <div
-            style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              marginBottom: '10px',
-            }}
-          >
+          <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>
             🎉 Game Over!
           </div>
           <div style={{ fontSize: '18px', marginBottom: '10px' }}>
@@ -926,20 +724,17 @@ export default function PlayerView() {
         </div>
       )}
 
-      {error && (
-        <div
-          style={{
-            marginTop: '20px',
-            padding: '15px',
-            backgroundColor: '#fee',
-            color: '#c00',
-            borderRadius: '5px',
-            textAlign: 'center',
-          }}
-        >
-          {error}
-        </div>
-      )}
+      {error && <div style={errorStyles}>{error}</div>}
     </div>
   )
+}
+
+function formatCard(card: { rank: string; suit: string }) {
+  const suitSymbols: Record<string, string> = {
+    hearts: '♥',
+    diamonds: '♦',
+    clubs: '♣',
+    spades: '♠',
+  }
+  return `${card.rank}${suitSymbols[card.suit] || card.suit}`
 }
