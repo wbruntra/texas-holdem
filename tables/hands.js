@@ -2,7 +2,7 @@
  * hands Table DDL:
  * BEGIN_DDL
 CREATE TABLE hands (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER NOT NULL,
     game_id INTEGER NOT NULL,
     hand_number INTEGER NOT NULL,
     dealer_position INTEGER NOT NULL,
@@ -16,7 +16,6 @@ CREATE TABLE hands (
     player_hole_cards TEXT,
     player_stacks_start TEXT,
     player_stacks_end TEXT,
-    pots TEXT,
     small_blind INTEGER,
     big_blind INTEGER,
     PRIMARY KEY (id),

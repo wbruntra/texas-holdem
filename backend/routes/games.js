@@ -147,7 +147,8 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
  */
 router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
   try {
-    let game = await gameService.getGameById(req.params.gameId)
+    const gameId = parseInt(req.params.gameId, 10)
+    let game = await gameService.getGameById(gameId)
 
     if (!game) {
       return res.status(404).json({ error: 'Game not found' })
@@ -163,12 +164,29 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
 
     const isShowdown = game.currentRound === SHOWDOWN_ROUND
 
-    // Return full state but only show this player's hole cards (except at showdown)
+    // Filter community cards based on current round (only show revealed cards)
+    let visibleCommunityCards = []
+    if (game.communityCards) {
+      if (game.currentRound === 'flop') {
+        visibleCommunityCards = game.communityCards.slice(0, 3)
+      } else if (game.currentRound === 'turn') {
+        visibleCommunityCards = game.communityCards.slice(0, 4)
+      } else if (game.currentRound === 'river' || game.currentRound === SHOWDOWN_ROUND) {
+        visibleCommunityCards = game.communityCards
+      }
+      // Pre-flop: no cards visible
+    }
+
+    // Return sanitized state: only show this player's hole cards (except at showdown)
+    // and exclude deck to prevent information leakage
+    const currentPlayerId = req.player.id
     const gameState = {
       ...game,
+      deck: undefined, // Never expose the deck
+      communityCards: visibleCommunityCards,
       players: game.players.map((p) => ({
         ...p,
-        holeCards: isShowdown || p.id === req.player.id ? p.holeCards : [],
+        holeCards: isShowdown || p.id === currentPlayerId ? p.holeCards : [],
       })),
     }
 
@@ -184,19 +202,20 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
  */
 router.post('/:gameId/join', async (req, res, next) => {
   try {
+    const gameId = parseInt(req.params.gameId, 10)
     const { name, password } = req.body
 
     if (!name || !password) {
       return res.status(400).json({ error: 'Name and password required' })
     }
 
-    const player = await playerService.joinGame(req.params.gameId, name, password)
+    const player = await playerService.joinGame(gameId, name, password)
 
     // Set session
     req.session.playerId = player.id
 
     // Emit game update event
-    gameEvents.emitGameUpdate(req.params.gameId, 'join')
+    gameEvents.emitGameUpdate(gameId, 'join')
 
     res.status(201).json({
       player,
@@ -213,13 +232,14 @@ router.post('/:gameId/join', async (req, res, next) => {
  */
 router.post('/:gameId/auth', async (req, res, next) => {
   try {
+    const gameId = parseInt(req.params.gameId, 10)
     const { name, password } = req.body
 
     if (!name || !password) {
       return res.status(400).json({ error: 'Name and password required' })
     }
 
-    const player = await playerService.authenticatePlayer(req.params.gameId, name, password)
+    const player = await playerService.authenticatePlayer(gameId, name, password)
 
     // Set session
     req.session.playerId = player.id
@@ -242,15 +262,16 @@ router.post('/:gameId/auth', async (req, res, next) => {
  */
 router.post('/:gameId/start', requireAuth, loadPlayer, async (req, res, next) => {
   try {
+    const gameId = parseInt(req.params.gameId, 10)
     // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
+    if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
 
-    const game = await gameService.startGame(req.params.gameId)
+    const game = await gameService.startGame(gameId)
 
     // Emit game update event
-    gameEvents.emitGameUpdate(req.params.gameId, 'start')
+    gameEvents.emitGameUpdate(gameId, 'start')
 
     res.json(game)
   } catch (error) {
@@ -264,6 +285,7 @@ router.post('/:gameId/start', requireAuth, loadPlayer, async (req, res, next) =>
  */
 router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) => {
   try {
+    const gameId = parseInt(req.params.gameId, 10)
     const { action, amount } = req.body
 
     if (!action) {
@@ -271,7 +293,7 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
     }
 
     // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
+    if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
 
@@ -279,9 +301,23 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
 
     const isShowdown = gameState.currentRound === SHOWDOWN_ROUND
 
-    // Return game state with only this player's hole cards visible
+    // Filter community cards based on current round
+    let visibleCommunityCards = []
+    if (gameState.communityCards) {
+      if (gameState.currentRound === 'flop') {
+        visibleCommunityCards = gameState.communityCards.slice(0, 3)
+      } else if (gameState.currentRound === 'turn') {
+        visibleCommunityCards = gameState.communityCards.slice(0, 4)
+      } else if (gameState.currentRound === 'river' || gameState.currentRound === SHOWDOWN_ROUND) {
+        visibleCommunityCards = gameState.communityCards
+      }
+    }
+
+    // Return game state with only this player's hole cards visible and no deck
     const sanitizedState = {
       ...gameState,
+      deck: undefined, // Never expose the deck
+      communityCards: visibleCommunityCards,
       players: gameState.players.map((p) => ({
         ...p,
         holeCards: isShowdown || p.id === req.player.id ? p.holeCards : [],
@@ -289,7 +325,7 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
     }
 
     // Emit game update event
-    gameEvents.emitGameUpdate(req.params.gameId, 'action')
+    gameEvents.emitGameUpdate(gameId, 'action')
 
     res.json(sanitizedState)
   } catch (error) {
@@ -306,8 +342,9 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
  */
 router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, next) => {
   try {
+    const gameId = parseInt(req.params.gameId, 10)
     // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
+    if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
 
@@ -315,9 +352,23 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
 
     const isShowdown = gameState.currentRound === SHOWDOWN_ROUND
 
-    // Return game state with only this player's hole cards visible
+    // Filter community cards based on current round
+    let visibleCommunityCards = []
+    if (gameState.communityCards) {
+      if (gameState.currentRound === 'flop') {
+        visibleCommunityCards = gameState.communityCards.slice(0, 3)
+      } else if (gameState.currentRound === 'turn') {
+        visibleCommunityCards = gameState.communityCards.slice(0, 4)
+      } else if (gameState.currentRound === 'river' || gameState.currentRound === SHOWDOWN_ROUND) {
+        visibleCommunityCards = gameState.communityCards
+      }
+    }
+
+    // Return game state with only this player's hole cards visible and no deck
     const sanitizedState = {
       ...gameState,
+      deck: undefined, // Never expose the deck
+      communityCards: visibleCommunityCards,
       players: gameState.players.map((p) => ({
         ...p,
         holeCards: isShowdown || p.id === req.player.id ? p.holeCards : [],
@@ -325,7 +376,7 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
     }
 
     // Emit game update event
-    gameEvents.emitGameUpdate(req.params.gameId, 'reveal')
+    gameEvents.emitGameUpdate(gameId, 'reveal')
 
     res.json(sanitizedState)
   } catch (error) {
@@ -342,12 +393,13 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
  */
 router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) => {
   try {
+    const gameId = parseInt(req.params.gameId, 10)
     // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
+    if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
 
-    const game = await gameService.getGameById(req.params.gameId)
+    const game = await gameService.getGameById(gameId)
     if (!game) {
       return res.status(404).json({ error: 'Game not found' })
     }
@@ -358,13 +410,27 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
     }
 
     // Advance exactly one round (not auto-advance through all)
-    const nextState = await gameService.advanceOneRound(req.params.gameId)
+    const nextState = await gameService.advanceOneRound(gameId)
 
     const isShowdown = nextState.currentRound === SHOWDOWN_ROUND
 
-    // Return game state with only this player's hole cards visible
+    // Filter community cards based on current round
+    let visibleCommunityCards = []
+    if (nextState.communityCards) {
+      if (nextState.currentRound === 'flop') {
+        visibleCommunityCards = nextState.communityCards.slice(0, 3)
+      } else if (nextState.currentRound === 'turn') {
+        visibleCommunityCards = nextState.communityCards.slice(0, 4)
+      } else if (nextState.currentRound === 'river' || nextState.currentRound === SHOWDOWN_ROUND) {
+        visibleCommunityCards = nextState.communityCards
+      }
+    }
+
+    // Return game state with only this player's hole cards visible and no deck
     const sanitizedState = {
       ...nextState,
+      deck: undefined, // Never expose the deck
+      communityCards: visibleCommunityCards,
       players: nextState.players.map((p) => ({
         ...p,
         holeCards: isShowdown || p.id === req.player.id ? p.holeCards : [],
@@ -372,7 +438,7 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
     }
 
     // Emit game update event
-    gameEvents.emitGameUpdate(req.params.gameId, 'advance')
+    gameEvents.emitGameUpdate(gameId, 'advance')
 
     res.json(sanitizedState)
   } catch (error) {
@@ -389,8 +455,9 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
  */
 router.get('/:gameId/actions/valid', requireAuth, loadPlayer, async (req, res, next) => {
   try {
+    const gameId = parseInt(req.params.gameId, 10)
     // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
+    if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
 
@@ -408,12 +475,13 @@ router.get('/:gameId/actions/valid', requireAuth, loadPlayer, async (req, res, n
  */
 router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next) => {
   try {
+    const gameId = parseInt(req.params.gameId, 10)
     // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
+    if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
 
-    const game = await gameService.getGameById(req.params.gameId)
+    const game = await gameService.getGameById(gameId)
     if (!game) {
       return res.status(404).json({ error: 'Game not found' })
     }
@@ -425,11 +493,25 @@ router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next
     // Allow next hand even if winners is not set (handles old game states)
     // The startNewHand function will handle resetting the state properly
 
-    const nextState = await gameService.startNextHand(req.params.gameId)
+    const nextState = await gameService.startNextHand(gameId)
 
     // Not showdown anymore: only reveal this player's hole cards
+    // Filter community cards (should be empty for new hand, but be safe)
+    let visibleCommunityCards = []
+    if (nextState.communityCards) {
+      if (nextState.currentRound === 'flop') {
+        visibleCommunityCards = nextState.communityCards.slice(0, 3)
+      } else if (nextState.currentRound === 'turn') {
+        visibleCommunityCards = nextState.communityCards.slice(0, 4)
+      } else if (nextState.currentRound === 'river' || nextState.currentRound === SHOWDOWN_ROUND) {
+        visibleCommunityCards = nextState.communityCards
+      }
+    }
+
     const sanitizedState = {
       ...nextState,
+      deck: undefined, // Never expose the deck
+      communityCards: visibleCommunityCards,
       players: nextState.players.map((p) => ({
         ...p,
         holeCards: p.id === req.player.id ? p.holeCards : [],
@@ -437,7 +519,7 @@ router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next
     }
 
     // Emit game update event
-    gameEvents.emitGameUpdate(req.params.gameId, 'next_hand')
+    gameEvents.emitGameUpdate(gameId, 'next_hand')
 
     res.json(sanitizedState)
   } catch (error) {
@@ -451,12 +533,13 @@ router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next
  */
 router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) => {
   try {
+    const gameId = parseInt(req.params.gameId, 10)
     // Verify player is in this game
-    if (req.player.gameId !== req.params.gameId) {
+    if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
 
-    const gameId = req.player.gameId
+    const playerGameId = req.player.gameId
 
     await playerService.leaveGame(req.player.id)
 
@@ -464,7 +547,7 @@ router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) =>
     req.session = null
 
     // Emit game update event
-    gameEvents.emitGameUpdate(gameId, 'leave')
+    gameEvents.emitGameUpdate(playerGameId, 'leave')
 
     res.json({ message: 'Left game successfully' })
   } catch (error) {
@@ -478,7 +561,8 @@ router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) =>
  */
 router.get('/:gameId/players', async (req, res, next) => {
   try {
-    const players = await playerService.getAllPlayersInGame(req.params.gameId)
+    const gameId = parseInt(req.params.gameId, 10)
+    const players = await playerService.getAllPlayersInGame(gameId)
 
     res.json(players)
   } catch (error) {

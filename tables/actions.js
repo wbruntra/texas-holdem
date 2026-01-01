@@ -2,15 +2,15 @@
  * actions Table DDL:
  * BEGIN_DDL
 CREATE TABLE actions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER NOT NULL,
     hand_id INTEGER NOT NULL,
     player_id INTEGER NOT NULL,
     action_type TEXT NOT NULL,
     amount INTEGER NOT NULL DEFAULT '0',
     round TEXT NOT NULL,
-    sequence_number INTEGER NOT NULL DEFAULT '0',
     created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sequence_number INTEGER NOT NULL DEFAULT '0',
     PRIMARY KEY (id),
     CONSTRAINT fk_actions_player_id_players_id FOREIGN KEY (player_id) REFERENCES players(id),
     CONSTRAINT fk_actions_hand_id_hands_id FOREIGN KEY (hand_id) REFERENCES hands(id)

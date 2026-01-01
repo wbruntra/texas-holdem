@@ -57,7 +57,7 @@ async function sleep(ms) {
 
 async function playGame(gameId, bot1, bot2) {
   console.log(`\n${'='.repeat(60)}`)
-  console.log(`🎮 Game ${gameId.substring(0, 8)}... Starting`)
+  console.log(`🎮 Game ${gameId} Starting`)
   console.log(`${'='.repeat(60)}\n`)
 
   let hand = 0
@@ -120,6 +120,33 @@ async function playGame(gameId, bot1, bot2) {
         const botPlayer = currentGame.players.find((p) => p.name === bot.name)
 
         if (!botPlayer) continue
+
+        // Check if betting round is complete (no current player) and we need to advance
+        if (
+          currentGame.currentPlayerPosition === null &&
+          currentGame.currentRound !== 'showdown' &&
+          currentGame.status === 'active'
+        ) {
+          console.log(`\n🎲 Betting round complete. Advancing to next round...`)
+          const advanceRes = await api.post(
+            `/games/${gameId}/advance`,
+            {},
+            {
+              headers: { Cookie: bot.sessionCookie },
+            },
+          )
+          if (advanceRes.status === 200) {
+            const advancedGame = advanceRes.data
+            console.log(`  ✅ Advanced to ${advancedGame.currentRound}`)
+            if (advancedGame.communityCards) {
+              console.log(
+                `  Cards: ${advancedGame.communityCards.map((c) => `${c.rank}${c.suit[0]}`).join(' ')}`,
+              )
+            }
+            await sleep(1000)
+          }
+          continue // Skip to next iteration to check new state
+        }
 
         // Check if it's this bot's turn
         if (currentGame.currentPlayerPosition === botPlayer.position) {

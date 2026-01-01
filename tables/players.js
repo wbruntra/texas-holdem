@@ -2,7 +2,7 @@
  * players Table DDL:
  * BEGIN_DDL
 CREATE TABLE players (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER NOT NULL,
     game_id INTEGER NOT NULL,
     name varchar(255) NOT NULL,
     position INTEGER NOT NULL,

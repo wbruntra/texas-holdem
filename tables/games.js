@@ -2,7 +2,7 @@
  * games Table DDL:
  * BEGIN_DDL
 CREATE TABLE games (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER NOT NULL,
     room_code varchar(6) NOT NULL,
     status TEXT NOT NULL DEFAULT 'waiting',
     small_blind INTEGER NOT NULL DEFAULT '5',

@@ -175,17 +175,21 @@ async function startGame(gameId) {
   await createHandRecord(gameId, newState)
 
   // Record blind posts as actions
-  const { recordBlindPost } = require('./action-service')
-  const players = newState.players
+  try {
+    const { recordBlindPost } = require('./action-service')
+    const players = newState.players
 
-  const sbPlayer = players.find((p) => p.isSmallBlind)
-  const bbPlayer = players.find((p) => p.isBigBlind)
+    const sbPlayer = players.find((p) => p.isSmallBlind)
+    const bbPlayer = players.find((p) => p.isBigBlind)
 
-  if (sbPlayer && sbPlayer.currentBet > 0) {
-    await recordBlindPost(gameId, sbPlayer.id, 'small_blind', sbPlayer.currentBet)
-  }
-  if (bbPlayer && bbPlayer.currentBet > 0) {
-    await recordBlindPost(gameId, bbPlayer.id, 'big_blind', bbPlayer.currentBet)
+    if (sbPlayer && sbPlayer.currentBet > 0) {
+      await recordBlindPost(gameId, sbPlayer.id, 'small_blind', sbPlayer.currentBet)
+    }
+    if (bbPlayer && bbPlayer.currentBet > 0) {
+      await recordBlindPost(gameId, bbPlayer.id, 'big_blind', bbPlayer.currentBet)
+    }
+  } catch (error) {
+    console.error('Failed to record blind posts:', error)
   }
 
   return getGameById(gameId)
@@ -376,17 +380,21 @@ async function startNextHand(gameId) {
   await createHandRecord(gameId, newState)
 
   // Record blind posts as actions
-  const { recordBlindPost } = require('./action-service')
-  const players = newState.players
+  try {
+    const { recordBlindPost } = require('./action-service')
+    const players = newState.players
 
-  const sbPlayer = players.find((p) => p.isSmallBlind)
-  const bbPlayer = players.find((p) => p.isBigBlind)
+    const sbPlayer = players.find((p) => p.isSmallBlind)
+    const bbPlayer = players.find((p) => p.isBigBlind)
 
-  if (sbPlayer && sbPlayer.currentBet > 0) {
-    await recordBlindPost(gameId, sbPlayer.id, 'small_blind', sbPlayer.currentBet)
-  }
-  if (bbPlayer && bbPlayer.currentBet > 0) {
-    await recordBlindPost(gameId, bbPlayer.id, 'big_blind', bbPlayer.currentBet)
+    if (sbPlayer && sbPlayer.currentBet > 0) {
+      await recordBlindPost(gameId, sbPlayer.id, 'small_blind', sbPlayer.currentBet)
+    }
+    if (bbPlayer && bbPlayer.currentBet > 0) {
+      await recordBlindPost(gameId, bbPlayer.id, 'big_blind', bbPlayer.currentBet)
+    }
+  } catch (error) {
+    console.error('Failed to record blind posts:', error)
   }
 
   return getGameById(gameId)
