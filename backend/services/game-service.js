@@ -319,6 +319,30 @@ async function advanceRoundIfReady(gameId) {
     (isBettingRoundComplete(gameState) || shouldAutoAdvance(gameState)) &&
     gameState.currentRound !== ROUND.SHOWDOWN
   ) {
+    // Before advancing, if only one player can act and they need to check, do it automatically
+    if (shouldAutoAdvance(gameState) && gameState.currentPlayerPosition !== null) {
+      const activePlayers = gameState.players.filter((p) => p.status === 'active' && p.chips > 0)
+
+      // If exactly one player can act and no bet to call, auto-check
+      if (activePlayers.length === 1 && gameState.currentBet === 0) {
+        const actingPlayer = activePlayers[0]
+        const playerPosition = gameState.players.findIndex((p) => p.id === actingPlayer.id)
+
+        if (playerPosition === gameState.currentPlayerPosition) {
+          // Import processAction here to avoid circular dependency issues
+          const { processAction } = require('../lib/betting-logic')
+
+          // Auto-check for this player
+          gameState = processAction(gameState, playerPosition, 'check', 0)
+          await saveGameState(gameId, gameState)
+
+          // Record the auto-check action
+          const { recordAction } = require('./action-service')
+          await recordAction(gameId, actingPlayer.id, 'check', 0, gameState.currentRound)
+        }
+      }
+    }
+
     if (shouldContinueToNextRound(gameState)) {
       gameState = advanceRound(gameState)
 
