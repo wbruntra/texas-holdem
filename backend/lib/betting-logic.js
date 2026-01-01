@@ -312,6 +312,21 @@ function getValidActions(state, playerPosition) {
     return { canAct: false }
   }
 
+  // Check if all other players are all-in or folded (only this player has chips)
+  const playersWithChips = state.players.filter(
+    (p) => p.chips > 0 && p.status !== PLAYER_STATUS.OUT && p.status !== PLAYER_STATUS.FOLDED,
+  )
+  const allInPlayers = state.players.filter((p) => p.status === PLAYER_STATUS.ALL_IN)
+
+  // If only this player has chips and there are all-in players, they should reveal cards
+  if (playersWithChips.length === 1 && allInPlayers.length > 0) {
+    return {
+      canAct: false,
+      canReveal: true,
+      reason: 'All other players are all-in. Reveal cards to continue.',
+    }
+  }
+
   const callAmount = state.currentBet - player.currentBet
   const canCheck = callAmount === 0
   // Can call if there's an amount to call and player has chips (may go all-in)
@@ -404,7 +419,7 @@ function canRevealCard(state, playerPosition) {
   }
 
   // Check if we can actually deal more cards
-  const { FLOP, TURN, RIVER } = require('./game-constants').ROUND
+  const { FLOP, TURN, RIVER, SHOWDOWN } = require('./game-constants').ROUND
   if (state.currentRound === FLOP && state.communityCards.length === 3) {
     return { canReveal: true, nextRound: TURN }
   }
@@ -412,11 +427,8 @@ function canRevealCard(state, playerPosition) {
     return { canReveal: true, nextRound: RIVER }
   }
   if (state.currentRound === RIVER && state.communityCards.length === 5) {
-    return {
-      canReveal: false,
-      error: 'All community cards have been dealt',
-      reason: 'Cannot deal more cards',
-    }
+    // Allow one final "reveal" click to transition to showdown
+    return { canReveal: true, nextRound: SHOWDOWN }
   }
 
   return { canReveal: true }

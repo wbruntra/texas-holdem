@@ -48,6 +48,8 @@ export interface ValidActions {
   canRaise: boolean
   minRaise?: number
   maxRaise?: number
+  canReveal?: boolean
+  reason?: string
 }
 
 const getApiErrorMessage = (err: unknown, fallback: string) => {

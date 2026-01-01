@@ -211,15 +211,15 @@
 
 /* Community Cards */
 .community-card {
-  width: clamp(40px, 5vw, 60px);
-  height: clamp(56px, 7vw, 84px);
+  width: clamp(60px, 8vw, 100px);
+  height: clamp(84px, 11vw, 140px);
   background-color: #fff;
   border-radius: 6px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(1.2rem, 2vw, 2rem);
+  font-size: clamp(2rem, 3.5vw, 3.5rem);
   font-weight: 800;
   border: 1px solid #ccc;
 }

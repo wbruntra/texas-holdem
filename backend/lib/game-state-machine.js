@@ -524,6 +524,7 @@ function revealNextCard(state) {
     communityCards: [...state.communityCards, ...newCards],
     deck: state.deck.slice(newDeckIndex),
     currentBet: 0,
+    currentPlayerPosition: null, // No one can act during all-in situation
   }
 }
 

@@ -8,6 +8,26 @@ const gameEvents = require('../lib/game-events')
 const SHOWDOWN_ROUND = 'showdown'
 
 /**
+ * Helper to determine if all hole cards should be revealed
+ * This happens when:
+ * 1. It's showdown, OR
+ * 2. Only one player has chips and all others are all-in
+ */
+function shouldRevealAllCards(game) {
+  if (game.currentRound === SHOWDOWN_ROUND) {
+    return true
+  }
+
+  // Check if only one player has chips and there are all-in players
+  const playersWithChips = game.players.filter(
+    (p) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
+  )
+  const allInPlayers = game.players.filter((p) => p.status === 'all_in')
+
+  return playersWithChips.length === 1 && allInPlayers.length > 0
+}
+
+/**
  * Middleware to require authentication
  */
 function requireAuth(req, res, next) {
@@ -103,10 +123,10 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
     // Normalize turn in case current player is ALL_IN or FOLDED
     game = (await actionService.normalizeTurnIfNeeded(game.id)) || game
 
-    const isShowdown = game.currentRound === SHOWDOWN_ROUND
+    const revealCards = shouldRevealAllCards(game)
 
     // Shared screen should show full table state.
-    // Hole cards remain hidden until showdown.
+    // Hole cards remain hidden until showdown or all-in situation.
     const tableState = {
       id: game.id,
       roomCode: game.roomCode,
@@ -129,13 +149,7 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
         chips: p.chips,
         currentBet: p.currentBet,
         status: p.status,
-        holeCards:
-          isShowdown &&
-          (game.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in').length >
-            1 ||
-            p.showCards)
-            ? p.holeCards || []
-            : [],
+        holeCards: revealCards || p.showCards ? p.holeCards || [] : [],
         lastAction: p.lastAction || null,
         connected: p.connected,
       })),
@@ -183,23 +197,17 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
       // Pre-flop: no cards visible
     }
 
-    // Return sanitized state: only show this player's hole cards (except at showdown)
+    // Return sanitized state: only show this player's hole cards (except at showdown or all-in situation)
     // and exclude deck to prevent information leakage
     const currentPlayerId = req.player.id
+    const revealCards = shouldRevealAllCards(game)
     const gameState = {
       ...game,
       deck: undefined, // Never expose the deck
       communityCards: visibleCommunityCards,
       players: game.players.map((p) => ({
         ...p,
-        holeCards:
-          (isShowdown &&
-            (game.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in').length >
-              1 ||
-              p.showCards)) ||
-          p.id === currentPlayerId
-            ? p.holeCards
-            : [],
+        holeCards: revealCards || p.showCards || p.id === currentPlayerId ? p.holeCards : [],
       })),
     }
 
@@ -312,7 +320,7 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
 
     const gameState = await actionService.submitAction(req.player.id, action, amount || 0)
 
-    const isShowdown = gameState.currentRound === SHOWDOWN_ROUND
+    const revealCards = shouldRevealAllCards(gameState)
 
     // Filter community cards based on current round
     let visibleCommunityCards = []
@@ -333,14 +341,7 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
       communityCards: visibleCommunityCards,
       players: gameState.players.map((p) => ({
         ...p,
-        holeCards:
-          (isShowdown &&
-            (gameState.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in')
-              .length > 1 ||
-              p.showCards)) ||
-          p.id === req.player.id
-            ? p.holeCards
-            : [],
+        holeCards: revealCards || p.showCards || p.id === req.player.id ? p.holeCards : [],
       })),
     }
 
@@ -370,7 +371,7 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
 
     const gameState = await actionService.revealCard(req.player.id)
 
-    const isShowdown = gameState.currentRound === SHOWDOWN_ROUND
+    const revealCards = shouldRevealAllCards(gameState)
 
     // Filter community cards based on current round
     let visibleCommunityCards = []
@@ -391,14 +392,7 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
       communityCards: visibleCommunityCards,
       players: gameState.players.map((p) => ({
         ...p,
-        holeCards:
-          (isShowdown &&
-            (gameState.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in')
-              .length > 1 ||
-              p.showCards)) ||
-          p.id === req.player.id
-            ? p.holeCards
-            : [],
+        holeCards: revealCards || p.showCards || p.id === req.player.id ? p.holeCards : [],
       })),
     }
 
@@ -439,7 +433,7 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
     // Advance exactly one round (not auto-advance through all)
     const nextState = await gameService.advanceOneRound(gameId)
 
-    const isShowdown = nextState.currentRound === SHOWDOWN_ROUND
+    const revealCards = shouldRevealAllCards(nextState)
 
     // Filter community cards based on current round
     let visibleCommunityCards = []
@@ -460,14 +454,7 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
       communityCards: visibleCommunityCards,
       players: nextState.players.map((p) => ({
         ...p,
-        holeCards:
-          (isShowdown &&
-            (nextState.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in')
-              .length > 1 ||
-              p.showCards)) ||
-          p.id === req.player.id
-            ? p.holeCards
-            : [],
+        holeCards: revealCards || p.showCards || p.id === req.player.id ? p.holeCards : [],
       })),
     }
 
