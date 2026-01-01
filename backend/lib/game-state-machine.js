@@ -247,9 +247,22 @@ function isBettingRoundComplete(state) {
 
   if (activePlayers.length === 0) return true
 
-  // Check if only one active player remains (others folded or all-in)
+  // Check if only active players remain
   const playersWhoCanAct = activePlayers.filter((p) => p.status === PLAYER_STATUS.ACTIVE)
-  if (playersWhoCanAct.length <= 1) return true
+
+  // If only 1 can-act player remains, betting is only complete if they've acted
+  // (Otherwise they still need to respond to the all-in bet)
+  if (playersWhoCanAct.length === 1) {
+    const lastPlayer = playersWhoCanAct[0]
+    // Betting is complete if this player has already acted AND matched the bet
+    // (or their action was to fold, which would have changed their status)
+    return lastPlayer.currentBet === state.currentBet && lastPlayer.lastAction !== null
+  }
+
+  if (playersWhoCanAct.length === 0) {
+    // No can-act players - only all-ins remain
+    return true
+  }
 
   // Check if all active players have acted and matched the current bet
   const allMatched = activePlayers.every((p) => {

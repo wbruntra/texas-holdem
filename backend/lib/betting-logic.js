@@ -244,19 +244,67 @@ function processAction(state, playerPosition, action, amount = 0) {
     }
   }
 
-  // Check if all players who can act have equal bets and have acted
-  const allBetsEqual = playersWhoCanAct.every((p) => p.currentBet === newCurrentBet)
-  const allHaveActed = playersWhoCanAct.every((p) => p.lastAction !== null)
+  // Determine if betting round is complete.
+  //
+  // CRITICAL: We just updated newCurrentBet based on the current player's action.
+  // But OTHER ACTIVE PLAYERS may not have acted yet in response to this new bet.
+  //
+  // Example: Player A bets/raises/all-ins to $100. Player B still has chips.
+  // We just set newCurrentBet = $100. But Player B hasn't acted yet!
+  // They need to call $100, raise, or fold.
+  //
+  // Solution: We can ONLY consider the round complete if:
+  // - All active players have matched the NEW current bet
+  // - All active players have acted at the new bet level
+  // - OR there's only 1 active player left (others folded)
+  //
+  // To know "have they acted at the new bet level", we track the prior bet level
+  // and see if everyone has acted since then.
 
-  if (allBetsEqual && allHaveActed) {
-    // Betting complete
-    return {
-      ...state,
-      players,
-      pot: newPot,
-      currentBet: newCurrentBet,
-      lastRaise: newLastRaise,
-      currentPlayerPosition: null,
+  // Has the current bet just increased? (someone bet/raised/all-in)
+  const betJustIncreased = newCurrentBet > state.currentBet
+
+  if (betJustIncreased) {
+    // New higher bet just happened. Other players must get a chance to respond.
+    // Only the player who just acted can skip having to respond again (they set it).
+    // Everyone else must act at this new level.
+
+    // Count how many other ACTIVE players still need to respond
+    // (we exclude the player who just acted because they set the bet)
+    const otherActivePlayers = playersWhoCanAct.filter(
+      (p) => players.indexOf(p) !== playerPosition,
+    )
+
+    // If there are no other active players, betting is complete
+    if (otherActivePlayers.length === 0) {
+      return {
+        ...state,
+        players,
+        pot: newPot,
+        currentBet: newCurrentBet,
+        lastRaise: newLastRaise,
+        currentPlayerPosition: null,
+      }
+    }
+
+    // Otherwise, another player needs to act, so DON'T mark as complete
+    // (this will be handled by the "Move to next player" code below)
+  } else {
+    // No new bet was set - the current player called, checked, or folded
+    // Check if all can-act players have matched the bet and acted
+    const allBetsMatched = playersWhoCanAct.every((p) => p.currentBet >= newCurrentBet)
+    const allHaveActed = playersWhoCanAct.every((p) => p.lastAction !== null)
+
+    if (allBetsMatched && allHaveActed) {
+      // Betting complete
+      return {
+        ...state,
+        players,
+        pot: newPot,
+        currentBet: newCurrentBet,
+        lastRaise: newLastRaise,
+        currentPlayerPosition: null,
+      }
     }
   }
 

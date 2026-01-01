@@ -220,21 +220,7 @@ export default function PlayerView() {
 
         {game.status === 'active' && (
           <div>
-            {validActions?.canReveal ? (
-              <div className="d-grid gap-3">
-                <div className="alert alert-info text-center mb-3">
-                  <strong>All opponents are all-in!</strong>
-                  <br />
-                  Reveal cards to continue.
-                </div>
-                <button
-                  onClick={advanceRound}
-                  className="btn btn-info btn-lg w-100 py-3 fw-bold shadow"
-                >
-                  {game.currentRound === 'river' ? '🏆 Go to Showdown' : '🃏 Reveal Next Card'}
-                </button>
-              </div>
-            ) : isMyTurn && validActions?.canAct ? (
+            {isMyTurn && validActions?.canAct ? (
               <div className="d-grid gap-3">
                 {validActions.canCheck && (
                   <button
