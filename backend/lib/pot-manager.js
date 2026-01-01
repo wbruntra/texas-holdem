@@ -90,7 +90,7 @@ function distributePots(pots, players, communityCards, evaluateHand) {
 
     // Evaluate each eligible player's hand
     const evaluations = eligiblePlayers.map(({ position, player }) => {
-      const hand = evaluateHand([...player.holeCards, ...communityCards])
+      const hand = evaluateHand(player.holeCards, communityCards)
       return { position, hand }
     })
 

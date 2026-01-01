@@ -451,9 +451,12 @@ function processShowdown(state) {
   const clearedPlayers = players.map((p) => ({ ...p, currentBet: 0, totalBet: 0 }))
 
   // Collect all unique winners across all pots
+  // Only include winners from contested pots (pots with more than one eligible player)
+  // This prevents marking a player as "winner" when they just get their uncalled bet back
   const allWinners = new Set()
   pots.forEach((pot) => {
-    if (pot.winners) {
+    if (pot.winners && pot.eligiblePlayers.length > 1) {
+      // Only add winners from pots that were actually contested
       pot.winners.forEach((pos) => allWinners.add(pos))
     }
   })
