@@ -16,6 +16,7 @@ export interface Pot {
   amount: number
   eligiblePlayers: number[]
   winners?: number[] | null
+  winningRankName?: string
 }
 
 export interface GameState {
