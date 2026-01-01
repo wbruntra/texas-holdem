@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import checkSound from '../assets/check.mp3'
 import betSound from '../assets/bet.wav'
-import cardFlipSound from '../assets/card_flip.wav'
+import cardFlipSound from '../assets/card_flip.mp3'
 
 export function useSoundEffects() {
   const checkAudioRef = useRef<HTMLAudioElement | null>(null)
