@@ -189,23 +189,62 @@ export default function Home() {
               >
                 Big Blind:
               </label>
-              <input
-                id="bigBlind"
-                type="number"
-                min="2"
-                step="2"
-                value={bigBlind}
-                onChange={(e) => setBigBlind(parseInt(e.target.value) || 2)}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  fontSize: '16px',
-                  boxSizing: 'border-box',
-                  color: 'rgba(255, 255, 255, 0.87)',
-                  backgroundColor: '#2a2a2a',
-                  border: '1px solid #444',
-                }}
-              />
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setBigBlind((prev) => Math.max(2, prev - 2))}
+                  style={{
+                    backgroundColor: '#444',
+                    color: '#fff',
+                    border: '1px solid #666',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    padding: 0,
+                  }}
+                >
+                  -
+                </button>
+                <input
+                  id="bigBlind"
+                  type="number"
+                  min="2"
+                  step="2"
+                  value={bigBlind}
+                  onChange={(e) => setBigBlind(parseInt(e.target.value) || 2)}
+                  style={{
+                    flex: 1,
+                    padding: '8px',
+                    fontSize: '16px',
+                    boxSizing: 'border-box',
+                    color: 'rgba(255, 255, 255, 0.87)',
+                    backgroundColor: '#2a2a2a',
+                    border: '1px solid #444',
+                    textAlign: 'center',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setBigBlind((prev) => prev + 2)}
+                  style={{
+                    backgroundColor: '#444',
+                    color: '#fff',
+                    border: '1px solid #666',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    padding: 0,
+                  }}
+                >
+                  +
+                </button>
+              </div>
               <div
                 style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '4px' }}
               >
@@ -225,23 +264,62 @@ export default function Home() {
               >
                 Starting Chips:
               </label>
-              <input
-                id="startingChips"
-                type="number"
-                min="100"
-                step="100"
-                value={startingChips}
-                onChange={(e) => setStartingChips(parseInt(e.target.value) || 100)}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  fontSize: '16px',
-                  boxSizing: 'border-box',
-                  color: 'rgba(255, 255, 255, 0.87)',
-                  backgroundColor: '#2a2a2a',
-                  border: '1px solid #444',
-                }}
-              />
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setStartingChips((prev) => Math.max(100, prev - 100))}
+                  style={{
+                    backgroundColor: '#444',
+                    color: '#fff',
+                    border: '1px solid #666',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    padding: 0,
+                  }}
+                >
+                  -
+                </button>
+                <input
+                  id="startingChips"
+                  type="number"
+                  min="100"
+                  step="100"
+                  value={startingChips}
+                  onChange={(e) => setStartingChips(parseInt(e.target.value) || 100)}
+                  style={{
+                    flex: 1,
+                    padding: '8px',
+                    fontSize: '16px',
+                    boxSizing: 'border-box',
+                    color: 'rgba(255, 255, 255, 0.87)',
+                    backgroundColor: '#2a2a2a',
+                    border: '1px solid #444',
+                    textAlign: 'center',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setStartingChips((prev) => prev + 100)}
+                  style={{
+                    backgroundColor: '#444',
+                    color: '#fff',
+                    border: '1px solid #666',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    padding: 0,
+                  }}
+                >
+                  +
+                </button>
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
