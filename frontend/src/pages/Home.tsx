@@ -165,7 +165,7 @@ export default function Home() {
             style={{
               backgroundColor: '#1a1a1a',
               color: 'rgba(255, 255, 255, 0.87)',
-              padding: '24px',
+              padding: '48px',
               borderRadius: '8px',
               maxWidth: '400px',
               width: '90%',
