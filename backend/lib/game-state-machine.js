@@ -9,7 +9,7 @@ const {
   determineWinners,
   evaluateHand,
 } = require('./poker-engine')
-const { calculatePots, distributePots, awardPots, getTotalPot } = require('./pot-manager')
+const { calculatePots, distributePots, awardPots } = require('./pot-manager')
 const { GAME_STATUS, ROUND, PLAYER_STATUS, ACTION_TYPE } = require('./game-constants')
 
 /**
@@ -431,13 +431,11 @@ function processShowdown(state) {
       return { ...p }
     })
 
-    const clearedPlayers = players.map((p) => ({ ...p, currentBet: 0, totalBet: 0 }))
-
+    // Keep bets intact for display
     return {
       ...state,
-      players: clearedPlayers,
+      players: players,
       pot: 0,
-      pots: [],
       winners: eligiblePlayers.map((p) => p.position),
       showdownProcessed: true,
     }
@@ -448,7 +446,9 @@ function processShowdown(state) {
 
   // Award chips to winners
   const players = awardPots(pots, state.players)
-  const clearedPlayers = players.map((p) => ({ ...p, currentBet: 0, totalBet: 0 }))
+
+  // DO NOT clear bets yet - keep them so frontend can calculate pot display
+  // Bets will be cleared when starting the next hand
 
   // Collect all unique winners across all pots
   // Only include winners from contested pots (pots with more than one eligible player)
@@ -468,9 +468,8 @@ function processShowdown(state) {
   return {
     ...state,
     status: gameStatus,
-    players: clearedPlayers,
+    players: players, // Keep bets intact for showdown display
     pot: 0,
-    pots: pots, // Keep pots with winners for display
     winners: Array.from(allWinners),
     showdownProcessed: true,
   }

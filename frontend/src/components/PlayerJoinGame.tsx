@@ -26,7 +26,7 @@ export default function PlayerJoinGame({
     <div className="container d-flex flex-column justify-content-center align-items-center min-vh-100">
       <div
         className="card p-4 bg-dark text-white border-secondary"
-        style={{ maxWidth: '400px', width: '100%' }}
+        style={{ maxWidth: '420px', width: '100%' }}
       >
         <h1 className="text-center mb-4">Join Game</h1>
         <p className="text-center text-secondary mb-4">Room: {roomCode}</p>
@@ -46,7 +46,7 @@ export default function PlayerJoinGame({
           <div className="mb-3">
             <input
               type="text"
-              placeholder="Security Word (min 4 chars)"
+              placeholder="Password (4+ chars)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="form-control form-control-lg bg-dark text-white border-secondary"

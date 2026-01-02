@@ -73,7 +73,7 @@ async function submitAction(playerId, action, amount = 0) {
     throw new Error(validation.error)
   }
 
-  const newState = processAction(game, playerPosition, action, amount)
+  let newState = processAction(game, playerPosition, action, amount)
 
   // Save updated state
   await saveGameState(game.id, newState)
@@ -84,19 +84,51 @@ async function submitAction(playerId, action, amount = 0) {
   }
 
   // CHECK FOR WIN BY FOLD
-  // If only one active player remains and NO ONE is all-in, the hand is over.
-  // We should auto-advance to Showdown effectively immediately so the winner gets the pot.
-  // We don't need to "wait for players to see what happened" because "Fold" -> "Winner" is immediate.
+  // If only one player remains (active or all-in), the hand is over.
+  // This handles two cases:
+  // 1. Everyone else folded and no one is all-in (simple case)
+  // 2. Someone went all-in, then everyone else folded (should not force full playout)
   const activePlayers = newState.players.filter((p) => p.status === PLAYER_STATUS.ACTIVE)
   const allInPlayers = newState.players.filter((p) => p.status === PLAYER_STATUS.ALL_IN)
+  const playersStillInHand = activePlayers.length + allInPlayers.length
 
-  if (activePlayers.length === 1 && allInPlayers.length === 0) {
-    // Everyone else folded. Advance to finish the hand.
-    await advanceRoundIfReady(game.id)
+  if (playersStillInHand === 1) {
+    // Only one player left - either they're active or all-in, they win!
+    // Advance directly to showdown without auto-advancing through rounds
+    const { advanceRound, processShowdown, ROUND } = require('../lib/game-state-machine')
+
+    // If not already at showdown, advance to showdown
+    if (newState.currentRound !== ROUND.SHOWDOWN) {
+      newState = advanceRound(newState)
+      newState.currentRound = ROUND.SHOWDOWN // Force to showdown
+    }
+
+    // Process showdown to award the pot
+    newState = processShowdown(newState)
+
+    // Save the final state
+    await saveGameState(game.id, newState)
+
+    // Complete hand record
+    const { completeHandRecord } = require('./game-service')
+    await completeHandRecord(game.id, newState)
   }
 
-  // DO NOT AUTO-ADVANCE when betting completes - let players manually reveal cards
-  // This prevents race conditions and double-processing of showdown
+  // AUTO-ADVANCE IN SIMPLE CASES (no all-ins)
+  // When betting completes and no players are all-in, automatically advance to next round
+  // This is a convenience feature for the common case where all players check or call
+  const { isBettingRoundComplete, shouldAutoAdvance } = require('../lib/game-state-machine')
+
+  if (
+    allInPlayers.length === 0 && // No all-in players (simple case)
+    isBettingRoundComplete(newState) && // Betting is complete
+    !shouldAutoAdvance(newState) && // Not already auto-advancing (redundant check but safe)
+    newState.currentRound !== 'showdown' // Not already at showdown
+  ) {
+    // Auto-advance one round for player convenience
+    const { advanceOneRound } = require('./game-service')
+    await advanceOneRound(game.id)
+  }
 
   // Get fresh state to return
   const finalState = await getGameById(game.id)

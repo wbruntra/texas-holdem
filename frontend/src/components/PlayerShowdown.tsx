@@ -34,7 +34,42 @@ export default function PlayerShowdown({
       <div className="card-body">
         <h3 className="text-center mb-3">Showdown</h3>
 
-        {winnerPositions.length > 0 && (
+        {/* Display pot results with detailed winner information */}
+        {game.pots && game.pots.length > 0 && (
+          <div className="mb-4">
+            {game.pots.map((pot, idx) => {
+              if (!pot.winners || pot.winners.length === 0) return null
+
+              const potLabel =
+                game.pots!.length > 1 ? (idx === 0 ? 'Main Pot' : `Side Pot ${idx}`) : 'Pot'
+
+              const potWinners = game.players.filter((p) => pot.winners!.includes(p.position))
+              const winAmount = pot.amount || Math.floor(pot.amount / pot.winners.length)
+
+              return (
+                <div key={idx} className="alert alert-success text-center mb-2">
+                  <div
+                    className="small text-uppercase text-muted mb-1"
+                    style={{ fontSize: '0.7rem' }}
+                  >
+                    {potLabel}
+                  </div>
+                  {potWinners.map((winner, wIdx) => (
+                    <div key={wIdx} className="mb-1">
+                      <strong>{winner.name}</strong> won <strong>${winAmount}</strong>
+                      {pot.winningRankName && (
+                        <span className="text-muted"> with {pot.winningRankName}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Fallback for when pots data isn't available */}
+        {(!game.pots || game.pots.length === 0) && winnerPositions.length > 0 && (
           <div className="alert alert-success text-center mb-4">
             <div className="h5 mb-1">
               Winner{winnerPositions.length > 1 ? 's' : ''}:{' '}
@@ -45,10 +80,6 @@ export default function PlayerShowdown({
                   .join(', ')}
               </strong>
             </div>
-            {(() => {
-              const winningRank = game.pots?.find((p) => p.winningRankName)?.winningRankName
-              return winningRank ? <div className="small text-muted">({winningRank})</div> : null
-            })()}
           </div>
         )}
 

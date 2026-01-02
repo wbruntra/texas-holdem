@@ -8,7 +8,8 @@ const Keygrip = require('keygrip')
 const gameService = require('../services/game-service')
 const playerService = require('../services/player-service')
 const gameEvents = require('../lib/game-events')
-const { calculatePots } = require('../lib/pot-manager')
+const { calculatePots, distributePots } = require('../lib/pot-manager')
+const { evaluateHand } = require('../lib/poker-engine')
 
 const SHOWDOWN_ROUND = 'showdown'
 
@@ -310,6 +311,14 @@ class WebSocketService {
     const shouldRevealAllCards =
       isShowdown || (playersWithChips.length === 1 && allInPlayers.length > 0)
 
+    // Calculate pots from player bets
+    let pots = calculatePots(game.players)
+
+    // If it's showdown, distribute pots to add winner information
+    if (isShowdown && pots.length > 0) {
+      pots = distributePots(pots, game.players, game.communityCards, evaluateHand)
+    }
+
     return {
       id: game.id,
       roomCode: game.roomCode,
@@ -320,7 +329,7 @@ class WebSocketService {
       dealerPosition: game.dealerPosition,
       currentRound: game.currentRound,
       pot: game.pot,
-      pots: calculatePots(game.players),
+      pots: pots,
       currentBet: game.currentBet,
       currentPlayerPosition: game.currentPlayerPosition,
       handNumber: game.handNumber,
@@ -332,6 +341,7 @@ class WebSocketService {
         position: p.position,
         chips: p.chips,
         currentBet: p.currentBet,
+        totalBet: p.totalBet || 0,
         status: p.status,
         holeCards:
           (shouldRevealAllCards &&
@@ -353,6 +363,14 @@ class WebSocketService {
   sanitizePlayerState(game, playerId) {
     const isShowdown = game.currentRound === SHOWDOWN_ROUND
 
+    // Calculate pots from player bets
+    let pots = calculatePots(game.players)
+
+    // If it's showdown, distribute pots to add winner information
+    if (isShowdown && pots.length > 0) {
+      pots = distributePots(pots, game.players, game.communityCards, evaluateHand)
+    }
+
     return {
       id: game.id,
       roomCode: game.roomCode,
@@ -363,7 +381,7 @@ class WebSocketService {
       dealerPosition: game.dealerPosition,
       currentRound: game.currentRound,
       pot: game.pot,
-      pots: calculatePots(game.players),
+      pots: pots,
       currentBet: game.currentBet,
       currentPlayerPosition: game.currentPlayerPosition,
       handNumber: game.handNumber,

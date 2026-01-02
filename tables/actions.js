@@ -34,8 +34,47 @@ class Actions extends Model {
     return 'actions'
   }
 
-  // TODO: Add jsonSchema based on DDL above
-  // TODO: Add relationMappings if needed
+  static get jsonSchema() {
+    return {
+      type: 'object',
+      required: ['hand_id', 'player_id', 'action_type', 'amount', 'round'],
+      properties: {
+        id: { type: 'integer' },
+        hand_id: { type: 'integer' },
+        player_id: { type: 'integer' },
+        action_type: { type: 'string' },
+        amount: { type: 'integer' },
+        round: { type: 'string' },
+        created_at: { type: 'string', format: 'date-time' },
+        updated_at: { type: ['string', 'null'], format: 'date-time' },
+        sequence_number: { type: 'integer' },
+      },
+    }
+  }
+
+  static get relationMappings() {
+    const Players = require('./players')
+    const Hands = require('./hands')
+
+    return {
+      player: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Players,
+        join: {
+          from: 'actions.player_id',
+          to: 'players.id',
+        },
+      },
+      hand: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Hands,
+        join: {
+          from: 'actions.hand_id',
+          to: 'hands.id',
+        },
+      },
+    }
+  }
 }
 
 module.exports = Actions

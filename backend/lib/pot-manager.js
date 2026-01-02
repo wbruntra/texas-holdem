@@ -7,62 +7,63 @@ const { compareHands } = require('./poker-engine')
  * @returns {Array} Array of pot objects with amount and eligiblePlayers
  */
 function calculatePots(players) {
-  // Create working array with position, contribution, and active status
-  const contributions = players.map((p, idx) => ({
+  // Create array with all players' contributions (total bets)
+  const remainingContributions = players.map((p, idx) => ({
     position: idx,
-    amount: p.totalBet || 0,
-    isActive: p.status === PLAYER_STATUS.ACTIVE || p.status === PLAYER_STATUS.ALL_IN,
-    isFolded: p.status === PLAYER_STATUS.FOLDED,
+    remaining: p.totalBet || 0,
+    isEligible: p.status === PLAYER_STATUS.ACTIVE || p.status === PLAYER_STATUS.ALL_IN,
   }))
 
-  // Separate active players from folded (folded contribute but can't win)
-  const activePlayers = contributions.filter((c) => c.isActive)
-  const foldedContributions = contributions
-    .filter((c) => c.isFolded)
-    .reduce((sum, c) => sum + c.amount, 0)
+  // Get eligible (non-folded) players
+  const eligiblePlayers = remainingContributions.filter((c) => c.isEligible)
 
-  if (activePlayers.length === 0) {
+  if (eligiblePlayers.length === 0) {
     // Everyone folded (shouldn't happen but handle it)
+    const totalAmount = remainingContributions.reduce((sum, c) => sum + c.remaining, 0)
     return [
       {
-        amount: foldedContributions,
+        amount: totalAmount,
         eligiblePlayers: [],
         winners: null,
       },
     ]
   }
 
-  // Sort active players by contribution (ascending)
-  activePlayers.sort((a, b) => a.amount - b.amount)
-
   const pots = []
-  let remainingPlayers = [...activePlayers]
-  let prevLevel = 0
 
-  while (remainingPlayers.length > 0) {
-    const currentLevel = remainingPlayers[0].amount
-    const increment = currentLevel - prevLevel
+  // Keep calculating pots while there are eligible players with money
+  while (eligiblePlayers.some((p) => p.remaining > 0)) {
+    // Sort eligible players by remaining contribution (ascending)
+    const eligibleWithMoney = eligiblePlayers.filter((p) => p.remaining > 0)
 
-    if (increment > 0) {
-      // Create a pot for this level
-      const potAmount = increment * remainingPlayers.length
-      const eligiblePositions = remainingPlayers.map((p) => p.position).sort((a, b) => a - b)
+    if (eligibleWithMoney.length === 0) break
 
+    // Get the lowest bet amount from eligible players
+    const lowestBet = Math.min(...eligibleWithMoney.map((p) => p.remaining))
+
+    // Calculate pot by taking lowestBet from ALL players who have at least that much
+    let potAmount = 0
+    const contributingPlayers = []
+
+    remainingContributions.forEach((player) => {
+      if (player.remaining > 0) {
+        const contribution = Math.min(lowestBet, player.remaining)
+        potAmount += contribution
+        player.remaining -= contribution
+        contributingPlayers.push(player.position)
+      }
+    })
+
+    // Eligible winners are the eligible players who contributed to this pot
+    const eligibleWinners = eligibleWithMoney.map((p) => p.position).sort((a, b) => a - b)
+
+    if (potAmount > 0) {
       pots.push({
         amount: potAmount,
-        eligiblePlayers: eligiblePositions,
+        eligiblePlayers: eligibleWinners,
         winners: null,
       })
     }
-
-    // Remove players who are tapped out at this level
-    remainingPlayers = remainingPlayers.filter((p) => p.amount > currentLevel)
-    prevLevel = currentLevel
-  }
-
-  // Add folded contributions to the first pot (main pot)
-  if (pots.length > 0 && foldedContributions > 0) {
-    pots[0].amount += foldedContributions
   }
 
   return pots

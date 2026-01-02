@@ -8,6 +8,7 @@ export interface Player {
   position: number
   chips: number
   currentBet: number
+  totalBet?: number
   status: string
   holeCards?: Array<{ rank: string; suit: string }>
   showCards?: boolean
@@ -17,6 +18,7 @@ export interface Pot {
   amount: number
   eligiblePlayers: number[]
   winners?: number[] | null
+  winAmount?: number
   winningRankName?: string
 }
 

@@ -5,6 +5,8 @@ const playerService = require('../services/player-service')
 const actionService = require('../services/action-service')
 const gameEvents = require('../lib/game-events')
 const { isBettingRoundComplete, shouldAutoAdvance } = require('../lib/game-state-machine')
+const { calculatePots, distributePots } = require('../lib/pot-manager')
+const { evaluateHand } = require('../lib/poker-engine')
 
 const SHOWDOWN_ROUND = 'showdown'
 
@@ -126,6 +128,15 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
 
     const revealCards = shouldRevealAllCards(game)
 
+    // Calculate pots from player bets
+    let pots = calculatePots(game.players)
+
+    // If it's showdown, distribute pots to add winner information
+    const isShowdown = game.currentRound === SHOWDOWN_ROUND
+    if (isShowdown && pots.length > 0) {
+      pots = distributePots(pots, game.players, game.communityCards, evaluateHand)
+    }
+
     // Shared screen should show full table state.
     // Hole cards remain hidden until showdown or all-in situation.
     const tableState = {
@@ -138,6 +149,7 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
       dealerPosition: game.dealerPosition,
       currentRound: game.currentRound,
       pot: game.pot,
+      pots: pots,
       currentBet: game.currentBet,
       currentPlayerPosition: game.currentPlayerPosition,
       handNumber: game.handNumber,
@@ -149,6 +161,7 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
         position: p.position,
         chips: p.chips,
         currentBet: p.currentBet,
+        totalBet: p.totalBet || 0,
         status: p.status,
         holeCards: revealCards || p.showCards ? p.holeCards || [] : [],
         lastAction: p.lastAction || null,
@@ -185,6 +198,14 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
 
     const isShowdown = game.currentRound === SHOWDOWN_ROUND
 
+    // Calculate pots from player bets
+    let pots = calculatePots(game.players)
+
+    // If it's showdown, distribute pots to add winner information
+    if (isShowdown && pots.length > 0) {
+      pots = distributePots(pots, game.players, game.communityCards, evaluateHand)
+    }
+
     // Filter community cards based on current round (only show revealed cards)
     let visibleCommunityCards = []
     if (game.communityCards) {
@@ -204,6 +225,7 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
     const revealCards = shouldRevealAllCards(game)
     const gameState = {
       ...game,
+      pots: pots,
       deck: undefined, // Never expose the deck
       communityCards: visibleCommunityCards,
       players: game.players.map((p) => ({

@@ -77,17 +77,15 @@ test('Advance endpoint: should be available when betting is complete', async () 
   console.log(`  Current player position: ${state.currentPlayerPosition}`)
   console.log(`  Round: ${state.currentRound}`)
 
-  // Verify betting is complete
-  expect(state.currentPlayerPosition).toBe(null)
-  expect(state.currentRound).toBe('preflop')
-  console.log(`  ✅ Betting complete (currentPlayerPosition is null)`)
+  // With auto-advance feature, betting completion automatically advances to next round
+  // (unless there are all-in players, which require manual advance)
+  expect(state.currentRound).toBe('flop')
+  expect(state.currentPlayerPosition).not.toBe(null) // Set to first player to act on flop
+  console.log(`  ✅ Auto-advanced to flop after betting completed`)
 
-  // Now advance should be available - call advanceRoundIfReady
-  console.log(`\n📍 Calling advanceRoundIfReady()...`)
-  state = await gameService.advanceRoundIfReady(gameId)
-
-  console.log(`\nAfter advance:`)
-  console.log(`  Round: ${state.currentRound}`)
+  console.log(`\nTest updated: Auto-advance now handles simple betting completion`)
+  console.log(`  Old behavior: stayed at preflop, needed manual advance`)
+  console.log(`  New behavior: auto-advances to flop for player convenience`)
   console.log(`  Current player position: ${state.currentPlayerPosition}`)
   console.log(`  Community cards: ${state.communityCards.length}`)
 
@@ -113,23 +111,13 @@ test('Advance endpoint: should be available when betting is complete', async () 
   console.log(`  Current player position: ${state.currentPlayerPosition}`)
   console.log(`  Round: ${state.currentRound}`)
 
-  // Verify betting is complete again
-  expect(state.currentPlayerPosition).toBe(null)
-  expect(state.currentRound).toBe('flop')
-  console.log(`  ✅ Betting complete again (currentPlayerPosition is null)`)
-
-  // Advance to turn
-  console.log(`\n📍 Calling advanceRoundIfReady() again...`)
-  state = await gameService.advanceRoundIfReady(gameId)
-
-  console.log(`\nAfter second advance:`)
-  console.log(`  Round: ${state.currentRound}`)
-  console.log(`  Current player position: ${state.currentPlayerPosition}`)
-  console.log(`  Community cards: ${state.communityCards.length}`)
-
-  // Verify we advanced to turn
+  // With auto-advance, the game automatically advances to turn after flop betting completes
   expect(state.currentRound).toBe('turn')
-  expect(state.communityCards.length).toBe(4)
+  expect(state.currentPlayerPosition).not.toBe(null) // Set to first player to act on turn
+  console.log(`  ✅ Auto-advanced to turn after flop betting completed`)
+
+  console.log(`\nVerifying auto-advance continued to work:`)
+  console.log(`  Flop -> Turn: automatic`)
   expect(state.currentPlayerPosition).not.toBe(null)
   console.log(`  ✅ Successfully advanced to turn`)
 

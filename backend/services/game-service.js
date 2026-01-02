@@ -14,7 +14,6 @@ const {
   GAME_STATUS,
   ROUND,
 } = require('../lib/game-state-machine')
-const { calculatePots, getTotalPot } = require('../lib/pot-manager')
 
 /**
  * Generate a unique 6-character room code
@@ -94,7 +93,6 @@ async function getGameById(gameId) {
     dealerPosition: game.dealer_position,
     currentRound: game.current_round,
     pot: game.pot,
-    pots: game.pots ? JSON.parse(game.pots) : [],
     communityCards: game.community_cards ? JSON.parse(game.community_cards) : [],
     deck: game.deck ? JSON.parse(game.deck) : [],
     winners: game.winners ? JSON.parse(game.winners) : undefined,

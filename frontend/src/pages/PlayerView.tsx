@@ -4,6 +4,7 @@ import HorizontalSlider from '../components/HorizontalSlider'
 import PlayerJoinGame from '../components/PlayerJoinGame'
 import PlayerShowdown from '../components/PlayerShowdown'
 import { usePlayerGame } from '../hooks/usePlayerGame'
+import { getDisplayPot } from '../utils/potUtils'
 
 export default function PlayerView() {
   const { roomCode } = useParams<{ roomCode: string }>()
@@ -109,6 +110,9 @@ export default function PlayerView() {
 
   const derivedMaxBet = validActions?.maxBet ?? validActions?.maxRaise ?? myPlayer?.chips ?? 0
 
+  // Calculate pot from player contributions (totalBet + currentBet) rather than game.pot
+  const displayPot = getDisplayPot(game.players, game.pots)
+
   return (
     <div className="container py-2" style={{ maxWidth: '480px' }}>
       {/* Unified Dashboard */}
@@ -132,7 +136,7 @@ export default function PlayerView() {
             >
               Total Pot
             </div>
-            <div className="h2 text-warning mb-0 fw-bold">${game.pot}</div>
+            <div className="h2 text-warning mb-0 fw-bold">${displayPot}</div>
 
             {game.pots && game.pots.length > 1 && (
               <div className="d-flex justify-content-center gap-2 mt-1">

@@ -24,8 +24,19 @@ class Demo extends Model {
     return 'demo'
   }
 
-  // TODO: Add jsonSchema based on DDL above
-  // TODO: Add relationMappings if needed
+  static get jsonSchema() {
+    return {
+      type: 'object',
+      required: ['name'],
+      properties: {
+        id: { type: 'integer' },
+        name: { type: 'string', maxLength: 255 },
+        description: { type: ['string', 'null'], maxLength: 255 },
+        created_at: { type: ['string', 'null'], format: 'date-time' },
+        updated_at: { type: ['string', 'null'], format: 'date-time' },
+      },
+    }
+  }
 }
 
 module.exports = Demo

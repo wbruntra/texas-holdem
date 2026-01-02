@@ -6,6 +6,7 @@ export interface Player {
   position: number
   chips: number
   currentBet: number
+  totalBet?: number
   status: string
   holeCards?: Card[]
   lastAction?: string | null
@@ -15,6 +16,7 @@ export interface Pot {
   amount: number
   eligiblePlayers: number[]
   winners?: number[] | null
+  winAmount?: number
   winningRankName?: string
 }
 
