@@ -27,8 +27,6 @@ CREATE TABLE games (
 -- Referenced by:
 -- * hands.game_id (fk_hands_game_id_games_id)
 -- * players.game_id (fk_players_game_id_games_id)
-
--- Note: pots are calculated on-the-fly from players.total_bet, not stored
  * END_DDL
  */
 const { Model } = require('objection')
