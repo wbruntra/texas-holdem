@@ -14,6 +14,8 @@ const {
   GAME_STATUS,
   ROUND,
 } = require('../lib/game-state-machine')
+const eventLogger = require('./event-logger')
+const { EVENT_TYPE } = require('../lib/event-types')
 
 /**
  * Generate a unique 6-character room code
@@ -61,6 +63,17 @@ async function createGame(config = {}) {
     hand_number: 0,
     last_raise: 0,
   })
+
+  eventLogger.logEvent(
+    EVENT_TYPE.GAME_CREATED,
+    {
+      roomCode,
+      smallBlind,
+      bigBlind,
+      startingChips,
+    },
+    gameId,
+  )
 
   return {
     id: gameId,
@@ -173,6 +186,27 @@ async function startGame(gameId) {
   // Create hand record at start with initial state
   await createHandRecord(gameId, newState)
 
+  eventLogger.logEvent(
+    EVENT_TYPE.GAME_STARTED,
+    {
+      playerCount: newState.players.length,
+      dealerPosition: newState.dealerPosition,
+      handNumber: newState.handNumber,
+      players: newState.players.map((p) => ({
+        id: p.id,
+        name: p.name,
+        position: p.position,
+        chips: p.chips,
+        holeCards: p.holeCards,
+        isDealer: p.isDealer,
+        isSmallBlind: p.isSmallBlind,
+        isBigBlind: p.isBigBlind,
+      })),
+      deck: newState.deck,
+    },
+    gameId,
+  )
+
   // Record blind posts as actions
   try {
     const { recordBlindPost } = require('./action-service')
@@ -281,11 +315,28 @@ async function advanceOneRound(gameId) {
   } else {
     // Go to showdown - processShowdown will calculate pots internally
     gameState = advanceRound(gameState)
+    eventLogger.logEvent(
+      EVENT_TYPE.SHOWDOWN,
+      {
+        communityCards: gameState.communityCards,
+        pot: gameState.pot,
+      },
+      gameId,
+    )
     gameState = processShowdown(gameState)
     await saveGameState(gameId, gameState)
 
     // Complete hand record with final state
     await completeHandRecord(gameId, gameState)
+
+    eventLogger.logEvent(
+      EVENT_TYPE.HAND_COMPLETED,
+      {
+        winners: gameState.winners,
+        handNumber: gameState.handNumber,
+      },
+      gameId,
+    )
   }
 
   return gameState
@@ -334,6 +385,16 @@ async function advanceRoundIfReady(gameId) {
     if (shouldContinueToNextRound(gameState)) {
       gameState = advanceRound(gameState)
 
+      eventLogger.logEvent(
+        EVENT_TYPE.ROUND_STARTED,
+        {
+          round: gameState.currentRound,
+          communityCards: gameState.communityCards,
+          pot: gameState.pot,
+        },
+        gameId,
+      )
+
       // If auto-advancing, add timestamp for when this round's cards were revealed
       if (shouldAutoAdvanceNow) {
         gameState.autoAdvanceTimestamp = Date.now()
@@ -349,11 +410,28 @@ async function advanceRoundIfReady(gameId) {
     } else {
       // Go to showdown - processShowdown will calculate pots internally
       gameState = advanceRound(gameState)
+      eventLogger.logEvent(
+        EVENT_TYPE.SHOWDOWN,
+        {
+          communityCards: gameState.communityCards,
+          pot: gameState.pot,
+        },
+        gameId,
+      )
       gameState = processShowdown(gameState)
       await saveGameState(gameId, gameState)
 
       // Complete hand record with final state
       await completeHandRecord(gameId, gameState)
+
+      eventLogger.logEvent(
+        EVENT_TYPE.HAND_COMPLETED,
+        {
+          winners: gameState.winners,
+          handNumber: gameState.handNumber,
+        },
+        gameId,
+      )
       break
     }
   }
@@ -381,6 +459,28 @@ async function startNextHand(gameId) {
 
   // Create hand record at start
   await createHandRecord(gameId, newState)
+
+  eventLogger.logEvent(
+    EVENT_TYPE.HAND_STARTED,
+    {
+      handNumber: newState.handNumber,
+      dealerPosition: newState.dealerPosition,
+      playerCount: newState.players.filter((p) => p.status !== 'out').length,
+      players: newState.players.map((p) => ({
+        id: p.id,
+        name: p.name,
+        position: p.position,
+        chips: p.chips,
+        holeCards: p.holeCards,
+        status: p.status,
+        isDealer: p.isDealer,
+        isSmallBlind: p.isSmallBlind,
+        isBigBlind: p.isBigBlind,
+      })),
+      deck: newState.deck,
+    },
+    gameId,
+  )
 
   // Record blind posts as actions
   try {
@@ -557,6 +657,14 @@ async function resetGame(gameId) {
     )
     .delete()
   await db('hands').where({ game_id: gameId }).delete()
+
+  eventLogger.logEvent(
+    EVENT_TYPE.GAME_RESET,
+    {
+      playerCount: players.length,
+    },
+    gameId,
+  )
 
   return await getGameById(gameId)
 }

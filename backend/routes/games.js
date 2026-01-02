@@ -7,6 +7,7 @@ const gameEvents = require('../lib/game-events')
 const { isBettingRoundComplete, shouldAutoAdvance } = require('../lib/game-state-machine')
 const { calculatePots, distributePots } = require('../lib/pot-manager')
 const { evaluateHand } = require('../lib/poker-engine')
+const eventLogger = require('../services/event-logger')
 
 const SHOWDOWN_ROUND = 'showdown'
 
@@ -671,6 +672,74 @@ router.get('/:gameId/players', async (req, res, next) => {
     const players = await playerService.getAllPlayersInGame(gameId)
 
     res.json(players)
+  } catch (error) {
+    next(error)
+  }
+})
+
+/**
+ * GET /api/events
+ * Get all logged events (for testing/debugging)
+ */
+router.get('/events/all', async (req, res, next) => {
+  try {
+    const events = eventLogger.getEvents()
+    res.json({
+      enabled: eventLogger.enabled,
+      count: events.length,
+      events,
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+/**
+ * GET /api/events/game/:gameId
+ * Get events for a specific game
+ */
+router.get('/events/game/:gameId', async (req, res, next) => {
+  try {
+    const gameId = parseInt(req.params.gameId, 10)
+    const events = eventLogger.getGameEvents(gameId)
+    res.json({
+      gameId,
+      count: events.length,
+      events,
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+/**
+ * DELETE /api/events
+ * Clear all logged events
+ */
+router.delete('/events/all', async (req, res, next) => {
+  try {
+    eventLogger.clear()
+    res.json({ message: 'Event log cleared' })
+  } catch (error) {
+    next(error)
+  }
+})
+
+/**
+ * POST /api/events/export
+ * Export events to a file
+ */
+router.post('/events/export', async (req, res, next) => {
+  try {
+    const { filename } = req.body
+    const filePath = filename || `event-log-${Date.now()}.json`
+    const success = eventLogger.exportToFile(filePath)
+
+    if (success) {
+      res.json({ message: 'Events exported', filePath })
+    } else {
+      res.status(500).json({ error: 'Failed to export events' })
+    }
   } catch (error) {
     next(error)
   }

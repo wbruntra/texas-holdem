@@ -9,13 +9,14 @@ type TablePlayer = {
 type AnyPlayer = Player | TablePlayer
 
 /**
- * Calculate the total pot from player contributions (totalBet + currentBet)
+ * Calculate the total pot from player contributions
  * This is used during active rounds when pot is being built
+ * Note: totalBet already includes currentBet (it's cumulative), so we only sum totalBet
  */
 export function calculateTotalPot(players: AnyPlayer[]): number {
   return players.reduce((sum, player) => {
     const totalBet = 'totalBet' in player ? player.totalBet || 0 : 0
-    return sum + totalBet + (player.currentBet || 0)
+    return sum + totalBet
   }, 0)
 }
 

@@ -1,0 +1,48 @@
+/**
+ * Event Types - Standardized event definitions for end-to-end testing
+ */
+
+const EVENT_TYPE = {
+  // Game lifecycle events
+  GAME_CREATED: 'game:created',
+  GAME_STARTED: 'game:started',
+  GAME_RESET: 'game:reset',
+  GAME_COMPLETED: 'game:completed',
+
+  // Player events
+  PLAYER_JOINED: 'player:joined',
+  PLAYER_LEFT: 'player:left',
+  PLAYER_AUTHENTICATED: 'player:authenticated',
+
+  // Hand lifecycle events
+  HAND_STARTED: 'hand:started',
+  HAND_COMPLETED: 'hand:completed',
+
+  // Betting round events
+  ROUND_STARTED: 'round:started',
+  ROUND_COMPLETED: 'round:completed',
+
+  // Player action events
+  ACTION_CHECK: 'action:check',
+  ACTION_BET: 'action:bet',
+  ACTION_CALL: 'action:call',
+  ACTION_RAISE: 'action:raise',
+  ACTION_FOLD: 'action:fold',
+  ACTION_ALL_IN: 'action:all_in',
+
+  // Game state changes
+  BLINDS_POSTED: 'state:blinds_posted',
+  CARDS_DEALT: 'state:cards_dealt',
+  COMMUNITY_CARDS_REVEALED: 'state:community_cards_revealed',
+  SHOWDOWN: 'state:showdown',
+  POTS_DISTRIBUTED: 'state:pots_distributed',
+  CARDS_SHOWN: 'state:cards_shown',
+
+  // Admin/system events
+  STATE_ADVANCED: 'admin:state_advanced',
+  CARD_REVEALED: 'admin:card_revealed',
+}
+
+module.exports = {
+  EVENT_TYPE,
+}

@@ -4,6 +4,8 @@
 
 const bcrypt = require('bcryptjs')
 const db = require('../../db')
+const eventLogger = require('./event-logger')
+const { EVENT_TYPE } = require('../lib/event-types')
 
 /**
  * Add a player to a game
@@ -69,6 +71,17 @@ async function joinGame(gameId, playerName, password) {
     connected: 1,
   })
 
+  eventLogger.logEvent(
+    EVENT_TYPE.PLAYER_JOINED,
+    {
+      playerId,
+      playerName,
+      position,
+      chips: game.starting_chips,
+    },
+    gameId,
+  )
+
   return {
     id: playerId,
     name: playerName,
@@ -120,9 +133,27 @@ async function leaveGame(playerId) {
   if (game.status !== 'waiting') {
     // If game started, mark as disconnected instead of deleting
     await db('players').where({ id: playerId }).update({ connected: 0, updated_at: new Date() })
+    eventLogger.logEvent(
+      EVENT_TYPE.PLAYER_LEFT,
+      {
+        playerId,
+        playerName: player.name,
+        disconnected: true,
+      },
+      player.gameId,
+    )
   } else {
     // If game not started, can remove player
     await db('players').where({ id: playerId }).delete()
+    eventLogger.logEvent(
+      EVENT_TYPE.PLAYER_LEFT,
+      {
+        playerId,
+        playerName: player.name,
+        removed: true,
+      },
+      player.gameId,
+    )
   }
 }
 
@@ -176,6 +207,15 @@ async function authenticatePlayer(gameId, playerName, password) {
     throw new Error('Invalid credentials')
   }
 
+  eventLogger.logEvent(
+    EVENT_TYPE.PLAYER_AUTHENTICATED,
+    {
+      playerId: player.id,
+      playerName,
+    },
+    gameId,
+  )
+
   return getPlayerById(player.id)
 }
 
@@ -183,9 +223,21 @@ async function authenticatePlayer(gameId, playerName, password) {
  * Update player showCards status
  */
 async function setShowCards(playerId, showCards) {
+  const player = await getPlayerById(playerId)
   await db('players')
     .where({ id: playerId })
     .update({ show_cards: showCards ? 1 : 0, updated_at: new Date() })
+
+  if (showCards && player) {
+    eventLogger.logEvent(
+      EVENT_TYPE.CARDS_SHOWN,
+      {
+        playerId,
+        playerName: player.name,
+      },
+      player.gameId,
+    )
+  }
 }
 
 module.exports = {

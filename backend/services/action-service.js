@@ -8,6 +8,8 @@ const { getGameById, saveGameState, advanceRoundIfReady } = require('./game-serv
 const { getPlayerById } = require('./player-service')
 const { ACTION_TYPE, PLAYER_STATUS } = require('../lib/game-constants')
 const { getNextActingPosition } = require('../lib/game-state-machine')
+const eventLogger = require('./event-logger')
+const { EVENT_TYPE } = require('../lib/event-types')
 
 async function normalizeTurnIfNeeded(gameId) {
   const game = await getGameById(gameId)
@@ -77,6 +79,30 @@ async function submitAction(playerId, action, amount = 0) {
 
   // Save updated state
   await saveGameState(game.id, newState)
+
+  // Log the action event
+  const eventTypeMap = {
+    check: EVENT_TYPE.ACTION_CHECK,
+    bet: EVENT_TYPE.ACTION_BET,
+    call: EVENT_TYPE.ACTION_CALL,
+    raise: EVENT_TYPE.ACTION_RAISE,
+    fold: EVENT_TYPE.ACTION_FOLD,
+    all_in: EVENT_TYPE.ACTION_ALL_IN,
+  }
+  const eventType = eventTypeMap[action] || 'action:unknown'
+  eventLogger.logEvent(
+    eventType,
+    {
+      playerId,
+      playerName: player.name,
+      playerPosition,
+      action,
+      amount,
+      round: game.currentRound,
+      remainingChips: newState.players[playerPosition].chips,
+    },
+    game.id,
+  )
 
   // Record action in history
   if (game.currentRound) {
@@ -217,6 +243,15 @@ async function recordAction(gameId, playerId, actionType, amount, round) {
  * @param {number} amount - Blind amount
  */
 async function recordBlindPost(gameId, playerId, blindType, amount) {
+  eventLogger.logEvent(
+    EVENT_TYPE.BLINDS_POSTED,
+    {
+      playerId,
+      blindType,
+      amount,
+    },
+    gameId,
+  )
   await recordAction(gameId, playerId, blindType, amount, 'preflop')
 }
 
@@ -280,6 +315,16 @@ async function revealCard(playerId) {
   // Reveal the card
   const { revealNextCard } = require('../lib/game-state-machine')
   let newState = revealNextCard(game)
+
+  eventLogger.logEvent(
+    EVENT_TYPE.CARD_REVEALED,
+    {
+      playerId,
+      round: newState.currentRound,
+      communityCards: newState.communityCards,
+    },
+    game.id,
+  )
 
   // Save updated state
   await saveGameState(game.id, newState)
