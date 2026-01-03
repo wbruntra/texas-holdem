@@ -1,4 +1,4 @@
-import type { GameState } from '~/hooks/usePlayerGame'
+import type { GameState } from '~/components/table/types'
 
 interface PlayerShowdownProps {
   game: GameState
@@ -34,7 +34,6 @@ export default function PlayerShowdown({
       <div className="card-body">
         <h3 className="text-center mb-3">Showdown</h3>
 
-        {/* Display pot results with detailed winner information */}
         {game.pots && game.pots.length > 0 && (
           <div className="mb-4">
             {game.pots.map((pot, idx) => {
@@ -68,7 +67,6 @@ export default function PlayerShowdown({
           </div>
         )}
 
-        {/* Fallback for when pots data isn't available */}
         {(!game.pots || game.pots.length === 0) && winnerPositions.length > 0 && (
           <div className="alert alert-success text-center mb-4">
             <div className="h5 mb-1">
@@ -125,7 +123,7 @@ export default function PlayerShowdown({
               <button
                 onClick={() => {
                   const me = game.players.find((p) => winnerPositions.includes(p.position))
-                  if (me) onToggleShowCards(!me.showCards)
+                  if (me) onToggleShowCards(!((me as { showCards?: boolean }).showCards ?? false))
                 }}
                 className="btn btn-outline-info btn-sm"
               >

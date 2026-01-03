@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import HorizontalSlider from '~/components/HorizontalSlider'
 import PlayerJoinGame from '~/components/PlayerJoinGame'
 import PlayerShowdown from '~/components/PlayerShowdown'
 import { usePlayerGame } from '~/hooks/usePlayerGame'
 import { getDisplayPot } from '~/utils/potUtils'
+import type { Player, Pot, Card } from '~/components/table/types'
 
 export default function PlayerView() {
   const { roomCode } = useParams<{ roomCode: string }>()
@@ -19,6 +19,8 @@ export default function PlayerView() {
     checkingAuth,
     canRevealCard,
     wsConnected,
+    betAmount,
+    raiseAmount,
     joinGame,
     startGame,
     performAction,
@@ -26,29 +28,14 @@ export default function PlayerView() {
     revealCard,
     advanceRound,
     toggleShowCards,
+    setBetAmount,
+    setRaiseAmount,
   } = usePlayerGame(roomCode)
-
-  const [raiseAmount, setRaiseAmount] = useState<number>(0)
-  const [betAmount, setBetAmount] = useState<number>(0)
-
-  // Initialize bet/raise amounts when validActions change
-  useEffect(() => {
-    if (!validActions) return
-
-    if (validActions.canBet && validActions.minBet !== undefined) {
-      const minBet = validActions.minBet
-      setBetAmount((prev) => (prev >= minBet ? prev : minBet))
-    }
-    if (validActions.canRaise && validActions.minRaise !== undefined) {
-      const minRaise = validActions.minRaise
-      setRaiseAmount((prev) => (prev >= minRaise ? prev : minRaise))
-    }
-  }, [validActions])
 
   const handleAction = async (action: string, amount?: number) => {
     await performAction(action, amount)
-    setRaiseAmount(0)
     setBetAmount(0)
+    setRaiseAmount(0)
   }
 
   const formatCard = (card: { rank: string; suit: string }) => {
@@ -65,7 +52,6 @@ export default function PlayerView() {
     return suit === 'hearts' || suit === 'diamonds' ? 'card-red' : 'card-black'
   }
 
-  // Show loading while checking authentication
   if (checkingAuth) {
     return (
       <div className="container d-flex flex-column justify-content-center align-items-center min-vh-100 text-white text-center">
@@ -77,7 +63,6 @@ export default function PlayerView() {
     )
   }
 
-  // Join screen
   if (!joined) {
     return (
       <PlayerJoinGame
@@ -101,7 +86,7 @@ export default function PlayerView() {
     )
   }
 
-  const myPlayer = game.players.find((p) => p.name === playerName)
+  const myPlayer = game.players.find((p: Player) => p.name === playerName)
   const isMyTurn = myPlayer && game.currentPlayerPosition === myPlayer.position
 
   const isShowdown = game.currentRound === 'showdown'
@@ -110,15 +95,12 @@ export default function PlayerView() {
 
   const derivedMaxBet = validActions?.maxBet ?? validActions?.maxRaise ?? myPlayer?.chips ?? 0
 
-  // Calculate pot from player contributions (totalBet + currentBet) rather than game.pot
   const displayPot = getDisplayPot(game.players, game.pots)
 
   return (
     <div className="container py-2" style={{ maxWidth: '480px' }}>
-      {/* Unified Dashboard */}
       <div className="card bg-dark text-white border-secondary p-3 pt-1 mb-3 shadow-sm">
         <div className="card-body p-2">
-          {/* Top Row: Name & Chips */}
           <div className="d-flex justify-content-between align-items-center mb-2">
             <div className="fw-bold text-truncate" style={{ maxWidth: '60%' }}>
               {playerName}
@@ -128,7 +110,6 @@ export default function PlayerView() {
             </div>
           </div>
 
-          {/* Center: Pot & Table Info */}
           <div className="text-center bg-black bg-opacity-25 rounded p-2 mb-2 border border-secondary border-opacity-25">
             <div
               className="small text-secondary text-uppercase"
@@ -140,7 +121,7 @@ export default function PlayerView() {
 
             {game.pots && game.pots.length > 1 && (
               <div className="d-flex justify-content-center gap-2 mt-1">
-                {game.pots.map((pot, idx) => (
+                {game.pots.map((pot: Pot, idx: number) => (
                   <span
                     key={idx}
                     className="badge bg-secondary bg-opacity-50 text-light"
@@ -164,7 +145,6 @@ export default function PlayerView() {
             )}
           </div>
 
-          {/* Bottom: Meta Info */}
           <div
             className="d-flex justify-content-between align-items-center text-secondary px-1"
             style={{ fontSize: '0.75rem' }}
@@ -180,7 +160,6 @@ export default function PlayerView() {
         </div>
       </div>
 
-      {/* Fold button - positioned above cards to prevent mis-clicks */}
       {game.status === 'active' && isMyTurn && validActions?.canAct && validActions.canFold && (
         <div className="mb-3 px-2">
           <button
@@ -192,10 +171,9 @@ export default function PlayerView() {
         </div>
       )}
 
-      {/* Hole Cards */}
       {myPlayer?.holeCards && myPlayer.holeCards.length > 0 && (
         <div className="d-flex gap-2 justify-content-center mb-4">
-          {myPlayer.holeCards.map((card, idx) => (
+          {myPlayer.holeCards.map((card: Card, idx: number) => (
             <div key={idx} className={`card-display ${getSuitClass(card.suit)}`}>
               {formatCard(card)}
             </div>
@@ -203,7 +181,6 @@ export default function PlayerView() {
         </div>
       )}
 
-      {/* Showdown */}
       {isShowdown && (
         <PlayerShowdown
           game={game}
@@ -214,7 +191,6 @@ export default function PlayerView() {
         />
       )}
 
-      {/* Actions */}
       <div className="px-1">
         {game.status === 'waiting' && (
           <button onClick={startGame} className="btn btn-success btn-lg w-100 py-3 fw-bold shadow">
@@ -252,8 +228,8 @@ export default function PlayerView() {
                     <div className="d-flex gap-2 justify-content-center align-items-center mb-2">
                       <button
                         onClick={() =>
-                          setBetAmount((prev) =>
-                            Math.max(prev - (game.bigBlind || 10), validActions.minBet!),
+                          setBetAmount(
+                            Math.max(betAmount - (game.bigBlind || 10), validActions.minBet!),
                           )
                         }
                         className="btn btn-outline-info rounded-circle p-0 d-flex align-items-center justify-content-center"
@@ -266,9 +242,7 @@ export default function PlayerView() {
                       </div>
                       <button
                         onClick={() =>
-                          setBetAmount((prev) =>
-                            Math.min(prev + (game.bigBlind || 10), derivedMaxBet),
-                          )
+                          setBetAmount(Math.min(betAmount + (game.bigBlind || 10), derivedMaxBet))
                         }
                         className="btn btn-outline-info rounded-circle p-0 d-flex align-items-center justify-content-center"
                         style={{ width: '40px', height: '40px', fontSize: '18px' }}
@@ -323,8 +297,8 @@ export default function PlayerView() {
                             <div className="d-flex gap-2 justify-content-center align-items-center mb-2">
                               <button
                                 onClick={() =>
-                                  setRaiseAmount((prev) =>
-                                    Math.max(prev - (game.bigBlind || 10), minInc),
+                                  setRaiseAmount(
+                                    Math.max(raiseAmount - (game.bigBlind || 10), minInc),
                                   )
                                 }
                                 className="btn btn-outline-warning rounded-circle p-0 d-flex align-items-center justify-content-center"
@@ -340,8 +314,8 @@ export default function PlayerView() {
                               </div>
                               <button
                                 onClick={() =>
-                                  setRaiseAmount((prev) =>
-                                    Math.min(prev + (game.bigBlind || 10), maxInc),
+                                  setRaiseAmount(
+                                    Math.min(raiseAmount + (game.bigBlind || 10), maxInc),
                                   )
                                 }
                                 className="btn btn-outline-warning rounded-circle p-0 d-flex align-items-center justify-content-center"
@@ -393,8 +367,12 @@ export default function PlayerView() {
                     className="btn btn-primary btn-lg w-100 py-3 fw-bold mb-3 shadow"
                   >
                     {(() => {
-                      const activeCount = game.players.filter((p) => p.status === 'active').length
-                      const allInCount = game.players.filter((p) => p.status === 'all_in').length
+                      const activeCount = game.players.filter(
+                        (p: Player) => p.status === 'active',
+                      ).length
+                      const allInCount = game.players.filter(
+                        (p: Player) => p.status === 'all_in',
+                      ).length
                       if (activeCount <= 1 && allInCount === 0) return '🏆 Claim Pot'
 
                       return game.currentRound === 'preflop'

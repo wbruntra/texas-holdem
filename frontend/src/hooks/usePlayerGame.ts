@@ -1,77 +1,42 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import axios from 'axios'
 import { BACKEND_LOCAL_PORT } from '@holdem/shared/config'
-
-export interface Player {
-  id: string
-  name: string
-  position: number
-  chips: number
-  currentBet: number
-  totalBet?: number
-  status: string
-  holeCards?: Array<{ rank: string; suit: string }>
-  showCards?: boolean
-}
-
-export interface Pot {
-  amount: number
-  eligiblePlayers: number[]
-  winners?: number[] | null
-  winAmount?: number
-  winningRankName?: string
-}
-
-export interface GameState {
-  id: string
-  roomCode: string
-  status: string
-  currentRound: string
-  pot: number
-  pots?: Pot[]
-  currentBet: number
-  currentPlayerPosition: number | null
-  communityCards: Array<{ rank: string; suit: string }>
-  players: Player[]
-  dealerPosition: number
-  winners?: number[]
-  bigBlind?: number
-}
-
-export interface ValidActions {
-  canAct: boolean
-  canFold: boolean
-  canCheck: boolean
-  canCall: boolean
-  callAmount?: number
-  canBet: boolean
-  minBet?: number
-  maxBet?: number
-  canRaise: boolean
-  minRaise?: number
-  maxRaise?: number
-  canReveal?: boolean
-  reason?: string
-}
-
-const getApiErrorMessage = (err: unknown, fallback: string) => {
-  if (!axios.isAxiosError(err)) return fallback
-  const data = err.response?.data as { error?: string } | undefined
-  return data?.error || fallback
-}
+import { useAppDispatch, useAppSelector } from '~/store/hooks'
+import {
+  checkAuth,
+  joinGame as joinGameThunk,
+  startGame as startGameThunk,
+  performAction as performActionThunk,
+  nextHand as nextHandThunk,
+  revealCard as revealCardThunk,
+  advanceRound as advanceRoundThunk,
+  toggleShowCards as toggleShowCardsThunk,
+  fetchValidActions as fetchValidActionsThunk,
+  setPlayerName,
+  setBetAmount,
+  setRaiseAmount,
+  setCanRevealCard,
+  setWsConnected,
+  setError,
+  clearValidActions,
+} from '~/store/playerSlice'
+import { setGame } from '~/store/gameSlice'
+import type { GameState, Player } from '~/components/table/types'
 
 export function usePlayerGame(roomCode: string | undefined) {
-  const [game, setGame] = useState<GameState | null>(null)
-  const [validActions, setValidActions] = useState<ValidActions | null>(null)
-  const [playerName, setPlayerName] = useState('')
-  const [joined, setJoined] = useState(false)
-  const [error, setError] = useState('')
-  const [checkingAuth, setCheckingAuth] = useState(true)
-  const [canRevealCard, setCanRevealCard] = useState(false)
-  const [wsConnected, setWsConnected] = useState(false)
+  const dispatch = useAppDispatch()
 
-  // We use refs to access the latest state in closures/intervals without triggering re-renders
-  // or needing them in dependency arrays which would cause reconnections
+  const validActions = useAppSelector((state) => state.player.validActions)
+  const playerName = useAppSelector((state) => state.player.playerName)
+  const joined = useAppSelector((state) => state.player.joined)
+  const error = useAppSelector((state) => state.player.error)
+  const checkingAuth = useAppSelector((state) => state.player.checkingAuth)
+  const canRevealCard = useAppSelector((state) => state.player.canRevealCard)
+  const wsConnected = useAppSelector((state) => state.player.wsConnected)
+  const betAmount = useAppSelector((state) => state.player.betAmount)
+  const raiseAmount = useAppSelector((state) => state.player.raiseAmount)
+  const game = useAppSelector((state) => state.game.game)
+
   const joinedRef = useRef(joined)
   joinedRef.current = joined
 
@@ -83,13 +48,11 @@ export function usePlayerGame(roomCode: string | undefined) {
 
   const playerNameStorageKey = roomCode ? `holdem:${roomCode}:playerName` : null
 
-  // Check Helper
-  const checkCanRevealCard = (gameState: GameState, myPlayerName: string | null) => {
+  const checkCanRevealCard = (gameState: GameState, myPlayerName: string | null): boolean => {
     if (!myPlayerName || gameState.status !== 'active') {
       return false
     }
 
-    // Can't reveal in preflop or showdown
     if (
       !gameState.currentRound ||
       gameState.currentRound === 'preflop' ||
@@ -98,83 +61,48 @@ export function usePlayerGame(roomCode: string | undefined) {
       return false
     }
 
-    // Count players with chips
     const playersWithChips = gameState.players.filter(
-      (p) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
+      (p: { chips: number; status: string }) =>
+        p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
     )
 
-    // Can only reveal if I'm the only one with chips
     if (playersWithChips.length !== 1) {
       return false
     }
 
-    // Checking if there are any all-in players.
-    // If everyone else folded (no all-in), then the hand is won.
-    // Revealing cards ("rabbit hunting") shouldn't be a primary option here,
-    // and definitely shouldn't be the only option alongside "Deal Turn".
-    const allInPlayers = gameState.players.filter((p) => p.status === 'all_in')
+    const allInPlayers = gameState.players.filter((p: { status: string }) => p.status === 'all_in')
     if (allInPlayers.length === 0) {
       return false
     }
 
-    // Must be that player
-    const myPlayer = gameState.players.find((p) => p.name === myPlayerName)
+    const myPlayer = gameState.players.find((p: { name: string }) => p.name === myPlayerName)
     return (myPlayer?.chips ?? 0) > 0
   }
 
-  // Check for existing authentication on mount
   useEffect(() => {
-    const checkExistingAuth = async () => {
-      if (!roomCode) {
-        setCheckingAuth(false)
-        return
-      }
+    if (!roomCode) return
 
-      // Prefill name from localStorage
+    const loadStoredName = () => {
       if (playerNameStorageKey) {
         const storedName = localStorage.getItem(playerNameStorageKey)
-        if (storedName && !playerName) {
-          setPlayerName(storedName)
+        if (storedName) {
+          dispatch(setPlayerName(storedName))
         }
-      }
-
-      try {
-        // Get game info
-        const gameResponse = await axios.get(`/api/games/room/${roomCode}`)
-        const gameId = gameResponse.data.id
-
-        // Try to fetch game state with credentials
-        const stateResponse = await axios.get(`/api/games/${gameId}`, {
-          withCredentials: true,
-        })
-
-        // Authenticated!
-        setGame(stateResponse.data)
-        setJoined(true)
-
-        // Infer name if needed
-        if (!playerNameStorageKey || !localStorage.getItem(playerNameStorageKey)) {
-          const authenticatedPlayer = stateResponse.data.players.find(
-            (p: Player) => p.holeCards && p.holeCards.length > 0,
-          )
-          if (authenticatedPlayer) {
-            setPlayerName(authenticatedPlayer.name)
-            if (playerNameStorageKey) {
-              localStorage.setItem(playerNameStorageKey, authenticatedPlayer.name)
-            }
-          }
-        }
-      } catch {
-        // Not authenticated
-      } finally {
-        setCheckingAuth(false)
       }
     }
 
-    checkExistingAuth()
-  }, [roomCode, playerNameStorageKey])
+    loadStoredName()
 
-  // WebSocket / Polling
+    const performCheckAuth = async () => {
+      const result = await dispatch(checkAuth({ roomCode, playerNameStorageKey }))
+      if (checkAuth.fulfilled.match(result)) {
+        dispatch(setGame(result.payload.game))
+      }
+    }
+
+    performCheckAuth()
+  }, [roomCode, playerNameStorageKey, dispatch])
+
   useEffect(() => {
     if (!joined || !game?.id || !roomCode) return
 
@@ -185,12 +113,9 @@ export function usePlayerGame(roomCode: string | undefined) {
 
     const fetchValidActions = async (gid: string) => {
       try {
-        const actionsResponse = await axios.get(`/api/games/${gid}/actions/valid`, {
-          withCredentials: true,
-        })
-        setValidActions(actionsResponse.data)
-      } catch (err: unknown) {
-        if (!(axios.isAxiosError(err) && err.response?.status === 403)) {
+        dispatch(fetchValidActionsThunk(gid))
+      } catch (err) {
+        if (!axios.isAxiosError(err) || err.response?.status !== 403) {
           console.error('[PlayerView] Failed to fetch valid actions:', err)
         }
       }
@@ -204,10 +129,10 @@ export function usePlayerGame(roomCode: string | undefined) {
           })
 
           const nextGame: GameState = response.data
-          setGame(nextGame)
+          dispatch(setGame(nextGame))
 
           const myName = playerNameRef.current
-          const me = myName ? nextGame.players.find((p) => p.name === myName) : undefined
+          const me = myName ? nextGame.players.find((p: Player) => p.name === myName) : undefined
 
           const isMyTurnNow =
             !!me &&
@@ -216,18 +141,18 @@ export function usePlayerGame(roomCode: string | undefined) {
             nextGame.currentPlayerPosition === (me?.position ?? -1)
 
           const canReveal = checkCanRevealCard(nextGame, myName)
-          setCanRevealCard(canReveal)
+          dispatch(setCanRevealCard(canReveal))
 
           if (isMyTurnNow) {
             await fetchValidActions(gameId)
           } else {
-            setValidActions((prev) => (prev ? null : prev))
+            dispatch(clearValidActions())
           }
 
-          setError('')
+          dispatch(setError(''))
         } catch (err: unknown) {
           if (!(axios.isAxiosError(err) && err.response?.status === 403)) {
-            setError(getApiErrorMessage(err, 'Failed to load game'))
+            dispatch(setError('Failed to load game'))
           }
         }
       }
@@ -249,8 +174,8 @@ export function usePlayerGame(roomCode: string | undefined) {
 
       ws.onopen = () => {
         console.log('[PlayerView] WebSocket connected')
-        setWsConnected(true)
-        setError('')
+        dispatch(setWsConnected(true))
+        dispatch(setError(''))
 
         if (ws && ws.readyState === WebSocket.OPEN) {
           const storedPlayerId = playerNameStorageKey
@@ -290,10 +215,12 @@ export function usePlayerGame(roomCode: string | undefined) {
 
             case 'game_state':
               const nextGame: GameState = message.payload.state
-              setGame(nextGame)
+              dispatch(setGame(nextGame))
 
               const myName = playerNameRef.current
-              const me = myName ? nextGame.players.find((p) => p.name === myName) : undefined
+              const me = myName
+                ? nextGame.players.find((p: Player) => p.name === myName)
+                : undefined
 
               const isMyTurnNow =
                 !!me &&
@@ -302,20 +229,20 @@ export function usePlayerGame(roomCode: string | undefined) {
                 nextGame.currentPlayerPosition === (me?.position ?? -1)
 
               const canReveal = checkCanRevealCard(nextGame, myName)
-              setCanRevealCard(canReveal)
+              dispatch(setCanRevealCard(canReveal))
 
               if (isMyTurnNow) {
                 fetchValidActions(gameId)
               } else {
-                setValidActions((prev) => (prev ? null : prev))
+                dispatch(clearValidActions())
               }
 
-              setError('')
+              dispatch(setError(''))
               break
 
             case 'error':
               console.error('[PlayerView] WebSocket error:', message.payload.error)
-              setError(message.payload.error)
+              dispatch(setError(message.payload.error))
               break
           }
         } catch (err) {
@@ -323,14 +250,14 @@ export function usePlayerGame(roomCode: string | undefined) {
         }
       }
 
-      ws.onerror = (error) => {
-        console.error('[PlayerView] WebSocket error:', error)
-        setWsConnected(false)
+      ws.onerror = () => {
+        console.error('[PlayerView] WebSocket error')
+        dispatch(setWsConnected(false))
       }
 
       ws.onclose = () => {
         console.log('[PlayerView] WebSocket disconnected')
-        setWsConnected(false)
+        dispatch(setWsConnected(false))
 
         if (!pollInterval) {
           startPolling()
@@ -350,162 +277,81 @@ export function usePlayerGame(roomCode: string | undefined) {
       if (pollInterval) clearInterval(pollInterval)
       if (reconnectTimeout) clearTimeout(reconnectTimeout)
     }
-  }, [joined, game?.id, roomCode, playerNameStorageKey])
-  // Note: we don't include playerName in deps because we use ref.
-  // But wait, the original code DID include playerName.
-  // Including playerName causes reconnection when name changes (which happens once on load).
-  // Using ref allows us to access current key without reconnecting, but the Original code reconnects.
-  // Actually, once joined, name shouldn't change.
-  // Let's stick to the original deps to be safe, but we moved checkingAuth to a separate effect.
-  // Original deps: [joined, game?.id, roomCode, playerName]
-  // We can include playerName if we want, but joined is the trigger.
+  }, [joined, game?.id, roomCode, playerNameStorageKey, dispatch])
 
-  const joinGame = async (password: string) => {
+  const handleJoinGame = async (password: string) => {
     if (!roomCode || !playerName.trim() || !password.trim()) return
-
-    try {
-      const gameResponse = await axios.get(`/api/games/room/${roomCode}`)
-      const gameId = gameResponse.data.id
-      const gameData = gameResponse.data
-
-      const playerExists = gameData.players?.some((p: Player) => p.name === playerName.trim())
-
-      if (playerExists) {
-        await axios.post(
-          `/api/games/${gameId}/auth`,
-          { name: playerName.trim(), password },
-          { withCredentials: true },
-        )
-      } else {
-        await axios.post(
-          `/api/games/${gameId}/join`,
-          { name: playerName.trim(), password },
-          { withCredentials: true },
-        )
-      }
-
-      if (playerNameStorageKey) {
-        localStorage.setItem(playerNameStorageKey, playerName.trim())
-      }
-
-      const stateResponse = await axios.get(`/api/games/${gameId}`, {
-        withCredentials: true,
-      })
-
-      setGame(stateResponse.data)
-
-      const authenticatedPlayer = stateResponse.data.players.find(
-        (p: Player) => p.holeCards && p.holeCards.length > 0,
-      )
-      if (authenticatedPlayer && playerNameStorageKey) {
-        localStorage.setItem(`${playerNameStorageKey}:playerId`, authenticatedPlayer.id)
-      }
-
-      setJoined(true)
-      setError('')
-    } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to join game'))
+    const result = await dispatch(joinGameThunk({ roomCode, playerName, password }))
+    if (joinGameThunk.fulfilled.match(result)) {
+      dispatch(setGame(result.payload.game))
     }
   }
 
-  const startGame = async () => {
+  const handleStartGame = async () => {
     if (!game?.id) return
-    try {
-      await axios.post(`/api/games/${game.id}/start`, {}, { withCredentials: true })
-      setError('')
-    } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to start game'))
+    dispatch(startGameThunk(game.id))
+  }
+
+  const handlePerformAction = async (action: string, amount?: number) => {
+    if (!game?.id) return
+    dispatch(performActionThunk({ gameId: game.id, action, amount }))
+  }
+
+  const handleNextHand = async () => {
+    if (!game?.id) return
+    dispatch(nextHandThunk(game.id))
+  }
+
+  const handleRevealCard = async () => {
+    if (!game?.id) return
+    dispatch(revealCardThunk(game.id))
+  }
+
+  const handleAdvanceRound = async () => {
+    if (!game?.id) return
+    dispatch(advanceRoundThunk(game.id))
+  }
+
+  const handleToggleShowCards = async (showCards: boolean) => {
+    if (!game?.id) return
+    dispatch(toggleShowCardsThunk({ gameId: game.id, showCards }))
+  }
+
+  const handleSetPlayerName = (name: string) => {
+    dispatch(setPlayerName(name))
+    if (playerNameStorageKey && name) {
+      localStorage.setItem(playerNameStorageKey, name)
     }
   }
 
-  const performAction = async (action: string, amount?: number) => {
-    if (!game?.id) return
-    try {
-      await axios.post(
-        `/api/games/${game.id}/actions`,
-        { action, amount },
-        { withCredentials: true },
-      )
-      setError('')
-    } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to submit action'))
-    }
+  const handleSetBetAmount = (amount: number) => {
+    dispatch(setBetAmount(amount))
   }
 
-  const nextHand = async () => {
-    if (!game?.id) return
-    try {
-      const res = await axios.post(
-        `/api/games/${game.id}/next-hand`,
-        {},
-        { withCredentials: true },
-      )
-      setGame(res.data)
-      setError('')
-      setValidActions(null)
-    } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to start next hand'))
-    }
-  }
-
-  const revealCard = async () => {
-    if (!game?.id) return
-    try {
-      const res = await axios.post(
-        `/api/games/${game.id}/reveal-card`,
-        {},
-        { withCredentials: true },
-      )
-      setGame(res.data)
-      setError('')
-      setCanRevealCard(false)
-    } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to reveal card'))
-    }
-  }
-
-  const advanceRound = async () => {
-    if (!game?.id) return
-    try {
-      const res = await axios.post(`/api/games/${game.id}/advance`, {}, { withCredentials: true })
-      setGame(res.data)
-      setError('')
-      setValidActions(null)
-    } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to advance round'))
-    }
-  }
-
-  const toggleShowCards = async (showCards: boolean) => {
-    if (!game?.id) return
-    try {
-      await axios.post(
-        `/api/games/${game.id}/show-cards`,
-        { showCards },
-        { withCredentials: true },
-      )
-      setError('')
-    } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to toggle card reveal'))
-    }
+  const handleSetRaiseAmount = (amount: number) => {
+    dispatch(setRaiseAmount(amount))
   }
 
   return {
     game,
     validActions,
     playerName,
-    setPlayerName,
+    setPlayerName: handleSetPlayerName,
     joined,
     error,
     checkingAuth,
     canRevealCard,
     wsConnected,
-    joinGame,
-    startGame,
-    performAction,
-    nextHand,
-    revealCard,
-    advanceRound,
-    toggleShowCards,
+    betAmount,
+    raiseAmount,
+    joinGame: handleJoinGame,
+    startGame: handleStartGame,
+    performAction: handlePerformAction,
+    nextHand: handleNextHand,
+    revealCard: handleRevealCard,
+    advanceRound: handleAdvanceRound,
+    toggleShowCards: handleToggleShowCards,
+    setBetAmount: handleSetBetAmount,
+    setRaiseAmount: handleSetRaiseAmount,
   }
 }

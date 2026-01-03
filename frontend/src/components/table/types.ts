@@ -10,6 +10,7 @@ export interface Player {
   status: string
   holeCards?: Card[]
   lastAction?: string | null
+  showCards?: boolean
 }
 
 export interface Pot {
@@ -33,4 +34,5 @@ export interface GameState {
   players: Player[]
   dealerPosition: number
   winners?: number[]
+  bigBlind?: number
 }

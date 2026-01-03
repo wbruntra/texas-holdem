@@ -36,7 +36,7 @@ class WebSocketService {
 
     this.wss.on('connection', (ws, req) => {
       console.log('[WS] Client connected')
-      console.log('[WS] Cookie header:', req.headers.cookie || '(none)')
+      // console.log('[WS] Cookie header:', req.headers.cookie || '(none)')
 
       // Parse session from cookies
       const session = this.parseSession(req)
