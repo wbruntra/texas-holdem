@@ -28,6 +28,26 @@ bun test ./backend/test/services.test.js
 bun test -- --grep "rejoin"
 ```
 
+### API Debug Tool
+
+Use `backend/api-debug.js` to make authenticated API requests for testing:
+
+```bash
+# List all games to find player IDs
+node -e "const db=require('./database/db'); db('players').select('id','name','game_id').then(p=>{p.forEach(v=>console.log(v.id+': '+v.name+' (game '+v.game_id+')'));db.destroy()})"
+
+# Make authenticated request (must run from backend directory)
+cd backend
+bun api-debug.js [PLAYER_ID] [API_ROUTE]
+
+# Examples:
+bun api-debug.js 10 /api/games/8/actions/valid
+bun api-debug.js 10 /api/games/room/PESBUA/state
+bun api-debug.js 11 /api/games/8/actions/valid
+```
+
+This script generates a JWT token for the player and sends authenticated requests to the API. **Must be run from the backend directory** so Bun can load the `.env` file containing `JWT_SECRET`.
+
 ### Formatting
 
 ```bash

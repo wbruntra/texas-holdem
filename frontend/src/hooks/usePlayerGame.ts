@@ -36,8 +36,11 @@ export function usePlayerGame(roomCode: string | undefined) {
   const game = useAppSelector((state) => state.game.game)
 
   const wsManagerRef = useRef<WebSocketManager | null>(null)
-  const gameIdRef = useRef<string | undefined>(game?.id)
   const playerNameRef = useRef(playerName)
+
+  useEffect(() => {
+    playerNameRef.current = playerName
+  }, [playerName])
 
   const playerNameStorageKey = roomCode ? `holdem:${roomCode}:playerName` : null
 
@@ -85,8 +88,8 @@ export function usePlayerGame(roomCode: string | undefined) {
     const canReveal = checkCanRevealCard(nextGame, myName)
     dispatch(setCanRevealCard(canReveal))
 
-    if (isMyTurnNow && gameIdRef.current) {
-      await dispatch(fetchValidActionsThunk(gameIdRef.current))
+    if (isMyTurnNow && nextGame.id) {
+      await dispatch(fetchValidActionsThunk(String(nextGame.id)))
     } else {
       dispatch(clearValidActions())
     }

@@ -7,6 +7,7 @@ const WebSocket = require('ws')
 const Keygrip = require('keygrip')
 const gameService = require('@/services/game-service')
 const playerService = require('@/services/player-service')
+const actionService = require('@/services/action-service')
 const gameEvents = require('@/lib/game-events')
 const { calculatePots, distributePots } = require('@/lib/pot-manager')
 const { evaluateHand } = require('@/lib/poker-engine')
@@ -203,12 +204,15 @@ class WebSocketService {
         },
       })
 
+      // Normalize turn in case current player is ALL_IN or FOLDED
+      const normalizedGame = (await actionService.normalizeTurnIfNeeded(game.id)) || game
+
       // Send initial game state snapshot
       // If player stream with no playerId, use table sanitization
       const sanitizedState =
         stream === 'player' && playerId
-          ? this.sanitizePlayerState(game, playerId)
-          : this.sanitizeTableState(game)
+          ? this.sanitizePlayerState(normalizedGame, playerId)
+          : this.sanitizeTableState(normalizedGame)
 
       this.sendMessage(ws, {
         type: 'game_state',
@@ -246,11 +250,15 @@ class WebSocketService {
         return this.sendError(ws, 'Game not found', requestId)
       }
 
+      // Normalize turn in case current player is ALL_IN or FOLDED
+      const normalizedGame =
+        (await actionService.normalizeTurnIfNeeded(subscription.gameId)) || game
+
       // Always send full snapshot on resume (authoritative)
       const sanitizedState =
         subscription.stream === 'player' && subscription.playerId
-          ? this.sanitizePlayerState(game, subscription.playerId)
-          : this.sanitizeTableState(game)
+          ? this.sanitizePlayerState(normalizedGame, subscription.playerId)
+          : this.sanitizeTableState(normalizedGame)
 
       this.sendMessage(ws, {
         type: 'game_state',
@@ -274,12 +282,16 @@ class WebSocketService {
    */
   async broadcastGameUpdate(gameId, reason) {
     try {
-      const game = await gameService.getGameById(gameId)
+      let game = await gameService.getGameById(gameId)
 
       if (!game) {
         console.warn(`[WS] Game not found for broadcast: ${gameId}`)
         return
       }
+
+      // Normalize turn in case current player is ALL_IN or FOLDED
+      // This ensures WebSocket broadcasts match HTTP API responses
+      game = (await actionService.normalizeTurnIfNeeded(gameId)) || game
 
       const revision = game.handNumber?.toString() || '0'
 
