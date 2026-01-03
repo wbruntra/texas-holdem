@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@scaffold/shared": "*",
+    "@holdem/shared": "*",
     "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
     "qrcode.react": "^4.2.0",

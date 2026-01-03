@@ -146,9 +146,9 @@ Then TableView can render:
 
 This keeps _all_ evaluation logic on the backend (single source of truth) and avoids frontend duplication.
 
-### Option B: shared evaluator code via `@scaffold/shared`
+### Option B: shared evaluator code via `@holdem/shared`
 
-If we want true reuse, we can move the hand-evaluation logic into `@scaffold/shared` and import it from backend + (optionally) frontend.
+If we want true reuse, we can move the hand-evaluation logic into `@holdem/shared` and import it from backend + (optionally) frontend.
 
 However, even with a shared evaluator, the frontend still should not _need_ to evaluate hands to display the common screen. The cleanest approach remains:
 
@@ -156,12 +156,12 @@ However, even with a shared evaluator, the frontend still should not _need_ to e
 - backend returns `winningRankName` per pot
 - frontend just renders
 
-Where `@scaffold/shared` _does_ help immediately is shared contracts:
+Where `@holdem/shared` _does_ help immediately is shared contracts:
 
 - shared TypeScript types for `GameState`, `Pot`, `ShowdownPotResult`
 - shared formatting helpers (e.g., mapping rank identifiers to short labels, if we ever standardize rank IDs)
 
-Note: today `@scaffold/shared` is very small and the backend is CommonJS while the shared package is ESM; any plan to share runtime evaluator code should account for module-format interop.
+Note: today `@holdem/shared` is very small and the backend is CommonJS while the shared package is ESM; any plan to share runtime evaluator code should account for module-format interop.
 
 ## Rendering rules (to prevent “dizzy” layout changes)
 

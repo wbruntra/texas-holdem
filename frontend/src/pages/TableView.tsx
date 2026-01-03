@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
 import { QRCodeSVG } from 'qrcode.react'
-import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config'
+import { BACKEND_LOCAL_PORT } from '@holdem/shared/config'
 
 import PokerTableScene from '~/components/table/PokerTableScene'
 import GameOverModal from '~/components/GameOverModal'

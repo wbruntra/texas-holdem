@@ -9,7 +9,7 @@ var debug = require('debug')('backend:server')
 var http = require('http')
 var wsService = require('../services/websocket-service')
 
-const config = require('@scaffold/shared/config')
+const config = require('@holdem/shared/config')
 console.log(`Backend will run on port: ${config.BACKEND_LOCAL_PORT}`)
 
 /**

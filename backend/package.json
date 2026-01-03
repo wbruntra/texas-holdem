@@ -7,7 +7,8 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@scaffold/shared": "*",
+    "@holdem/shared": "*",
+    "@holdem/database": "*",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "~1.4.4",

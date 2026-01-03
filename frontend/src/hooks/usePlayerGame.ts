@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
-import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config'
+import { BACKEND_LOCAL_PORT } from '@holdem/shared/config'
 
 export interface Player {
   id: string

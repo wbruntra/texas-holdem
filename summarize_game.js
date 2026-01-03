@@ -8,7 +8,7 @@
  *   node summarize_game.js ROOM_CODE
  */
 
-const db = require('./db')
+const db = require('./database/db')
 
 const colors = {
   reset: '\x1b[0m',

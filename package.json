@@ -6,7 +6,8 @@
     "backend",
     "frontend",
     "shared",
-    "terminal"
+    "terminal",
+    "database"
   ],
   "scripts": {
     "backend": "cd backend && bun run api",
