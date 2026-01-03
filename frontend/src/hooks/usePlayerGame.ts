@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import axios from 'axios'
-import { BACKEND_LOCAL_PORT } from '@holdem/shared/config'
 import { useAppDispatch, useAppSelector } from '~/store/hooks'
 import {
   checkAuth,
@@ -21,6 +20,7 @@ import {
   clearValidActions,
 } from '~/store/playerSlice'
 import { setGame } from '~/store/gameSlice'
+import { buildWsUrl } from '~/hooks/useWebSocket'
 import type { GameState, Player } from '~/components/table/types'
 
 export function usePlayerGame(roomCode: string | undefined) {
@@ -162,12 +162,7 @@ export function usePlayerGame(roomCode: string | undefined) {
     }
 
     const connectWebSocket = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const isDevelopment =
-        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      const wsUrl = isDevelopment
-        ? `${protocol}//localhost:${BACKEND_LOCAL_PORT}/ws`
-        : `${protocol}//${window.location.host}/ws`
+      const wsUrl = buildWsUrl()
 
       console.log('[PlayerView] Connecting to WebSocket:', wsUrl)
       ws = new WebSocket(wsUrl)

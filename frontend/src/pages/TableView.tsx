@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from '~/store/hooks'
 import { setGame, setLoading, setError, setWsConnected } from '~/store/gameSlice'
 import { useSoundEffects } from '~/hooks/useSoundEffects'
 import type { Player } from '~/components/table/types'
+import { buildWsUrl } from '~/hooks/useWebSocket'
 
 export default function TableView() {
   const { roomCode } = useParams<{ roomCode: string }>()
@@ -81,12 +82,7 @@ export default function TableView() {
     let reconnectTimeout: number | null = null
 
     const connectWebSocket = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const isDevelopment =
-        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      const wsUrl = isDevelopment
-        ? `${protocol}//localhost:${BACKEND_LOCAL_PORT}/ws`
-        : `${protocol}//${window.location.host}/ws`
+      const wsUrl = buildWsUrl()
 
       console.log('[TableView] Connecting to WebSocket:', wsUrl)
       ws = new WebSocket(wsUrl)
