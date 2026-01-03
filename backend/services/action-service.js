@@ -2,14 +2,14 @@
  * Action Service - Handles player actions (bet, raise, fold, etc.)
  */
 
-const db = require('../../db')
-const { validateAction, processAction, getValidActions } = require('../lib/betting-logic')
-const { getGameById, saveGameState, advanceRoundIfReady } = require('./game-service')
-const { getPlayerById } = require('./player-service')
-const { ACTION_TYPE, PLAYER_STATUS } = require('../lib/game-constants')
-const { getNextActingPosition } = require('../lib/game-state-machine')
-const eventLogger = require('./event-logger')
-const { EVENT_TYPE } = require('../lib/event-types')
+const db = require('@holdem/root/db')
+const { validateAction, processAction, getValidActions } = require('@/lib/betting-logic')
+const { getGameById, saveGameState, advanceRoundIfReady } = require('@/services/game-service')
+const { getPlayerById } = require('@/services/player-service')
+const { ACTION_TYPE, PLAYER_STATUS } = require('@/lib/game-constants')
+const { getNextActingPosition } = require('@/lib/game-state-machine')
+const eventLogger = require('@/services/event-logger')
+const { EVENT_TYPE } = require('@/lib/event-types')
 
 async function normalizeTurnIfNeeded(gameId) {
   const game = await getGameById(gameId)
@@ -121,7 +121,7 @@ async function submitAction(playerId, action, amount = 0) {
   if (playersStillInHand === 1) {
     // Only one player left - either they're active or all-in, they win!
     // Advance directly to showdown without auto-advancing through rounds
-    const { advanceRound, processShowdown, ROUND } = require('../lib/game-state-machine')
+    const { advanceRound, processShowdown, ROUND } = require('@/lib/game-state-machine')
 
     // If not already at showdown, advance to showdown
     if (newState.currentRound !== ROUND.SHOWDOWN) {
@@ -136,14 +136,14 @@ async function submitAction(playerId, action, amount = 0) {
     await saveGameState(game.id, newState)
 
     // Complete hand record
-    const { completeHandRecord } = require('./game-service')
+    const { completeHandRecord } = require('@/services/game-service')
     await completeHandRecord(game.id, newState)
   }
 
   // AUTO-ADVANCE IN SIMPLE CASES (no all-ins)
   // When betting completes and no players are all-in, automatically advance to next round
   // This is a convenience feature for the common case where all players check or call
-  const { isBettingRoundComplete, shouldAutoAdvance } = require('../lib/game-state-machine')
+  const { isBettingRoundComplete, shouldAutoAdvance } = require('@/lib/game-state-machine')
 
   if (
     allInPlayers.length === 0 && // No all-in players (simple case)
@@ -152,7 +152,7 @@ async function submitAction(playerId, action, amount = 0) {
     newState.currentRound !== 'showdown' // Not already at showdown
   ) {
     // Auto-advance one round for player convenience
-    const { advanceOneRound } = require('./game-service')
+    const { advanceOneRound } = require('@/services/game-service')
     await advanceOneRound(game.id)
   }
 
@@ -306,14 +306,14 @@ async function revealCard(playerId) {
   }
 
   // Validate that player can reveal a card
-  const { canRevealCard } = require('../lib/betting-logic')
+  const { canRevealCard } = require('@/lib/betting-logic')
   const validation = canRevealCard(game, playerPosition)
   if (!validation.canReveal) {
     throw new Error(validation.error || 'Cannot reveal card in current game state')
   }
 
   // Reveal the card
-  const { revealNextCard } = require('../lib/game-state-machine')
+  const { revealNextCard } = require('@/lib/game-state-machine')
   let newState = revealNextCard(game)
 
   eventLogger.logEvent(
@@ -331,7 +331,7 @@ async function revealCard(playerId) {
 
   // If we just moved to showdown, process it
   if (newState.currentRound === 'showdown') {
-    const { processShowdown } = require('../lib/game-state-machine')
+    const { processShowdown } = require('@/lib/game-state-machine')
     newState = processShowdown(newState)
     await saveGameState(game.id, newState)
   }

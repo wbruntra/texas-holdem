@@ -6,7 +6,7 @@
 process.env.NODE_ENV = 'test'
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
-const db = require('../../db')
+const db = require('@holdem/root/db')
 const gameService = require('../services/game-service')
 const playerService = require('../services/player-service')
 const actionService = require('../services/action-service')
@@ -138,12 +138,21 @@ describe('Player Service', () => {
     expect(player3.position).toBe(2)
   })
 
-  test('prevents duplicate player names', async () => {
+  test('allows rejoining with same password', async () => {
+    const game = await gameService.createGame()
+    const player1 = await playerService.joinGame(game.id, 'Alice', 'pass1')
+
+    const player2 = await playerService.joinGame(game.id, 'Alice', 'pass1')
+    expect(player2.id).toBe(player1.id)
+    expect(player2.name).toBe('Alice')
+  })
+
+  test('prevents rejoining with wrong password', async () => {
     const game = await gameService.createGame()
     await playerService.joinGame(game.id, 'Alice', 'pass1')
 
-    await expect(playerService.joinGame(game.id, 'Alice', 'pass1')).rejects.toThrow(
-      'already taken',
+    await expect(playerService.joinGame(game.id, 'Alice', 'wrong')).rejects.toThrow(
+      'Invalid password',
     )
   })
 

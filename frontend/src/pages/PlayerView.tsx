@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import HorizontalSlider from '../components/HorizontalSlider'
-import PlayerJoinGame from '../components/PlayerJoinGame'
-import PlayerShowdown from '../components/PlayerShowdown'
-import { usePlayerGame } from '../hooks/usePlayerGame'
-import { getDisplayPot } from '../utils/potUtils'
+import HorizontalSlider from '~/components/HorizontalSlider'
+import PlayerJoinGame from '~/components/PlayerJoinGame'
+import PlayerShowdown from '~/components/PlayerShowdown'
+import { usePlayerGame } from '~/hooks/usePlayerGame'
+import { getDisplayPot } from '~/utils/potUtils'
 
 export default function PlayerView() {
   const { roomCode } = useParams<{ roomCode: string }>()

@@ -13,6 +13,7 @@ const EVENT_TYPE = {
   PLAYER_JOINED: 'player:joined',
   PLAYER_LEFT: 'player:left',
   PLAYER_AUTHENTICATED: 'player:authenticated',
+  PLAYER_REJOINED: 'player:rejoined',
 
   // Hand lifecycle events
   HAND_STARTED: 'hand:started',

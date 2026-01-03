@@ -3,9 +3,9 @@
  */
 
 const bcrypt = require('bcryptjs')
-const db = require('../../db')
-const eventLogger = require('./event-logger')
-const { EVENT_TYPE } = require('../lib/event-types')
+const db = require('@holdem/root/db')
+const eventLogger = require('@/services/event-logger')
+const { EVENT_TYPE } = require('@/lib/event-types')
 
 /**
  * Add a player to a game
@@ -23,12 +23,46 @@ async function joinGame(gameId, playerName, password) {
     throw new Error('Password must be at least 4 characters')
   }
 
-  // Check if game exists and is in waiting status
+  // Check if game exists
   const game = await db('games').where({ id: gameId }).first()
   if (!game) {
     throw new Error('Game not found')
   }
 
+  // Check if player already exists in this game (allow rejoin regardless of game status)
+  const existingPlayer = await db('players').where({ game_id: gameId, name: playerName }).first()
+
+  if (existingPlayer) {
+    // Allow rejoin if password matches
+    const isValid = await bcrypt.compare(password, existingPlayer.password_hash)
+    if (!isValid) {
+      throw new Error('Invalid password')
+    }
+
+    // Update connection status
+    await db('players')
+      .where({ id: existingPlayer.id })
+      .update({ connected: 1, updated_at: new Date() })
+
+    eventLogger.logEvent(
+      EVENT_TYPE.PLAYER_REJOINED,
+      {
+        playerId: existingPlayer.id,
+        playerName,
+      },
+      gameId,
+    )
+
+    return {
+      id: existingPlayer.id,
+      name: existingPlayer.name,
+      position: existingPlayer.position,
+      chips: existingPlayer.chips,
+      gameId,
+    }
+  }
+
+  // New player: only allow joining if game is still in waiting status
   if (game.status !== 'waiting') {
     throw new Error('Game already started')
   }
@@ -37,13 +71,6 @@ async function joinGame(gameId, playerName, password) {
   const playerCount = await db('players').where({ game_id: gameId }).count('id as count')
   if (playerCount[0].count >= 10) {
     throw new Error('Game is full')
-  }
-
-  // Check if name is already taken
-  const existingPlayer = await db('players').where({ game_id: gameId, name: playerName }).first()
-
-  if (existingPlayer) {
-    throw new Error('Player name already taken')
   }
 
   // Get next position

@@ -1,6 +1,6 @@
-import type { GameState } from './types'
-import { formatCard, getSuitColor } from './cardUtils'
-import { getDisplayPot } from '../../utils/potUtils'
+import type { GameState } from '~/components/table/types'
+import { formatCard, getSuitColor } from '~/components/table/cardUtils'
+import { getDisplayPot } from '~/utils/potUtils'
 
 type Props = {
   game: GameState

@@ -71,7 +71,7 @@ export function usePlayerGame(roomCode: string | undefined) {
   const [wsConnected, setWsConnected] = useState(false)
 
   // We use refs to access the latest state in closures/intervals without triggering re-renders
-  // or needing them in dependency arrays which would cause recocnnections
+  // or needing them in dependency arrays which would cause reconnections
   const joinedRef = useRef(joined)
   joinedRef.current = joined
 

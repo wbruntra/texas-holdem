@@ -1,4 +1,4 @@
-import type { GameState } from '../hooks/usePlayerGame'
+import type { GameState } from '~/hooks/usePlayerGame'
 
 interface PlayerShowdownProps {
   game: GameState

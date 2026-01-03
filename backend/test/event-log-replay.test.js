@@ -8,7 +8,7 @@
  * Tests are sequential - game is set up once and all tests run against it.
  */
 
-const db = require('../../db')
+const db = require('@holdem/root/db')
 const gameService = require('../services/game-service')
 const playerService = require('../services/player-service')
 const actionService = require('../services/action-service')

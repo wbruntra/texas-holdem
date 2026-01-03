@@ -1,4 +1,4 @@
-import type { GameState } from './table/types'
+import type { GameState } from '~/components/table/types'
 
 interface GameOverModalProps {
   game: GameState

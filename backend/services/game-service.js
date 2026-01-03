@@ -2,7 +2,7 @@
  * Game Service - Handles game creation, state management, and persistence
  */
 
-const db = require('../../db')
+const db = require('@holdem/root/db')
 const {
   createGameState,
   startNewHand,
@@ -13,9 +13,9 @@ const {
   shouldContinueToNextRound,
   GAME_STATUS,
   ROUND,
-} = require('../lib/game-state-machine')
-const eventLogger = require('./event-logger')
-const { EVENT_TYPE } = require('../lib/event-types')
+} = require('@/lib/game-state-machine')
+const eventLogger = require('@/services/event-logger')
+const { EVENT_TYPE } = require('@/lib/event-types')
 
 /**
  * Generate a unique 6-character room code
@@ -369,14 +369,14 @@ async function advanceRoundIfReady(gameId) {
 
         if (playerPosition === gameState.currentPlayerPosition) {
           // Import processAction here to avoid circular dependency issues
-          const { processAction } = require('../lib/betting-logic')
+          const { processAction } = require('@/lib/betting-logic')
 
           // Auto-check for this player
           gameState = processAction(gameState, playerPosition, 'check', 0)
           await saveGameState(gameId, gameState)
 
           // Record the auto-check action
-          const { recordAction } = require('./action-service')
+          const { recordAction } = require('@/services/action-service')
           await recordAction(gameId, actingPlayer.id, 'check', 0, gameState.currentRound)
         }
       }

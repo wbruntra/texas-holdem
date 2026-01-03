@@ -30,7 +30,7 @@ export interface GameState {
   communityCards: Array<{ rank: string; suit: string }>
   players: Player[]
   dealerPosition: number
-  winners?: number[]
+  winners?: number[] | null
   bigBlind?: number
   handNumber?: number
 }
@@ -48,5 +48,6 @@ export interface ValidActions {
   minRaise?: number
   maxRaise?: number
   canReveal?: boolean
+  canNextHand?: boolean
   reason?: string
 }

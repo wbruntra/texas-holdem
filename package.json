@@ -1,11 +1,12 @@
 {
-  "name": "scaffold",
+  "name": "@holdem/root",
   "module": "index.ts",
   "type": "commonjs",
   "workspaces": [
     "backend",
     "frontend",
-    "shared"
+    "shared",
+    "terminal"
   ],
   "scripts": {
     "backend": "cd backend && bun run api",

@@ -1,13 +1,18 @@
 const express = require('express')
 const router = express.Router()
 const gameService = require('../services/game-service')
-const playerService = require('../services/player-service')
+const playerService = require('@/services/player-service')
 const actionService = require('../services/action-service')
 const gameEvents = require('../lib/game-events')
 const { isBettingRoundComplete, shouldAutoAdvance } = require('../lib/game-state-machine')
 const { calculatePots, distributePots } = require('../lib/pot-manager')
 const { evaluateHand } = require('../lib/poker-engine')
 const eventLogger = require('../services/event-logger')
+const {
+  getPlayerIdFromRequest,
+  generateToken,
+  requireAuth: jwtRequireAuth,
+} = require('../middleware/auth')
 
 const SHOWDOWN_ROUND = 'showdown'
 
@@ -32,23 +37,30 @@ function shouldRevealAllCards(game) {
 }
 
 /**
- * Middleware to require authentication
+ * Middleware to require authentication (JWT or cookie-session)
  */
-function requireAuth(req, res, next) {
-  if (!req.session || !req.session.playerId) {
+const requireAuth = async (req, res, next) => {
+  const playerId = await getPlayerIdFromRequest(req)
+  if (!playerId) {
     return res.status(401).json({ error: 'Not authenticated' })
   }
+  req.playerId = playerId
   next()
 }
 
 /**
- * Middleware to load player from session
+ * Middleware to load player from session or JWT
  */
 async function loadPlayer(req, res, next) {
   try {
-    const player = await playerService.getPlayerById(req.session.playerId)
+    const playerId = await getPlayerIdFromRequest(req)
+    if (!playerId) {
+      return res.status(401).json({ error: 'Not authenticated' })
+    }
+
+    const player = await playerService.getPlayerById(playerId)
     if (!player) {
-      req.session = null // Clear invalid session
+      if (req.session) req.session = null
       return res.status(401).json({ error: 'Player not found' })
     }
     req.player = player
@@ -256,14 +268,20 @@ router.post('/:gameId/join', async (req, res, next) => {
 
     const player = await playerService.joinGame(gameId, name, password)
 
-    // Set session
-    req.session.playerId = player.id
+    // Set session (for browser compatibility)
+    if (req.session) {
+      req.session.playerId = player.id
+    }
+
+    // Generate JWT token
+    const token = generateToken(player.id, gameId)
 
     // Emit game update event
     gameEvents.emitGameUpdate(gameId, 'join')
 
     res.status(201).json({
       player,
+      token,
       message: 'Joined game successfully',
     })
   } catch (error) {
@@ -286,11 +304,17 @@ router.post('/:gameId/auth', async (req, res, next) => {
 
     const player = await playerService.authenticatePlayer(gameId, name, password)
 
-    // Set session
-    req.session.playerId = player.id
+    // Set session (for browser compatibility)
+    if (req.session) {
+      req.session.playerId = player.id
+    }
+
+    // Generate JWT token
+    const token = generateToken(player.id, gameId)
 
     res.json({
       player,
+      token,
       message: 'Authenticated successfully',
     })
   } catch (error) {

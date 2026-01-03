@@ -5,11 +5,12 @@
 
 const WebSocket = require('ws')
 const Keygrip = require('keygrip')
-const gameService = require('../services/game-service')
-const playerService = require('../services/player-service')
-const gameEvents = require('../lib/game-events')
-const { calculatePots, distributePots } = require('../lib/pot-manager')
-const { evaluateHand } = require('../lib/poker-engine')
+const gameService = require('@/services/game-service')
+const playerService = require('@/services/player-service')
+const gameEvents = require('@/lib/game-events')
+const { calculatePots, distributePots } = require('@/lib/pot-manager')
+const { evaluateHand } = require('@/lib/poker-engine')
+const { verifyToken } = require('@/middleware/auth')
 
 const SHOWDOWN_ROUND = 'showdown'
 
@@ -113,7 +114,7 @@ class WebSocketService {
    * Handle subscription request
    */
   async handleSubscribe(ws, payload, requestId) {
-    const { roomCode, stream, gameId: clientGameId, playerId: clientPlayerId } = payload
+    const { roomCode, stream, gameId: clientGameId, playerId: clientPlayerId, token } = payload
 
     if (!roomCode || !stream) {
       return this.sendError(ws, 'roomCode and stream are required', requestId)
@@ -133,10 +134,26 @@ class WebSocketService {
 
       let playerId = null
 
-      // For player stream, try multiple auth methods
+      // For player stream, try multiple auth methods (in order of preference)
       if (stream === 'player') {
-        // Method 1: Session-based auth (from cookies)
-        if (ws.playerId) {
+        // Method 1: JWT token (preferred - allows non-browser clients)
+        if (token) {
+          const decoded = verifyToken(token)
+          if (decoded && decoded.playerId) {
+            const player = await playerService.getPlayerById(decoded.playerId)
+            if (player && player.gameId === game.id) {
+              playerId = player.id
+              console.log('[WS] Player authenticated via JWT:', playerId)
+            } else {
+              console.warn('[WS] JWT player not found or wrong game:', decoded.playerId)
+            }
+          } else {
+            console.warn('[WS] Invalid JWT token provided')
+          }
+        }
+
+        // Method 2: Session-based auth (from cookies)
+        if (!playerId && ws.playerId) {
           const player = await playerService.getPlayerById(ws.playerId)
 
           if (player && player.gameId === game.id) {
@@ -145,7 +162,7 @@ class WebSocketService {
           }
         }
 
-        // Method 2: Client-provided playerId (from localStorage)
+        // Method 3: Client-provided playerId (legacy localStorage method)
         if (!playerId && clientPlayerId) {
           const player = await playerService.getPlayerById(clientPlayerId)
 
@@ -157,11 +174,11 @@ class WebSocketService {
           }
         }
 
-        // Method 3: Fallback to table view if gameId matches
+        // Method 4: Fallback to table view if gameId matches
         if (!playerId && clientGameId && clientGameId === game.id) {
           console.warn('[WS] Player stream requested but no auth - using table view sanitization')
           // Keep playerId = null, will use table sanitization
-        } else if (!playerId && !clientGameId) {
+        } else if (!playerId && !clientGameId && !token) {
           return this.sendError(ws, 'Authentication required for player stream', requestId)
         }
       }

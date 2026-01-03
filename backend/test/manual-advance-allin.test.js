@@ -2,7 +2,7 @@ const { test, expect, beforeEach, afterEach } = require('bun:test')
 const gameService = require('../services/game-service')
 const playerService = require('../services/player-service')
 const actionService = require('../services/action-service')
-const db = require('../../db')
+const db = require('@holdem/root/db')
 
 let gameId
 let player1

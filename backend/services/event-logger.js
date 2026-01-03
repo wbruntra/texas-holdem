@@ -5,7 +5,7 @@
 
 const fs = require('fs')
 const path = require('path')
-const { EVENT_TYPE } = require('../lib/event-types')
+const { EVENT_TYPE } = require('@/lib/event-types')
 
 class EventLogger {
   constructor() {

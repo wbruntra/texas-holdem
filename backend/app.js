@@ -36,18 +36,22 @@ app.use(function (err, req, res, next) {
 
   if (req.app.get('env') === 'development') {
     // Send detailed error information in development
+    const errorDetails = {
+      message: err.message,
+      status: statusCode,
+      stack: err.stack,
+      name: err.name,
+      ...(err.errors && { errors: err.errors }), // For validation errors
+      ...(err.code && { code: err.code }),
+      timestamp: new Date().toISOString(),
+      path: req.path,
+      method: req.method,
+    }
+
+    console.log('Error details:', errorDetails)
+
     res.status(statusCode).json({
-      error: {
-        message: err.message,
-        status: statusCode,
-        stack: err.stack,
-        name: err.name,
-        ...(err.errors && { errors: err.errors }), // For validation errors
-        ...(err.code && { code: err.code }),
-        timestamp: new Date().toISOString(),
-        path: req.path,
-        method: req.method,
-      },
+      error: errorDetails,
     })
   } else {
     // Send generic error message in production

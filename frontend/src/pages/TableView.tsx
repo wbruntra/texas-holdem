@@ -4,10 +4,10 @@ import axios from 'axios'
 import { QRCodeSVG } from 'qrcode.react'
 import { BACKEND_LOCAL_PORT } from '@scaffold/shared/config'
 
-import PokerTableScene from '../components/table/PokerTableScene'
-import GameOverModal from '../components/GameOverModal'
-import type { GameState } from '../components/table/types'
-import { useSoundEffects } from '../hooks/useSoundEffects'
+import PokerTableScene from '~/components/table/PokerTableScene'
+import GameOverModal from '~/components/GameOverModal'
+import type { GameState } from '~/components/table/types'
+import { useSoundEffects } from '~/hooks/useSoundEffects'
 
 export default function TableView() {
   const { roomCode } = useParams<{ roomCode: string }>()
