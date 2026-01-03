@@ -2,15 +2,14 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
 import { QRCodeSVG } from 'qrcode.react'
-import { BACKEND_LOCAL_PORT } from '@holdem/shared/config'
 
 import PokerTableScene from '~/components/table/PokerTableScene'
 import GameOverModal from '~/components/GameOverModal'
 import { useAppDispatch, useAppSelector } from '~/store/hooks'
 import { setGame, setLoading, setError, setWsConnected } from '~/store/gameSlice'
 import { useSoundEffects } from '~/hooks/useSoundEffects'
+import { WebSocketManager } from '~/lib/WebSocketManager'
 import type { Player } from '~/components/table/types'
-import { buildWsUrl } from '~/hooks/useWebSocket'
 
 export default function TableView() {
   const { roomCode } = useParams<{ roomCode: string }>()
@@ -22,6 +21,8 @@ export default function TableView() {
   const [showGameOverModal, setShowGameOverModal] = useState(true)
   const [isResetting, setIsResetting] = useState(false)
   const { playCheckSound, playBetSound, playCardFlipSound } = useSoundEffects()
+
+  const wsManagerRef = useRef<WebSocketManager | null>(null)
 
   const previousActionsRef = useRef<Record<string, string | null>>({})
   const previousCommunityCardsCountRef = useRef(0)
@@ -77,121 +78,41 @@ export default function TableView() {
   useEffect(() => {
     if (!roomCode) return
 
-    let ws: WebSocket | null = null
-    let pollInterval: number | null = null
-    let reconnectTimeout: number | null = null
-
-    const connectWebSocket = () => {
-      const wsUrl = buildWsUrl()
-
-      console.log('[TableView] Connecting to WebSocket:', wsUrl)
-      ws = new WebSocket(wsUrl)
-
-      ws.onopen = () => {
-        console.log('[TableView] WebSocket connected')
-        dispatch(setWsConnected(true))
+    wsManagerRef.current = new WebSocketManager({
+      onHello: (payload) => {
+        console.log('[TableView] Server hello:', payload)
         dispatch(setError(''))
+      },
+      onSubscribed: () => {
+        console.log('[TableView] Subscribed to table stream')
+        dispatch(setLoading(false))
+      },
+      onGameState: (payload) => {
+        console.log('[TableView] Game state update:', payload.reason)
+        dispatch(setGame(payload.state as Parameters<typeof setGame>[0]))
+        dispatch(setError(''))
+        dispatch(setLoading(false))
+      },
+      onError: (err) => {
+        console.error('[TableView] WebSocket error:', err)
+        dispatch(setError(err))
+      },
+    })
 
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(
-            JSON.stringify({
-              type: 'subscribe',
-              payload: {
-                roomCode,
-                stream: 'table',
-              },
-            }),
-          )
-        }
-      }
-
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data)
-          console.log('[TableView] WebSocket message:', message.type)
-
-          switch (message.type) {
-            case 'hello':
-              console.log('[TableView] Server hello:', message.payload)
-              break
-
-            case 'subscribed':
-              console.log('[TableView] Subscribed to table stream')
-              dispatch(setLoading(false))
-              if (pollInterval) {
-                clearInterval(pollInterval)
-                pollInterval = null
-              }
-              break
-
-            case 'game_state':
-              console.log('[TableView] Game state update:', message.payload.reason)
-              dispatch(setGame(message.payload.state))
-              dispatch(setError(''))
-              dispatch(setLoading(false))
-              break
-
-            case 'error':
-              console.error('[TableView] WebSocket error:', message.payload.error)
-              dispatch(setError(message.payload.error))
-              break
-          }
-        } catch (err) {
-          console.error('[TableView] Failed to parse WebSocket message:', err)
-        }
-      }
-
-      ws.onerror = () => {
-        console.error('[TableView] WebSocket error')
-        dispatch(setWsConnected(false))
-      }
-
-      ws.onclose = () => {
-        console.log('[TableView] WebSocket disconnected')
-        dispatch(setWsConnected(false))
-
-        if (!pollInterval) {
-          startPolling()
-        }
-
-        reconnectTimeout = window.setTimeout(() => {
-          console.log('[TableView] Attempting to reconnect...')
-          connectWebSocket()
-        }, 3000)
-      }
-    }
-
-    const startPolling = () => {
-      const fetchGame = async () => {
-        try {
-          const response = await axios.get(`/api/games/room/${roomCode}/state`)
-          dispatch(setGame(response.data))
-          dispatch(setError(''))
-          dispatch(setLoading(false))
-        } catch (err: unknown) {
-          dispatch(setError(getApiErrorMessage(err, 'Failed to load game')))
-          dispatch(setLoading(false))
-        }
-      }
-
-      fetchGame()
-      pollInterval = window.setInterval(fetchGame, 2000)
-    }
-
-    connectWebSocket()
+    wsManagerRef.current.connect(roomCode, 'table')
 
     return () => {
-      if (ws) {
-        ws.close()
-      }
-      if (pollInterval) {
-        clearInterval(pollInterval)
-      }
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout)
-      }
+      wsManagerRef.current?.disconnect()
+      wsManagerRef.current = null
     }
   }, [roomCode, dispatch])
+
+  useEffect(() => {
+    if (wsManagerRef.current) {
+      const isConnected = wsManagerRef.current.isConnected()
+      dispatch(setWsConnected(isConnected))
+    }
+  }, [wsManagerRef.current, dispatch])
 
   const handleResetGame = async () => {
     if (!roomCode) return
