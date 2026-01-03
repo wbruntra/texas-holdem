@@ -45,7 +45,21 @@ const initialState: PlayerState = {
 const getApiErrorMessage = (err: unknown, fallback: string): string => {
   if (!axios.isAxiosError(err)) return fallback
   const data = err.response?.data as { error?: string } | undefined
-  return data?.error || fallback
+  const error = data?.error || fallback
+
+  if (error === 'Invalid password') {
+    return 'Incorrect password for this player and game'
+  }
+  if (error === 'Game already started') {
+    return 'Cannot join: game has already started'
+  }
+  if (error === 'Game is full') {
+    return 'Cannot join: game is full'
+  }
+  if (error === 'Game not found') {
+    return 'Game not found'
+  }
+  return error
 }
 
 export const checkAuth = createAsyncThunk(
