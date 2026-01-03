@@ -1,50 +1,57 @@
-/**
- * WebSocket Service - Handles WebSocket connections and game state broadcasting
- * Phase 2: Authenticated "player" stream + public "table" stream
- */
-
-const WebSocket = require('ws')
-const Keygrip = require('keygrip')
-const gameService = require('@/services/game-service')
-const playerService = require('@/services/player-service')
-const actionService = require('@/services/action-service')
-const gameEvents = require('@/lib/game-events')
-const { calculatePots, distributePots } = require('@/lib/pot-manager')
-const { evaluateHand } = require('@/lib/poker-engine')
-const { verifyToken } = require('@/middleware/auth')
+// @ts-ignore
+import WebSocket from 'ws'
+// @ts-ignore
+import Keygrip from 'keygrip'
+// @ts-ignore
+import gameService from '@/services/game-service'
+// @ts-ignore
+import playerService from '@/services/player-service'
+// @ts-ignore
+import actionService from '@/services/action-service'
+import gameEvents from '@/lib/game-events'
+import { calculatePots, distributePots } from '@/lib/pot-manager'
+import { evaluateHand } from '@/lib/poker-engine'
+// @ts-ignore
+import { verifyToken } from '@/middleware/auth'
 
 const SHOWDOWN_ROUND = 'showdown'
 
-// Cookie session keys (must match app.js configuration)
 const SESSION_KEYS = ['hackedescape']
 const keygrip = new Keygrip(SESSION_KEYS)
 
-class WebSocketService {
-  constructor() {
-    this.wss = null
-    this.subscriptions = new Map() // ws -> { roomCode, stream, gameId, playerId? }
-  }
+interface Subscription {
+  roomCode: string
+  stream: string
+  gameId: number
+  playerId: number | null
+}
 
-  /**
-   * Initialize WebSocket server
-   * @param {http.Server} server - HTTP server instance
-   */
-  initialize(server) {
+interface WSMessage {
+  type: string
+  requestId?: string
+  payload?: Record<string, unknown>
+}
+
+class WebSocketService {
+  private wss: WebSocket.Server | null = null
+  private subscriptions: Map<WebSocket, Subscription> = new Map()
+
+  initialize(server: any): void {
     this.wss = new WebSocket.Server({
       server,
       path: '/ws',
     })
 
-    this.wss.on('connection', (ws, req) => {
+    this.wss.on('connection', (ws: WebSocket, req: any) => {
       console.log('[WS] Client connected')
-      // console.log('[WS] Cookie header:', req.headers.cookie || '(none)')
 
-      // Parse session from cookies
       const session = this.parseSession(req)
-      const playerId = session?.playerId || null
+      let playerId: number | null = null
+      if (session && session.playerId) {
+        playerId = session.playerId
+      }
 
-      // Store session info on the WebSocket
-      ws.playerId = playerId
+      ;(ws as any).playerId = playerId
 
       if (playerId) {
         console.log('[WS] Authenticated connection:', playerId)
@@ -52,7 +59,6 @@ class WebSocketService {
         console.log('[WS] Unauthenticated connection')
       }
 
-      // Send hello message
       this.sendMessage(ws, {
         type: 'hello',
         payload: {
@@ -62,10 +68,9 @@ class WebSocketService {
         },
       })
 
-      // Handle incoming messages
-      ws.on('message', async (data) => {
+      ws.on('message', async (data: Buffer) => {
         try {
-          const message = JSON.parse(data.toString())
+          const message = JSON.parse(data.toString()) as WSMessage
           await this.handleMessage(ws, message)
         } catch (error) {
           console.error('[WS] Message parse error:', error)
@@ -78,32 +83,28 @@ class WebSocketService {
         this.subscriptions.delete(ws)
       })
 
-      ws.on('error', (error) => {
+      ws.on('error', (error: Error) => {
         console.error('[WS] WebSocket error:', error)
       })
     })
 
-    // Subscribe to game update events
-    gameEvents.onGameUpdate(async ({ gameId, reason }) => {
-      await this.broadcastGameUpdate(gameId, reason)
+    gameEvents.onGameUpdate(async (data: { gameId: string; reason: string }) => {
+      await this.broadcastGameUpdate(parseInt(data.gameId, 10), data.reason)
     })
 
     console.log('[WS] WebSocket server initialized on /ws')
   }
 
-  /**
-   * Handle incoming WebSocket message
-   */
-  async handleMessage(ws, message) {
+  async handleMessage(ws: WebSocket, message: WSMessage): Promise<void> {
     const { type, requestId, payload } = message
 
     switch (type) {
       case 'subscribe':
-        await this.handleSubscribe(ws, payload, requestId)
+        await this.handleSubscribe(ws, payload as any, requestId)
         break
 
       case 'resume':
-        await this.handleResume(ws, payload, requestId)
+        await this.handleResume(ws, payload as any, requestId)
         break
 
       default:
@@ -111,11 +112,14 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Handle subscription request
-   */
-  async handleSubscribe(ws, payload, requestId) {
-    const { roomCode, stream, gameId: clientGameId, playerId: clientPlayerId, token } = payload
+  async handleSubscribe(ws: WebSocket, payload: any, requestId?: string): Promise<void> {
+    const {
+      roomCode,
+      stream,
+      gameId: clientGameId,
+      playerId: clientPlayerIdFromPayload,
+      token,
+    } = payload
 
     if (!roomCode || !stream) {
       return this.sendError(ws, 'roomCode and stream are required', requestId)
@@ -126,25 +130,22 @@ class WebSocketService {
     }
 
     try {
-      // Get game by room code
       const game = await gameService.getGameByRoomCode(roomCode)
 
       if (!game) {
         return this.sendError(ws, 'Game not found', requestId)
       }
 
-      let playerId = null
+      let authenticatedPlayerId: number | null = null
 
-      // For player stream, try multiple auth methods (in order of preference)
       if (stream === 'player') {
-        // Method 1: JWT token (preferred - allows non-browser clients)
         if (token) {
           const decoded = verifyToken(token)
           if (decoded && decoded.playerId) {
             const player = await playerService.getPlayerById(decoded.playerId)
             if (player && player.gameId === game.id) {
-              playerId = player.id
-              console.log('[WS] Player authenticated via JWT:', playerId)
+              authenticatedPlayerId = player.id
+              console.log('[WS] Player authenticated via JWT:', authenticatedPlayerId)
             } else {
               console.warn('[WS] JWT player not found or wrong game:', decoded.playerId)
             }
@@ -153,46 +154,40 @@ class WebSocketService {
           }
         }
 
-        // Method 2: Session-based auth (from cookies)
-        if (!playerId && ws.playerId) {
-          const player = await playerService.getPlayerById(ws.playerId)
+        if (!authenticatedPlayerId && (ws as any).playerId) {
+          const player = await playerService.getPlayerById((ws as any).playerId)
 
           if (player && player.gameId === game.id) {
-            playerId = player.id
-            console.log('[WS] Player authenticated via session:', playerId)
+            authenticatedPlayerId = player.id
+            console.log('[WS] Player authenticated via session:', authenticatedPlayerId)
           }
         }
 
-        // Method 3: Client-provided playerId (legacy localStorage method)
-        if (!playerId && clientPlayerId) {
-          const player = await playerService.getPlayerById(clientPlayerId)
+        if (!authenticatedPlayerId && clientPlayerIdFromPayload) {
+          const player = await playerService.getPlayerById(clientPlayerIdFromPayload)
 
           if (player && player.gameId === game.id) {
-            playerId = player.id
-            console.log('[WS] Player authenticated via playerId:', playerId)
+            authenticatedPlayerId = player.id
+            console.log('[WS] Player authenticated via playerId:', authenticatedPlayerId)
           } else {
-            console.warn('[WS] Invalid playerId provided:', clientPlayerId)
+            console.warn('[WS] Invalid playerId provided:', clientPlayerIdFromPayload)
           }
         }
 
-        // Method 4: Fallback to table view if gameId matches
-        if (!playerId && clientGameId && clientGameId === game.id) {
+        if (!authenticatedPlayerId && clientGameId && clientGameId === game.id) {
           console.warn('[WS] Player stream requested but no auth - using table view sanitization')
-          // Keep playerId = null, will use table sanitization
-        } else if (!playerId && !clientGameId && !token) {
+        } else if (!authenticatedPlayerId && !clientGameId && !token) {
           return this.sendError(ws, 'Authentication required for player stream', requestId)
         }
       }
 
-      // Store subscription
       this.subscriptions.set(ws, {
         roomCode,
         stream,
         gameId: game.id,
-        playerId,
+        playerId: authenticatedPlayerId,
       })
 
-      // Send subscribed confirmation
       this.sendMessage(ws, {
         type: 'subscribed',
         requestId,
@@ -200,18 +195,15 @@ class WebSocketService {
           gameId: game.id,
           roomCode,
           stream,
-          authenticated: !!playerId,
+          authenticated: !!authenticatedPlayerId,
         },
       })
 
-      // Normalize turn in case current player is ALL_IN or FOLDED
       const normalizedGame = (await actionService.normalizeTurnIfNeeded(game.id)) || game
 
-      // Send initial game state snapshot
-      // If player stream with no playerId, use table sanitization
       const sanitizedState =
-        stream === 'player' && playerId
-          ? this.sanitizePlayerState(normalizedGame, playerId)
+        stream === 'player' && authenticatedPlayerId
+          ? this.sanitizePlayerState(normalizedGame, authenticatedPlayerId)
           : this.sanitizeTableState(normalizedGame)
 
       this.sendMessage(ws, {
@@ -219,13 +211,13 @@ class WebSocketService {
         requestId,
         payload: {
           state: sanitizedState,
-          revision: game.handNumber?.toString() || '0',
+          revision: game.handNumber ? String(game.handNumber) : '0',
           reason: 'subscribe',
         },
       })
 
       console.log(
-        `[WS] Client subscribed to ${stream} stream: ${roomCode}${playerId ? ` (player: ${playerId})` : ''}`,
+        `[WS] Client subscribed to ${stream} stream: ${roomCode}${authenticatedPlayerId ? ` (player: ${authenticatedPlayerId})` : ''}`,
       )
     } catch (error) {
       console.error('[WS] Subscribe error:', error)
@@ -233,10 +225,7 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Handle resume request (reconnect with last known revision)
-   */
-  async handleResume(ws, payload, requestId) {
+  async handleResume(ws: WebSocket, payload: any, requestId?: string): Promise<void> {
     const subscription = this.subscriptions.get(ws)
 
     if (!subscription) {
@@ -250,11 +239,9 @@ class WebSocketService {
         return this.sendError(ws, 'Game not found', requestId)
       }
 
-      // Normalize turn in case current player is ALL_IN or FOLDED
       const normalizedGame =
         (await actionService.normalizeTurnIfNeeded(subscription.gameId)) || game
 
-      // Always send full snapshot on resume (authoritative)
       const sanitizedState =
         subscription.stream === 'player' && subscription.playerId
           ? this.sanitizePlayerState(normalizedGame, subscription.playerId)
@@ -265,7 +252,7 @@ class WebSocketService {
         requestId,
         payload: {
           state: sanitizedState,
-          revision: game.handNumber?.toString() || '0',
+          revision: game.handNumber ? String(game.handNumber) : '0',
           reason: 'resume',
         },
       })
@@ -277,10 +264,7 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Broadcast game state update to all subscribed clients
-   */
-  async broadcastGameUpdate(gameId, reason) {
+  async broadcastGameUpdate(gameId: number, reason: string): Promise<void> {
     try {
       let game = await gameService.getGameById(gameId)
 
@@ -289,18 +273,12 @@ class WebSocketService {
         return
       }
 
-      // Normalize turn in case current player is ALL_IN or FOLDED
-      // This ensures WebSocket broadcasts match HTTP API responses
       game = (await actionService.normalizeTurnIfNeeded(gameId)) || game
 
-      const revision = game.handNumber?.toString() || '0'
+      const revision = game.handNumber ? String(game.handNumber) : '0'
 
-      // Send to all clients subscribed to this game (both table and player streams)
       for (const [ws, subscription] of this.subscriptions.entries()) {
         if (subscription.gameId === gameId && ws.readyState === WebSocket.OPEN) {
-          // Sanitize state per-connection based on stream type and auth
-          // If player stream with playerId, show that player's cards
-          // Otherwise use table sanitization
           const sanitizedState =
             subscription.stream === 'player' && subscription.playerId
               ? this.sanitizePlayerState(game, subscription.playerId)
@@ -323,27 +301,18 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Sanitize game state for table view (public, no hole cards except when rules allow)
-   * Cards are revealed when:
-   * 1. It's showdown, OR
-   * 2. Only one player has chips and others are all-in (standard poker rules)
-   */
-  sanitizeTableState(game) {
+  sanitizeTableState(game: any): any {
     const isShowdown = game.currentRound === SHOWDOWN_ROUND
 
-    // Check if cards should be revealed due to all-in situation
     const playersWithChips = game.players.filter(
-      (p) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
+      (p: any) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
     )
-    const allInPlayers = game.players.filter((p) => p.status === 'all_in')
+    const allInPlayers = game.players.filter((p: any) => p.status === 'all_in')
     const shouldRevealAllCards =
       isShowdown || (playersWithChips.length === 1 && allInPlayers.length > 0)
 
-    // Calculate pots from player bets
     let pots = calculatePots(game.players)
 
-    // If it's showdown, distribute pots to add winner information
     if (isShowdown && pots.length > 0) {
       pots = distributePots(pots, game.players, game.communityCards, evaluateHand)
     }
@@ -364,7 +333,7 @@ class WebSocketService {
       handNumber: game.handNumber,
       communityCards: game.communityCards || [],
       winners: game.winners || undefined,
-      players: game.players.map((p) => ({
+      players: game.players.map((p: any) => ({
         id: p.id,
         name: p.name,
         position: p.position,
@@ -374,8 +343,8 @@ class WebSocketService {
         status: p.status,
         holeCards:
           (shouldRevealAllCards &&
-            (game.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in').length >
-              1 ||
+            (game.players.filter((pl: any) => pl.status === 'active' || pl.status === 'all_in')
+              .length > 1 ||
               p.showCards)) ||
           p.showCards
             ? p.holeCards || []
@@ -386,16 +355,11 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Sanitize game state for player view (show only that player's hole cards, except showdown)
-   */
-  sanitizePlayerState(game, playerId) {
+  sanitizePlayerState(game: any, playerId: number): any {
     const isShowdown = game.currentRound === SHOWDOWN_ROUND
 
-    // Calculate pots from player bets
     let pots = calculatePots(game.players)
 
-    // If it's showdown, distribute pots to add winner information
     if (isShowdown && pots.length > 0) {
       pots = distributePots(pots, game.players, game.communityCards, evaluateHand)
     }
@@ -416,7 +380,7 @@ class WebSocketService {
       handNumber: game.handNumber,
       communityCards: game.communityCards || [],
       winners: game.winners || undefined,
-      players: game.players.map((p) => ({
+      players: game.players.map((p: any) => ({
         id: p.id,
         name: p.name,
         position: p.position,
@@ -426,8 +390,8 @@ class WebSocketService {
         status: p.status,
         holeCards:
           (isShowdown &&
-            (game.players.filter((pl) => pl.status === 'active' || pl.status === 'all_in').length >
-              1 ||
+            (game.players.filter((pl: any) => pl.status === 'active' || pl.status === 'all_in')
+              .length > 1 ||
               p.showCards)) ||
           p.id === playerId
             ? p.holeCards || []
@@ -441,10 +405,7 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Parse session from cookies during WebSocket upgrade
-   */
-  parseSession(req) {
+  parseSession(req: any): { playerId: number } | null {
     try {
       const cookies = this.parseCookies(req.headers.cookie || '')
       console.log('[WS] Parsed cookies:', Object.keys(cookies))
@@ -465,12 +426,10 @@ class WebSocketService {
       console.log('[WS] Session cookie length:', sessionCookie.length)
       console.log('[WS] Signature cookie length:', signatureCookie.length)
 
-      // Cookie value might be URL-encoded
       const decodedValue = decodeURIComponent(sessionCookie)
       const decodedSignature = decodeURIComponent(signatureCookie)
 
-      // Verify signature
-      const expectedSignature = keygrip.sign(`holdem=${decodedValue}`)
+      const expectedSignature = keygrip.sign('holdem=' + decodedValue)
       if (decodedSignature !== expectedSignature) {
         console.warn('[WS] Invalid session signature')
         console.warn('[WS] Expected:', expectedSignature)
@@ -478,7 +437,6 @@ class WebSocketService {
         return null
       }
 
-      // Decode Base64 session data
       const sessionJson = Buffer.from(decodedValue, 'base64').toString('utf-8')
       const session = JSON.parse(sessionJson)
 
@@ -490,11 +448,8 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Parse cookies from cookie header string
-   */
-  parseCookies(cookieHeader) {
-    const cookies = {}
+  parseCookies(cookieHeader: string): Record<string, string> {
+    const cookies: Record<string, string> = {}
 
     if (!cookieHeader) {
       return cookies
@@ -513,19 +468,13 @@ class WebSocketService {
     return cookies
   }
 
-  /**
-   * Send a message to a WebSocket client
-   */
-  sendMessage(ws, message) {
+  sendMessage(ws: WebSocket, message: Record<string, unknown>): void {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message))
     }
   }
 
-  /**
-   * Send an error message
-   */
-  sendError(ws, errorMessage, requestId = null) {
+  sendError(ws: WebSocket, errorMessage: string, requestId?: string): void {
     this.sendMessage(ws, {
       type: 'error',
       requestId,
@@ -535,10 +484,7 @@ class WebSocketService {
     })
   }
 
-  /**
-   * Close all connections and cleanup
-   */
-  close() {
+  close(): void {
     if (this.wss) {
       this.wss.close()
       console.log('[WS] WebSocket server closed')
@@ -546,7 +492,6 @@ class WebSocketService {
   }
 }
 
-// Singleton instance
 const wsService = new WebSocketService()
 
-module.exports = wsService
+export default wsService

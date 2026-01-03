@@ -1,13 +1,12 @@
-var express = require('express')
-var router = express.Router()
-var gamesRouter = require('./games')
+import express from 'express'
+import gamesRouter from './games'
 
-/* Health check */
+const router = express.Router()
+
 router.get('/health', function (req, res, next) {
   res.send({ health: 'OK' })
 })
 
-/* Game routes */
 router.use('/games', gamesRouter)
 
-module.exports = router
+export default router

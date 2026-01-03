@@ -11,13 +11,19 @@ const config = {
       filename: path.join(__dirname, 'holdem.sqlite3'),
     },
     useNullAsDefault: true,
+    migrations: {
+      directory: path.join(__dirname, 'migrations'),
+    },
   },
   test: {
     client: 'sqlite3',
     connection: {
-      filename: path.join(__dirname, 'holdem-test.sqlite3'),
+      filename: ':memory:',
     },
     useNullAsDefault: true,
+    migrations: {
+      directory: path.join(__dirname, 'migrations'),
+    },
   },
 }
 

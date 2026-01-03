@@ -1,18 +1,26 @@
-/**
- * Event Logger - Centralized logging service for end-to-end testing
- * Captures all game events when LOG_EVENTS environment variable is true
- */
+import fs from 'fs'
+import path from 'path'
+import { EVENT_TYPE, type EventType } from '@/lib/event-types'
 
-const fs = require('fs')
-const path = require('path')
-const { EVENT_TYPE } = require('@/lib/event-types')
+interface LoggedEvent {
+  timestamp: string
+  eventType: EventType
+  gameId: string | number | null
+  data: Record<string, unknown>
+  sequence: number
+}
 
 class EventLogger {
+  private enabled: boolean
+  private events: LoggedEvent[]
+  private logFilePath: string
+  private autoFlush: boolean
+
   constructor() {
     this.enabled = process.env.LOG_EVENTS === 'true'
     this.events = []
     this.logFilePath = path.join(__dirname, '../../event-log.json')
-    this.autoFlush = true // Auto-flush after each event
+    this.autoFlush = true
 
     if (this.enabled) {
       console.log('[EventLogger] Logging enabled - events will be written to', this.logFilePath)
@@ -20,10 +28,7 @@ class EventLogger {
     }
   }
 
-  /**
-   * Initialize/clear the log file
-   */
-  initializeLogFile() {
+  initializeLogFile(): void {
     try {
       fs.writeFileSync(this.logFilePath, JSON.stringify([], null, 2))
     } catch (error) {
@@ -31,16 +36,14 @@ class EventLogger {
     }
   }
 
-  /**
-   * Log an event
-   * @param {string} eventType - Event type from EVENT_TYPE constants
-   * @param {Object} data - Event data
-   * @param {string} gameId - Game ID (optional)
-   */
-  logEvent(eventType, data = {}, gameId = null) {
+  logEvent(
+    eventType: EventType,
+    data: Record<string, unknown> = {},
+    gameId: string | number | null = null,
+  ): void {
     if (!this.enabled) return
 
-    const event = {
+    const event: LoggedEvent = {
       timestamp: new Date().toISOString(),
       eventType,
       gameId,
@@ -54,7 +57,6 @@ class EventLogger {
       this.flushToFile()
     }
 
-    // Also log to console for real-time debugging
     console.log(
       `[Event:${event.sequence}] ${eventType}`,
       gameId ? `[Game:${gameId}]` : '',
@@ -62,10 +64,7 @@ class EventLogger {
     )
   }
 
-  /**
-   * Flush events to file
-   */
-  flushToFile() {
+  flushToFile(): void {
     if (!this.enabled) return
 
     try {
@@ -75,34 +74,22 @@ class EventLogger {
     }
   }
 
-  /**
-   * Get all logged events
-   */
-  getEvents() {
+  getEvents(): LoggedEvent[] {
     return this.events
   }
 
-  /**
-   * Get events for a specific game
-   */
-  getGameEvents(gameId) {
+  getGameEvents(gameId: string | number): LoggedEvent[] {
     return this.events.filter((e) => e.gameId === gameId)
   }
 
-  /**
-   * Clear all events
-   */
-  clear() {
+  clear(): void {
     this.events = []
     if (this.enabled) {
       this.initializeLogFile()
     }
   }
 
-  /**
-   * Export events to a file
-   */
-  exportToFile(filePath) {
+  exportToFile(filePath: string): boolean {
     try {
       fs.writeFileSync(filePath, JSON.stringify(this.events, null, 2))
       return true
@@ -113,7 +100,6 @@ class EventLogger {
   }
 }
 
-// Singleton instance
 const eventLogger = new EventLogger()
 
-module.exports = eventLogger
+export default eventLogger

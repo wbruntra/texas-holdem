@@ -1,33 +1,23 @@
-const express = require('express')
+import express from 'express'
+import gameService from '../services/game-service'
+import playerService from '@/services/player-service'
+import actionService from '../services/action-service'
+import gameEvents from '../lib/game-events'
+import { isBettingRoundComplete, shouldAutoAdvance } from '../lib/game-state-machine'
+import { calculatePots, distributePots } from '../lib/pot-manager'
+import { evaluateHand } from '../lib/poker-engine'
+import eventLogger from '../services/event-logger'
+import { getPlayerIdFromRequest, generateToken, requireAuth } from '../middleware/auth'
+
 const router = express.Router()
-const gameService = require('../services/game-service')
-const playerService = require('@/services/player-service')
-const actionService = require('../services/action-service')
-const gameEvents = require('../lib/game-events')
-const { isBettingRoundComplete, shouldAutoAdvance } = require('../lib/game-state-machine')
-const { calculatePots, distributePots } = require('../lib/pot-manager')
-const { evaluateHand } = require('../lib/poker-engine')
-const eventLogger = require('../services/event-logger')
-const {
-  getPlayerIdFromRequest,
-  generateToken,
-  requireAuth: jwtRequireAuth,
-} = require('../middleware/auth')
 
 const SHOWDOWN_ROUND = 'showdown'
 
-/**
- * Helper to determine if all hole cards should be revealed
- * This happens when:
- * 1. It's showdown, OR
- * 2. Only one player has chips and all others are all-in
- */
 function shouldRevealAllCards(game) {
   if (game.currentRound === SHOWDOWN_ROUND) {
     return true
   }
 
-  // Check if only one player has chips and there are all-in players
   const playersWithChips = game.players.filter(
     (p) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
   )
@@ -36,10 +26,7 @@ function shouldRevealAllCards(game) {
   return playersWithChips.length === 1 && allInPlayers.length > 0
 }
 
-/**
- * Middleware to require authentication (JWT or cookie-session)
- */
-const requireAuth = async (req, res, next) => {
+const requireAuthMiddleware = async (req, res, next) => {
   const playerId = await getPlayerIdFromRequest(req)
   if (!playerId) {
     return res.status(401).json({ error: 'Not authenticated' })
@@ -48,9 +35,6 @@ const requireAuth = async (req, res, next) => {
   next()
 }
 
-/**
- * Middleware to load player from session or JWT
- */
 async function loadPlayer(req, res, next) {
   try {
     const playerId = await getPlayerIdFromRequest(req)
@@ -70,10 +54,6 @@ async function loadPlayer(req, res, next) {
   }
 }
 
-/**
- * POST /api/games
- * Create a new game
- */
 router.post('/', async (req, res, next) => {
   try {
     const { smallBlind, bigBlind, startingChips } = req.body
@@ -90,10 +70,6 @@ router.post('/', async (req, res, next) => {
   }
 })
 
-/**
- * GET /api/games/room/:roomCode
- * Get game by room code (public info only)
- */
 router.get('/room/:roomCode', async (req, res, next) => {
   try {
     const game = await gameService.getGameByRoomCode(req.params.roomCode)
@@ -102,7 +78,6 @@ router.get('/room/:roomCode', async (req, res, next) => {
       return res.status(404).json({ error: 'Game not found' })
     }
 
-    // Return public info only (no hole cards)
     const publicGame = {
       id: game.id,
       roomCode: game.roomCode,
@@ -124,10 +99,6 @@ router.get('/room/:roomCode', async (req, res, next) => {
   }
 })
 
-/**
- * GET /api/games/room/:roomCode/state
- * Shared table display state (no auth)
- */
 router.get('/room/:roomCode/state', async (req, res, next) => {
   try {
     let game = await gameService.getGameByRoomCode(req.params.roomCode)
@@ -136,22 +107,17 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
       return res.status(404).json({ error: 'Game not found' })
     }
 
-    // Normalize turn in case current player is ALL_IN or FOLDED
     game = (await actionService.normalizeTurnIfNeeded(game.id)) || game
 
     const revealCards = shouldRevealAllCards(game)
 
-    // Calculate pots from player bets
     let pots = calculatePots(game.players)
 
-    // If it's showdown, distribute pots to add winner information
     const isShowdown = game.currentRound === SHOWDOWN_ROUND
     if (isShowdown && pots.length > 0) {
       pots = distributePots(pots, game.players, game.communityCards, evaluateHand)
     }
 
-    // Shared screen should show full table state.
-    // Hole cards remain hidden until showdown or all-in situation.
     const tableState = {
       id: game.id,
       roomCode: game.roomCode,
@@ -188,11 +154,7 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
   }
 })
 
-/**
- * GET /api/games/:gameId
- * Get full game state (requires authentication)
- */
-router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
+router.get('/:gameId', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     let game = await gameService.getGameById(gameId)
@@ -201,25 +163,20 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
       return res.status(404).json({ error: 'Game not found' })
     }
 
-    // Verify player is in this game
     if (req.player.gameId !== game.id) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
 
-    // Normalize turn in case current player is ALL_IN or FOLDED
     game = (await actionService.normalizeTurnIfNeeded(game.id)) || game
 
     const isShowdown = game.currentRound === SHOWDOWN_ROUND
 
-    // Calculate pots from player bets
     let pots = calculatePots(game.players)
 
-    // If it's showdown, distribute pots to add winner information
     if (isShowdown && pots.length > 0) {
       pots = distributePots(pots, game.players, game.communityCards, evaluateHand)
     }
 
-    // Filter community cards based on current round (only show revealed cards)
     let visibleCommunityCards = []
     if (game.communityCards) {
       if (game.currentRound === 'flop') {
@@ -229,17 +186,14 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
       } else if (game.currentRound === 'river' || game.currentRound === SHOWDOWN_ROUND) {
         visibleCommunityCards = game.communityCards
       }
-      // Pre-flop: no cards visible
     }
 
-    // Return sanitized state: only show this player's hole cards (except at showdown or all-in situation)
-    // and exclude deck to prevent information leakage
     const currentPlayerId = req.player.id
     const revealCards = shouldRevealAllCards(game)
     const gameState = {
       ...game,
       pots: pots,
-      deck: undefined, // Never expose the deck
+      deck: undefined,
       communityCards: visibleCommunityCards,
       players: game.players.map((p) => ({
         ...p,
@@ -253,10 +207,6 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
   }
 })
 
-/**
- * POST /api/games/:gameId/join
- * Join a game with name and password
- */
 router.post('/:gameId/join', async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
@@ -268,15 +218,12 @@ router.post('/:gameId/join', async (req, res, next) => {
 
     const player = await playerService.joinGame(gameId, name, password)
 
-    // Set session (for browser compatibility)
     if (req.session) {
       req.session.playerId = player.id
     }
 
-    // Generate JWT token
     const token = generateToken(player.id, gameId)
 
-    // Emit game update event
     gameEvents.emitGameUpdate(gameId, 'join')
 
     res.status(201).json({
@@ -289,10 +236,6 @@ router.post('/:gameId/join', async (req, res, next) => {
   }
 })
 
-/**
- * POST /api/games/:gameId/auth
- * Authenticate with existing player credentials
- */
 router.post('/:gameId/auth', async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
@@ -304,12 +247,10 @@ router.post('/:gameId/auth', async (req, res, next) => {
 
     const player = await playerService.authenticatePlayer(gameId, name, password)
 
-    // Set session (for browser compatibility)
     if (req.session) {
       req.session.playerId = player.id
     }
 
-    // Generate JWT token
     const token = generateToken(player.id, gameId)
 
     res.json({
@@ -325,21 +266,15 @@ router.post('/:gameId/auth', async (req, res, next) => {
   }
 })
 
-/**
- * POST /api/games/:gameId/start
- * Start the game
- */
-router.post('/:gameId/start', requireAuth, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/start', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    // Verify player is in this game
     if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
 
     const game = await gameService.startGame(gameId)
 
-    // Emit game update event
     gameEvents.emitGameUpdate(gameId, 'start')
 
     res.json(game)
@@ -348,10 +283,6 @@ router.post('/:gameId/start', requireAuth, loadPlayer, async (req, res, next) =>
   }
 })
 
-/**
- * POST /api/games/room/:roomCode/reset
- * Reset the game to initial state (no auth required for table view)
- */
 router.post('/room/:roomCode/reset', async (req, res, next) => {
   try {
     const game = await gameService.getGameByRoomCode(req.params.roomCode)
@@ -366,7 +297,6 @@ router.post('/room/:roomCode/reset', async (req, res, next) => {
 
     const resetGame = await gameService.resetGame(game.id)
 
-    // Emit game update event
     gameEvents.emitGameUpdate(game.id, 'reset')
 
     res.json(resetGame)
@@ -375,11 +305,7 @@ router.post('/room/:roomCode/reset', async (req, res, next) => {
   }
 })
 
-/**
- * POST /api/games/:gameId/actions
- * Submit a player action
- */
-router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/actions', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     const { action, amount } = req.body
@@ -388,7 +314,6 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
       return res.status(400).json({ error: 'Action required' })
     }
 
-    // Verify player is in this game
     if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
@@ -397,7 +322,6 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
 
     const revealCards = shouldRevealAllCards(gameState)
 
-    // Filter community cards based on current round
     let visibleCommunityCards = []
     if (gameState.communityCards) {
       if (gameState.currentRound === 'flop') {
@@ -409,10 +333,9 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
       }
     }
 
-    // Return game state with only this player's hole cards visible and no deck
     const sanitizedState = {
       ...gameState,
-      deck: undefined, // Never expose the deck
+      deck: undefined,
       communityCards: visibleCommunityCards,
       players: gameState.players.map((p) => ({
         ...p,
@@ -420,7 +343,6 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
       })),
     }
 
-    // Emit game update event
     gameEvents.emitGameUpdate(gameId, 'action')
 
     res.json(sanitizedState)
@@ -432,14 +354,9 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
   }
 })
 
-/**
- * POST /api/games/:gameId/reveal-card
- * Manually reveal the next community card (when only 1 player has chips)
- */
-router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/reveal-card', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    // Verify player is in this game
     if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
@@ -448,7 +365,6 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
 
     const revealCards = shouldRevealAllCards(gameState)
 
-    // Filter community cards based on current round
     let visibleCommunityCards = []
     if (gameState.communityCards) {
       if (gameState.currentRound === 'flop') {
@@ -460,10 +376,9 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
       }
     }
 
-    // Return game state with only this player's hole cards visible and no deck
     const sanitizedState = {
       ...gameState,
-      deck: undefined, // Never expose the deck
+      deck: undefined,
       communityCards: visibleCommunityCards,
       players: gameState.players.map((p) => ({
         ...p,
@@ -471,7 +386,6 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
       })),
     }
 
-    // Emit game update event
     gameEvents.emitGameUpdate(gameId, 'reveal')
 
     res.json(sanitizedState)
@@ -483,14 +397,9 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
   }
 })
 
-/**
- * POST /api/games/:gameId/advance
- * Advance to next round when betting is complete (any player can trigger)
- */
-router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/advance', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    // Verify player is in this game
     if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
@@ -500,18 +409,14 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
       return res.status(404).json({ error: 'Game not found' })
     }
 
-    // Check if betting is complete or if we should auto-advance (all-in situation)
-    // Allow advance if: betting complete (no one to act) OR should auto-advance (all-in)
     if (!isBettingRoundComplete(game) && !shouldAutoAdvance(game)) {
       return res.status(400).json({ error: 'Betting round not complete' })
     }
 
-    // Advance exactly one round (not auto-advance through all)
     const nextState = await gameService.advanceOneRound(gameId)
 
     const revealCards = shouldRevealAllCards(nextState)
 
-    // Filter community cards based on current round
     let visibleCommunityCards = []
     if (nextState.communityCards) {
       if (nextState.currentRound === 'flop') {
@@ -523,10 +428,9 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
       }
     }
 
-    // Return game state with only this player's hole cards visible and no deck
     const sanitizedState = {
       ...nextState,
-      deck: undefined, // Never expose the deck
+      deck: undefined,
       communityCards: visibleCommunityCards,
       players: nextState.players.map((p) => ({
         ...p,
@@ -534,7 +438,6 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
       })),
     }
 
-    // Emit game update event
     gameEvents.emitGameUpdate(gameId, 'advance')
 
     res.json(sanitizedState)
@@ -546,14 +449,9 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
   }
 })
 
-/**
- * GET /api/games/:gameId/actions/valid
- * Get valid actions for current player
- */
-router.get('/:gameId/actions/valid', requireAuth, loadPlayer, async (req, res, next) => {
+router.get('/:gameId/actions/valid', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    // Verify player is in this game
     if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
@@ -566,14 +464,9 @@ router.get('/:gameId/actions/valid', requireAuth, loadPlayer, async (req, res, n
   }
 })
 
-/**
- * POST /api/games/:gameId/next-hand
- * Start the next hand (any player can trigger)
- */
-router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/next-hand', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    // Verify player is in this game
     if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
@@ -587,13 +480,8 @@ router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next
       return res.status(400).json({ error: 'Current hand not finished' })
     }
 
-    // Allow next hand even if winners is not set (handles old game states)
-    // The startNewHand function will handle resetting the state properly
-
     const nextState = await gameService.startNextHand(gameId)
 
-    // Not showdown anymore: only reveal this player's hole cards
-    // Filter community cards (should be empty for new hand, but be safe)
     let visibleCommunityCards = []
     if (nextState.communityCards) {
       if (nextState.currentRound === 'flop') {
@@ -607,7 +495,7 @@ router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next
 
     const sanitizedState = {
       ...nextState,
-      deck: undefined, // Never expose the deck
+      deck: undefined,
       communityCards: visibleCommunityCards,
       players: nextState.players.map((p) => ({
         ...p,
@@ -615,7 +503,6 @@ router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next
       })),
     }
 
-    // Emit game update event
     gameEvents.emitGameUpdate(gameId, 'next_hand')
 
     res.json(sanitizedState)
@@ -624,15 +511,7 @@ router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next
   }
 })
 
-/**
- * POST /api/games/:gameId/leave
- * Leave the game
- */
-/**
- * POST /api/games/:gameId/show-cards
- * Toggle revealing hole cards during showdown
- */
-router.post('/:gameId/show-cards', requireAuth, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/show-cards', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     const { showCards } = req.body
@@ -646,14 +525,12 @@ router.post('/:gameId/show-cards', requireAuth, loadPlayer, async (req, res, nex
       return res.status(400).json({ error: 'Not in showdown' })
     }
 
-    // Verify player is in this game
     if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
 
     await playerService.setShowCards(req.player.id, showCards)
 
-    // Emit game update event
     gameEvents.emitGameUpdate(gameId, 'show_cards')
 
     res.json({ success: true, showCards })
@@ -662,10 +539,9 @@ router.post('/:gameId/show-cards', requireAuth, loadPlayer, async (req, res, nex
   }
 })
 
-router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/leave', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    // Verify player is in this game
     if (req.player.gameId !== gameId) {
       return res.status(403).json({ error: 'Not authorized for this game' })
     }
@@ -674,10 +550,8 @@ router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) =>
 
     await playerService.leaveGame(req.player.id)
 
-    // Clear session
     req.session = null
 
-    // Emit game update event
     gameEvents.emitGameUpdate(playerGameId, 'leave')
 
     res.json({ message: 'Left game successfully' })
@@ -686,10 +560,6 @@ router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) =>
   }
 })
 
-/**
- * GET /api/games/:gameId/players
- * Get all players in game (public info)
- */
 router.get('/:gameId/players', async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
@@ -701,10 +571,6 @@ router.get('/:gameId/players', async (req, res, next) => {
   }
 })
 
-/**
- * GET /api/events
- * Get all logged events (for testing/debugging)
- */
 router.get('/events/all', async (req, res, next) => {
   try {
     const events = eventLogger.getEvents()
@@ -718,10 +584,6 @@ router.get('/events/all', async (req, res, next) => {
   }
 })
 
-/**
- * GET /api/events/game/:gameId
- * Get events for a specific game
- */
 router.get('/events/game/:gameId', async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
@@ -736,10 +598,6 @@ router.get('/events/game/:gameId', async (req, res, next) => {
   }
 })
 
-/**
- * DELETE /api/events
- * Clear all logged events
- */
 router.delete('/events/all', async (req, res, next) => {
   try {
     eventLogger.clear()
@@ -749,10 +607,6 @@ router.delete('/events/all', async (req, res, next) => {
   }
 })
 
-/**
- * POST /api/events/export
- * Export events to a file
- */
 router.post('/events/export', async (req, res, next) => {
   try {
     const { filename } = req.body
@@ -769,4 +623,4 @@ router.post('/events/export', async (req, res, next) => {
   }
 })
 
-module.exports = router
+export default router

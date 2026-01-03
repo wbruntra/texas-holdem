@@ -1,23 +1,50 @@
-/**
- * Game State Machine - Manages Texas Hold'em game flow and state transitions
- */
-
-const {
+import {
   shuffleDeck,
   createDeck,
   dealHoleCards,
   determineWinners,
   evaluateHand,
-} = require('./poker-engine')
-const { calculatePots, distributePots, awardPots } = require('./pot-manager')
-const { GAME_STATUS, ROUND, PLAYER_STATUS, ACTION_TYPE } = require('./game-constants')
+  type Card,
+  type HandEvaluation,
+} from './poker-engine'
+import { calculatePots, distributePots, awardPots, type Player, type Pot } from './pot-manager'
+import {
+  GAME_STATUS,
+  ROUND,
+  PLAYER_STATUS,
+  ACTION_TYPE,
+  type GameStatus,
+  type Round,
+  type PlayerStatus,
+} from './game-constants'
 
-/**
- * Create initial game state
- * @param {Object} config - Game configuration
- * @returns {Object} Initial game state
- */
-function createGameState(config = {}) {
+export interface GameState {
+  status: GameStatus
+  smallBlind: number
+  bigBlind: number
+  players: Player[]
+  dealerPosition: number
+  currentRound: Round | null
+  currentPlayerPosition: number | null
+  pot: number
+  pots: Pot[]
+  currentBet: number
+  communityCards: Card[]
+  deck: Card[]
+  handNumber: number
+  lastRaise: number
+  showdownProcessed: boolean
+  winners?: number[]
+}
+
+interface GameConfig {
+  smallBlind?: number
+  bigBlind?: number
+  startingChips?: number
+  players?: Array<{ id: string | number; name: string; chips?: number }>
+}
+
+export function createGameState(config: GameConfig = {}): GameState {
   const { smallBlind = 5, bigBlind = 10, startingChips = 1000, players = [] } = config
 
   return {
@@ -52,12 +79,7 @@ function createGameState(config = {}) {
   }
 }
 
-/**
- * Start a new hand
- * @param {Object} state - Current game state
- * @returns {Object} Updated game state
- */
-function startNewHand(state) {
+export function startNewHand(state: GameState): GameState {
   const activePlayers = state.players.filter((p) => p.chips > 0 && p.status !== PLAYER_STATUS.OUT)
 
   if (activePlayers.length < 2) {
@@ -67,8 +89,7 @@ function startNewHand(state) {
     }
   }
 
-  // Reset player states
-  const players = state.players.map((p) => ({
+  const players: Player[] = state.players.map((p) => ({
     ...p,
     currentBet: 0,
     totalBet: 0,
@@ -81,13 +102,11 @@ function startNewHand(state) {
     showCards: false,
   }))
 
-  // Rotate dealer button
   let dealerPosition = state.dealerPosition
   if (state.handNumber > 0) {
     dealerPosition = getNextActivePosition(players, dealerPosition)
   }
 
-  // Set blinds (in heads-up, dealer is small blind)
   const isHeadsUp = activePlayers.length === 2
   const smallBlindPosition = isHeadsUp
     ? dealerPosition
@@ -98,7 +117,6 @@ function startNewHand(state) {
   players[smallBlindPosition].isSmallBlind = true
   players[bigBlindPosition].isBigBlind = true
 
-  // Post blinds
   const smallBlindAmount = Math.min(players[smallBlindPosition].chips, state.smallBlind)
   const bigBlindAmount = Math.min(players[bigBlindPosition].chips, state.bigBlind)
 
@@ -118,10 +136,8 @@ function startNewHand(state) {
 
   const pot = smallBlindAmount + bigBlindAmount
 
-  // Create and shuffle deck
   const deck = shuffleDeck(createDeck())
 
-  // Deal hole cards
   const activePlayerIndices = players
     .map((p, i) => ({ player: p, index: i }))
     .filter(
@@ -136,8 +152,6 @@ function startNewHand(state) {
     players[playerIndex].holeCards = dealResult.players[i]
   })
 
-  // First to act preflop is left of big blind.
-  // IMPORTANT: skip ALL_IN players (they are still eligible for showdown, but cannot act).
   const firstToAct = getNextActingPosition(players, bigBlindPosition)
 
   return {
@@ -148,23 +162,18 @@ function startNewHand(state) {
     currentRound: ROUND.PREFLOP,
     currentPlayerPosition: firstToAct,
     pot,
-    pots: [], // Clear pots from previous hand
+    pots: [],
     currentBet: bigBlindAmount,
     communityCards: [],
     deck: dealResult.deck,
     handNumber: state.handNumber + 1,
     lastRaise: bigBlindAmount,
-    winners: [], // Clear winners from previous hand
+    winners: [],
+    showdownProcessed: false,
   }
 }
 
-/**
- * Get next player who is allowed to act (ACTIVE only)
- * @param {Array} players - Array of players
- * @param {number} currentPosition - Current position
- * @returns {number|null} Next acting position or null if none
- */
-function getNextActingPosition(players, currentPosition) {
+export function getNextActingPosition(players: Player[], currentPosition: number): number | null {
   let nextPosition = (currentPosition + 1) % players.length
   let attempts = 0
 
@@ -180,14 +189,9 @@ function getNextActingPosition(players, currentPosition) {
   return null
 }
 
-/**
- * Check if betting should auto-advance (all players all-in or only one can bet)
- * @param {Object} state - Current game state
- * @returns {boolean} True if should auto-advance
- */
-function shouldAutoAdvance(state) {
+export function shouldAutoAdvance(state: GameState): boolean {
   if (state.currentRound === ROUND.SHOWDOWN) {
-    return false // Already at showdown
+    return false
   }
 
   const activePlayers = state.players.filter(
@@ -195,18 +199,16 @@ function shouldAutoAdvance(state) {
   )
 
   if (activePlayers.length <= 1) {
-    return true // Only one player left
+    return true
   }
 
   const canBet = activePlayers.filter((p) => p.status === PLAYER_STATUS.ACTIVE && p.chips > 0)
 
-  // If 0 or 1 players can bet, auto-advance
   if (canBet.length === 0) {
-    return true // Everyone is all-in
+    return true
   }
 
   if (canBet.length === 1) {
-    // Check if that one player has acted (matched current bet)
     const player = canBet[0]
     return player.currentBet >= state.currentBet
   }
@@ -214,13 +216,7 @@ function shouldAutoAdvance(state) {
   return false
 }
 
-/**
- * Get next active player position
- * @param {Array} players - Array of players
- * @param {number} currentPosition - Current position
- * @returns {number} Next active position
- */
-function getNextActivePosition(players, currentPosition) {
+export function getNextActivePosition(players: Player[], currentPosition: number): number {
   let nextPosition = (currentPosition + 1) % players.length
   let attempts = 0
 
@@ -236,36 +232,24 @@ function getNextActivePosition(players, currentPosition) {
   return currentPosition
 }
 
-/**
- * Check if betting round is complete
- * @param {Object} state - Current game state
- * @returns {boolean} True if round is complete
- */
-function isBettingRoundComplete(state) {
+export function isBettingRoundComplete(state: GameState): boolean {
   const activePlayers = state.players.filter(
     (p) => p.status === PLAYER_STATUS.ACTIVE || p.status === PLAYER_STATUS.ALL_IN,
   )
 
   if (activePlayers.length === 0) return true
 
-  // Check if only active players remain
   const playersWhoCanAct = activePlayers.filter((p) => p.status === PLAYER_STATUS.ACTIVE)
 
-  // If only 1 can-act player remains, betting is only complete if they've acted
-  // (Otherwise they still need to respond to the all-in bet)
   if (playersWhoCanAct.length === 1) {
     const lastPlayer = playersWhoCanAct[0]
-    // Betting is complete if this player has already acted AND matched the bet
-    // (or their action was to fold, which would have changed their status)
     return lastPlayer.currentBet === state.currentBet && lastPlayer.lastAction !== null
   }
 
   if (playersWhoCanAct.length === 0) {
-    // No can-act players - only all-ins remain
     return true
   }
 
-  // Check if all active players have acted and matched the current bet
   const allMatched = activePlayers.every((p) => {
     if (p.status === PLAYER_STATUS.ALL_IN) return true
     return p.currentBet === state.currentBet && p.lastAction !== null
@@ -274,19 +258,11 @@ function isBettingRoundComplete(state) {
   return allMatched
 }
 
-/**
- * Advance to next round
- * @param {Object} state - Current game state
- * @returns {Object} Updated game state
- */
-function advanceRound(state) {
-  // Check if only one active player remains (others folded)
+export function advanceRound(state: GameState): GameState {
   const activePlayers = state.players.filter((p) => p.status === PLAYER_STATUS.ACTIVE)
   const allInPlayers = state.players.filter((p) => p.status === PLAYER_STATUS.ALL_IN)
 
-  // If only one active player and no all-ins, skip straight to showdown (they won by fold)
   if (activePlayers.length <= 1 && allInPlayers.length === 0) {
-    // Player won by fold - go straight to showdown
     const players = state.players.map((p) => ({
       ...p,
       currentBet: 0,
@@ -303,11 +279,10 @@ function advanceRound(state) {
     }
   }
 
-  let newRound
-  let newCards = []
+  let newRound: Round | undefined
+  let newCards: Card[] = []
   let deckIndex = 0
 
-  // Burn a card before dealing
   deckIndex = 1
 
   switch (state.currentRound) {
@@ -333,18 +308,14 @@ function advanceRound(state) {
       return state
   }
 
-  // Reset player states for new round
   const players = state.players.map((p) => ({
     ...p,
     currentBet: 0,
     lastAction: null,
   }))
 
-  // Move bets to pot
-  const newPot = state.pot // Bets already added when actions were processed
+  const newPot = state.pot
 
-  // First to act is left of dealer.
-  // IMPORTANT: skip ALL_IN players (they cannot act).
   const firstToAct = getNextActingPosition(players, state.dealerPosition)
 
   return {
@@ -352,7 +323,7 @@ function advanceRound(state) {
     currentRound: newRound,
     players,
     communityCards: [...state.communityCards, ...newCards],
-    deck: state.deck.slice(deckIndex + 1), // Skip burned card
+    deck: state.deck.slice(deckIndex + 1),
     currentPlayerPosition: newRound === ROUND.SHOWDOWN ? null : firstToAct,
     currentBet: 0,
     pot: newPot,
@@ -360,15 +331,7 @@ function advanceRound(state) {
   }
 }
 
-/**
- * Process showdown and determine winners
- * @param {Object} state - Current game state
- * @returns {Object} Updated game state with winners
- */
-function processShowdown(state) {
-  // Guard against double processing: showdown payout must be idempotent.
-  // We cannot rely on `state.pot === 0` because other code may recalculate `pot`
-  // from `totalBet` (or rehydrate older state), which would repopulate the pot.
+export function processShowdown(state: GameState): GameState {
   if (state.showdownProcessed) {
     return state
   }
@@ -381,15 +344,13 @@ function processShowdown(state) {
     return state
   }
 
-  // If only one player remains, they win all pots
   if (eligiblePlayers.length === 1) {
     const winner = eligiblePlayers[0]
     const players = state.players
       .map((p) => (p.id === winner.id ? { ...p, chips: p.chips + state.pot } : { ...p }))
       .map((p) => ({ ...p, currentBet: 0, totalBet: 0 }))
 
-    // Create a single pot with "Won by fold" designation
-    const pots = [
+    const pots: Pot[] = [
       {
         amount: state.pot,
         eligiblePlayers: [winner.position],
@@ -408,16 +369,11 @@ function processShowdown(state) {
     }
   }
 
-  // Always calculate pots fresh from players.totalBet (never reuse state.pots)
-  // This prevents double-award bugs from stale pot data
   let pots = calculatePots(state.players)
 
-  // If pots are empty (likely from old games without totalBet tracking),
-  // fall back to simple pot distribution
   const hasValidPots = pots.some((pot) => pot.amount > 0)
 
   if (!hasValidPots) {
-    // Legacy fallback: split pot evenly among eligible players
     const potShare = Math.floor(state.pot / eligiblePlayers.length)
     const remainder = state.pot % eligiblePlayers.length
 
@@ -431,7 +387,6 @@ function processShowdown(state) {
       return { ...p }
     })
 
-    // Keep bets intact for display
     return {
       ...state,
       players: players,
@@ -441,65 +396,46 @@ function processShowdown(state) {
     }
   }
 
-  // Distribute pots based on hand strength
   pots = distributePots(pots, state.players, state.communityCards, evaluateHand)
 
-  // Award chips to winners
   const players = awardPots(pots, state.players)
 
-  // DO NOT clear bets yet - keep them so frontend can calculate pot display
-  // Bets will be cleared when starting the next hand
-
-  // Collect all unique winners across all pots
-  // Only include winners from contested pots (pots with more than one eligible player)
-  // This prevents marking a player as "winner" when they just get their uncalled bet back
-  const allWinners = new Set()
+  const allWinners = new Set<number>()
   pots.forEach((pot) => {
     if (pot.winners && pot.eligiblePlayers.length > 1) {
-      // Only add winners from pots that were actually contested
       pot.winners.forEach((pos) => allWinners.add(pos))
     }
   })
 
-  // Check if game is over (only one player has chips)
   const playersWithChips = players.filter((p) => p.chips > 0)
   const gameStatus = playersWithChips.length <= 1 ? GAME_STATUS.COMPLETED : state.status
 
   return {
     ...state,
     status: gameStatus,
-    players: players, // Keep bets intact for showdown display
+    players: players,
     pot: 0,
     winners: Array.from(allWinners),
     showdownProcessed: true,
   }
 }
 
-/**
- * Check if game should continue to next round
- * @param {Object} state - Current game state
- * @returns {boolean} True if should continue
- */
-function shouldContinueToNextRound(state) {
+export function shouldContinueToNextRound(state: GameState): boolean {
   if (state.currentRound === ROUND.SHOWDOWN) {
     return false
   }
 
-  // If only one player remains active (others folded), go to showdown
   const activePlayers = state.players.filter((p) => p.status === PLAYER_STATUS.ACTIVE)
   const allInPlayers = state.players.filter((p) => p.status === PLAYER_STATUS.ALL_IN)
 
-  // If only one active player AND no one is all-in, hand ended by fold
   if (activePlayers.length <= 1 && allInPlayers.length === 0) {
-    return false // Go to showdown to award pot to remaining player
+    return false
   }
 
-  // If at river and betting complete, go to showdown (don't continue to another street)
   if (state.currentRound === ROUND.RIVER && isBettingRoundComplete(state)) {
     return false
   }
 
-  // If betting round complete and not at river yet, continue (even with all-ins)
   if (isBettingRoundComplete(state) && state.currentRound !== ROUND.RIVER) {
     return true
   }
@@ -507,14 +443,8 @@ function shouldContinueToNextRound(state) {
   return false
 }
 
-/**
- * Reveal the next community card (manual action when only one player has chips)
- * @param {Object} state - Current game state
- * @returns {Object} Updated game state with next card revealed
- */
-function revealNextCard(state) {
-  // Find next round
-  let nextRound
+export function revealNextCard(state: GameState): GameState {
+  let nextRound: Round | undefined
   let cardsToDeal = 0
 
   switch (state.currentRound) {
@@ -527,26 +457,24 @@ function revealNextCard(state) {
       cardsToDeal = 1
       break
     case ROUND.RIVER:
-      // Already at river, move to showdown
       return {
         ...state,
         currentRound: ROUND.SHOWDOWN,
         currentPlayerPosition: null,
       }
     default:
-      return state // Can't reveal in this round
+      return state
   }
 
-  // Get cards from deck (accounting for burn cards)
-  let deckIndex = state.communityCards.length + 1 // +1 for initial burn
+  let deckIndex = state.communityCards.length + 1
   if (state.currentRound === ROUND.FLOP) {
-    deckIndex = 3 + 2 // After flop (3 cards + 1 burn), now burn 1 and deal turn
+    deckIndex = 3 + 2
   } else if (state.currentRound === ROUND.TURN) {
-    deckIndex = 5 + 2 // After turn (5 cards + 1 burn), now burn 1 and deal river
+    deckIndex = 5 + 2
   }
 
   const newCards = state.deck.slice(deckIndex, deckIndex + cardsToDeal)
-  const newDeckIndex = deckIndex + cardsToDeal + 1 // +1 for the burn card after dealing
+  const newDeckIndex = deckIndex + cardsToDeal + 1
 
   return {
     ...state,
@@ -554,23 +482,6 @@ function revealNextCard(state) {
     communityCards: [...state.communityCards, ...newCards],
     deck: state.deck.slice(newDeckIndex),
     currentBet: 0,
-    currentPlayerPosition: null, // No one can act during all-in situation
+    currentPlayerPosition: null,
   }
-}
-
-module.exports = {
-  GAME_STATUS,
-  ROUND,
-  PLAYER_STATUS,
-  ACTION_TYPE,
-  createGameState,
-  startNewHand,
-  getNextActivePosition,
-  getNextActingPosition,
-  shouldAutoAdvance,
-  isBettingRoundComplete,
-  advanceRound,
-  processShowdown,
-  shouldContinueToNextRound,
-  revealNextCard,
 }

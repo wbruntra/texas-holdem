@@ -1,14 +1,14 @@
-const jwt = require('jsonwebtoken')
+import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'holdem-secret-key-change-in-production'
 
 const TOKEN_EXPIRY = '7d'
 
-function generateToken(playerId, gameId) {
+export function generateToken(playerId, gameId) {
   return jwt.sign({ playerId, gameId }, JWT_SECRET, { expiresIn: TOKEN_EXPIRY })
 }
 
-function verifyToken(token) {
+export function verifyToken(token) {
   try {
     return jwt.verify(token, JWT_SECRET)
   } catch (error) {
@@ -16,7 +16,7 @@ function verifyToken(token) {
   }
 }
 
-function extractToken(authHeader) {
+export function extractToken(authHeader) {
   if (!authHeader) return null
   if (authHeader.startsWith('Bearer ')) {
     return authHeader.slice(7)
@@ -24,7 +24,7 @@ function extractToken(authHeader) {
   return authHeader
 }
 
-async function getPlayerIdFromRequest(req) {
+export async function getPlayerIdFromRequest(req) {
   const authHeader = req.headers.authorization
   const token = extractToken(authHeader)
 
@@ -42,7 +42,7 @@ async function getPlayerIdFromRequest(req) {
   return null
 }
 
-function requireAuth(req, res, next) {
+export function requireAuth(req, res, next) {
   getPlayerIdFromRequest(req)
     .then((playerId) => {
       if (!playerId) {
@@ -54,11 +54,4 @@ function requireAuth(req, res, next) {
     .catch(next)
 }
 
-module.exports = {
-  generateToken,
-  verifyToken,
-  extractToken,
-  getPlayerIdFromRequest,
-  requireAuth,
-  JWT_SECRET,
-}
+export { JWT_SECRET }

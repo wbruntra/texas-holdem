@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 /**
  * Aggressive Simulation - Bot 1 always bets 50, Bot 2 always calls
  * Runs until one player goes broke
