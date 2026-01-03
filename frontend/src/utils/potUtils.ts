@@ -1,4 +1,4 @@
-import type { Player, Pot } from '../components/table/types'
+import type { Player, Pot } from '~/components/table/types'
 
 // Also support the table view types
 type TablePlayer = {

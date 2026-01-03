@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import axios from 'axios'
 import { useAppDispatch, useAppSelector } from '~/store/hooks'
 import {
   checkAuth,
@@ -20,7 +19,7 @@ import {
   clearValidActions,
 } from '~/store/playerSlice'
 import { setGame } from '~/store/gameSlice'
-import { buildWsUrl } from '~/hooks/useWebSocket'
+import { WebSocketManager } from '~/lib/WebSocketManager'
 import type { GameState, Player } from '~/components/table/types'
 
 export function usePlayerGame(roomCode: string | undefined) {
@@ -32,19 +31,13 @@ export function usePlayerGame(roomCode: string | undefined) {
   const error = useAppSelector((state) => state.player.error)
   const checkingAuth = useAppSelector((state) => state.player.checkingAuth)
   const canRevealCard = useAppSelector((state) => state.player.canRevealCard)
-  const wsConnected = useAppSelector((state) => state.player.wsConnected)
   const betAmount = useAppSelector((state) => state.player.betAmount)
   const raiseAmount = useAppSelector((state) => state.player.raiseAmount)
   const game = useAppSelector((state) => state.game.game)
 
-  const joinedRef = useRef(joined)
-  joinedRef.current = joined
-
+  const wsManagerRef = useRef<WebSocketManager | null>(null)
   const gameIdRef = useRef<string | undefined>(game?.id)
-  gameIdRef.current = game?.id
-
   const playerNameRef = useRef(playerName)
-  playerNameRef.current = playerName
 
   const playerNameStorageKey = roomCode ? `holdem:${roomCode}:playerName` : null
 
@@ -79,6 +72,26 @@ export function usePlayerGame(roomCode: string | undefined) {
     return (myPlayer?.chips ?? 0) > 0
   }
 
+  const updateValidActions = async (nextGame: GameState) => {
+    const myName = playerNameRef.current
+    const me = myName ? nextGame.players.find((p: Player) => p.name === myName) : undefined
+
+    const isMyTurnNow =
+      !!me &&
+      nextGame.status === 'active' &&
+      nextGame.currentPlayerPosition !== null &&
+      nextGame.currentPlayerPosition === (me?.position ?? -1)
+
+    const canReveal = checkCanRevealCard(nextGame, myName)
+    dispatch(setCanRevealCard(canReveal))
+
+    if (isMyTurnNow && gameIdRef.current) {
+      await dispatch(fetchValidActionsThunk(gameIdRef.current))
+    } else {
+      dispatch(clearValidActions())
+    }
+  }
+
   useEffect(() => {
     if (!roomCode) return
 
@@ -106,173 +119,44 @@ export function usePlayerGame(roomCode: string | undefined) {
   useEffect(() => {
     if (!joined || !game?.id || !roomCode) return
 
-    const gameId = game.id
-    let ws: WebSocket | null = null
-    let pollInterval: number | null = null
-    let reconnectTimeout: number | null = null
+    const storedPlayerId = playerNameStorageKey
+      ? localStorage.getItem(`${playerNameStorageKey}:playerId`)
+      : undefined
 
-    const fetchValidActions = async (gid: string) => {
-      try {
-        dispatch(fetchValidActionsThunk(gid))
-      } catch (err) {
-        if (!axios.isAxiosError(err) || err.response?.status !== 403) {
-          console.error('[PlayerView] Failed to fetch valid actions:', err)
-        }
-      }
-    }
-
-    const startPolling = () => {
-      const tick = async () => {
-        try {
-          const response = await axios.get(`/api/games/${gameId}`, {
-            withCredentials: true,
-          })
-
-          const nextGame: GameState = response.data
-          dispatch(setGame(nextGame))
-
-          const myName = playerNameRef.current
-          const me = myName ? nextGame.players.find((p: Player) => p.name === myName) : undefined
-
-          const isMyTurnNow =
-            !!me &&
-            nextGame.status === 'active' &&
-            nextGame.currentPlayerPosition !== null &&
-            nextGame.currentPlayerPosition === (me?.position ?? -1)
-
-          const canReveal = checkCanRevealCard(nextGame, myName)
-          dispatch(setCanRevealCard(canReveal))
-
-          if (isMyTurnNow) {
-            await fetchValidActions(gameId)
-          } else {
-            dispatch(clearValidActions())
-          }
-
-          dispatch(setError(''))
-        } catch (err: unknown) {
-          if (!(axios.isAxiosError(err) && err.response?.status === 403)) {
-            dispatch(setError('Failed to load game'))
-          }
-        }
-      }
-
-      tick()
-      pollInterval = window.setInterval(tick, 1500)
-    }
-
-    const connectWebSocket = () => {
-      const wsUrl = buildWsUrl()
-
-      console.log('[PlayerView] Connecting to WebSocket:', wsUrl)
-      ws = new WebSocket(wsUrl)
-
-      ws.onopen = () => {
-        console.log('[PlayerView] WebSocket connected')
-        dispatch(setWsConnected(true))
+    wsManagerRef.current = new WebSocketManager({
+      onHello: (payload) => {
+        console.log('[usePlayerGame] Server hello:', payload)
         dispatch(setError(''))
+      },
+      onSubscribed: () => {
+        console.log('[usePlayerGame] Subscribed to player stream')
+      },
+      onGameState: (payload) => {
+        const nextGame = payload.state as GameState
+        dispatch(setGame(nextGame))
+        dispatch(setError(''))
+        updateValidActions(nextGame)
+      },
+      onError: (err) => {
+        console.error('[usePlayerGame] WebSocket error:', err)
+        dispatch(setError(err))
+      },
+    })
 
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          const storedPlayerId = playerNameStorageKey
-            ? localStorage.getItem(`${playerNameStorageKey}:playerId`)
-            : null
-
-          ws.send(
-            JSON.stringify({
-              type: 'subscribe',
-              payload: {
-                roomCode,
-                stream: 'player',
-                gameId,
-                playerId: storedPlayerId,
-              },
-            }),
-          )
-        }
-      }
-
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data)
-
-          switch (message.type) {
-            case 'hello':
-              console.log('[PlayerView] Server hello:', message.payload)
-              break
-
-            case 'subscribed':
-              console.log('[PlayerView] Subscribed to player stream')
-              if (pollInterval) {
-                clearInterval(pollInterval)
-                pollInterval = null
-              }
-              break
-
-            case 'game_state':
-              const nextGame: GameState = message.payload.state
-              dispatch(setGame(nextGame))
-
-              const myName = playerNameRef.current
-              const me = myName
-                ? nextGame.players.find((p: Player) => p.name === myName)
-                : undefined
-
-              const isMyTurnNow =
-                !!me &&
-                nextGame.status === 'active' &&
-                nextGame.currentPlayerPosition !== null &&
-                nextGame.currentPlayerPosition === (me?.position ?? -1)
-
-              const canReveal = checkCanRevealCard(nextGame, myName)
-              dispatch(setCanRevealCard(canReveal))
-
-              if (isMyTurnNow) {
-                fetchValidActions(gameId)
-              } else {
-                dispatch(clearValidActions())
-              }
-
-              dispatch(setError(''))
-              break
-
-            case 'error':
-              console.error('[PlayerView] WebSocket error:', message.payload.error)
-              dispatch(setError(message.payload.error))
-              break
-          }
-        } catch (err) {
-          console.error('[PlayerView] Failed to parse WebSocket message:', err)
-        }
-      }
-
-      ws.onerror = () => {
-        console.error('[PlayerView] WebSocket error')
-        dispatch(setWsConnected(false))
-      }
-
-      ws.onclose = () => {
-        console.log('[PlayerView] WebSocket disconnected')
-        dispatch(setWsConnected(false))
-
-        if (!pollInterval) {
-          startPolling()
-        }
-
-        reconnectTimeout = window.setTimeout(() => {
-          console.log('[PlayerView] Attempting to reconnect...')
-          connectWebSocket()
-        }, 3000)
-      }
-    }
-
-    connectWebSocket()
+    wsManagerRef.current.connect(roomCode, 'player', game.id, storedPlayerId ?? undefined)
 
     return () => {
-      if (ws) ws.close()
-      if (pollInterval) clearInterval(pollInterval)
-      if (reconnectTimeout) clearTimeout(reconnectTimeout)
+      wsManagerRef.current?.disconnect()
+      wsManagerRef.current = null
     }
   }, [joined, game?.id, roomCode, playerNameStorageKey, dispatch])
+
+  useEffect(() => {
+    if (wsManagerRef.current) {
+      const isConnected = wsManagerRef.current.isConnected()
+      dispatch(setWsConnected(isConnected))
+    }
+  }, [wsManagerRef.current, dispatch])
 
   const handleJoinGame = async (password: string) => {
     if (!roomCode || !playerName.trim() || !password.trim()) return
@@ -336,7 +220,7 @@ export function usePlayerGame(roomCode: string | undefined) {
     error,
     checkingAuth,
     canRevealCard,
-    wsConnected,
+    wsConnected: wsManagerRef.current?.isConnected() ?? false,
     betAmount,
     raiseAmount,
     joinGame: handleJoinGame,

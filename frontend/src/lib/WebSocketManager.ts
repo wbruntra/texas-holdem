@@ -17,18 +17,22 @@ export class WebSocketManager {
   private pollInterval: ReturnType<typeof setInterval> | null = null
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null
   private handlers: WsHandlers
-  private currentConfig: { roomCode: string; stream: 'table' | 'player'; gameId?: string } | null =
-    null
+  private currentConfig: {
+    roomCode: string
+    stream: 'table' | 'player'
+    gameId?: string
+    playerId?: string
+  } | null = null
   private shouldReconnect = true
 
   constructor(handlers: WsHandlers) {
     this.handlers = handlers
   }
 
-  connect(roomCode: string, stream: 'table' | 'player', gameId?: string): void {
-    console.log('[WebSocketManager] Connect called:', { roomCode, stream, gameId })
+  connect(roomCode: string, stream: 'table' | 'player', gameId?: string, playerId?: string): void {
+    console.log('[WebSocketManager] Connect called:', { roomCode, stream, gameId, playerId })
 
-    this.currentConfig = { roomCode, stream, gameId }
+    this.currentConfig = { roomCode, stream, gameId, playerId }
     this.shouldReconnect = true
 
     this.connectWebSocket()
@@ -67,6 +71,7 @@ export class WebSocketManager {
               roomCode: config.roomCode,
               stream: config.stream,
               gameId: config.gameId,
+              playerId: config.playerId,
             },
           }),
         )
