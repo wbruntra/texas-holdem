@@ -458,12 +458,10 @@ function canRevealCard(state, playerPosition) {
     }
   }
 
-  // Count players still in the hand with chips
   const playersWithChips = state.players.filter(
-    (p) => p.chips > 0 && p.status !== PLAYER_STATUS.OUT && p.status !== PLAYER_STATUS.FOLDED,
+    (p) => p.chips > 0 && p.status === PLAYER_STATUS.ACTIVE,
   ).length
 
-  // Only reveal if requesting player is the only one with chips
   if (playersWithChips !== 1) {
     return {
       canReveal: false,

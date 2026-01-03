@@ -28,7 +28,7 @@ function createGameState(config = {}) {
       id: p.id,
       name: p.name,
       position: index,
-      chips: startingChips,
+      chips: p.chips ?? startingChips,
       currentBet: 0,
       holeCards: [],
       status: PLAYER_STATUS.ACTIVE,

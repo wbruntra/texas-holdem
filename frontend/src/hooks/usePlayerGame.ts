@@ -16,7 +16,7 @@ import {
   setError,
   clearValidActions,
 } from '~/store/playerSlice'
-import { setGame } from '~/store/gameSlice'
+import { setGame, setWsConnected } from '~/store/gameSlice'
 import { WebSocketManager } from '~/lib/WebSocketManager'
 import type { GameState, Player } from '~/components/table/types'
 
