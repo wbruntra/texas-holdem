@@ -362,7 +362,7 @@ function getValidActions(state, playerPosition) {
 
   // Check if all other players are all-in or folded (only this player has chips)
   const playersWithChips = state.players.filter(
-    (p) => p.chips > 0 && p.status !== PLAYER_STATUS.OUT && p.status !== PLAYER_STATUS.FOLDED,
+    (p) => p.chips > 0 && p.status === PLAYER_STATUS.ACTIVE,
   )
   const allInPlayers = state.players.filter((p) => p.status === PLAYER_STATUS.ALL_IN)
 

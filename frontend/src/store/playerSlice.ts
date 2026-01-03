@@ -328,6 +328,9 @@ const playerSlice = createSlice({
         if (action.payload.canRaise && action.payload.minRaise !== undefined) {
           state.raiseAmount = action.payload.minRaise
         }
+        if (action.payload.canReveal !== undefined) {
+          state.canRevealCard = action.payload.canReveal
+        }
       })
       .addCase(fetchValidActions.rejected, () => {})
   },

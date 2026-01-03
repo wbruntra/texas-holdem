@@ -13,8 +13,6 @@ import {
   setPlayerName,
   setBetAmount,
   setRaiseAmount,
-  setCanRevealCard,
-  setWsConnected,
   setError,
   clearValidActions,
 } from '~/store/playerSlice'
@@ -30,7 +28,6 @@ export function usePlayerGame(roomCode: string | undefined) {
   const joined = useAppSelector((state) => state.player.joined)
   const error = useAppSelector((state) => state.player.error)
   const checkingAuth = useAppSelector((state) => state.player.checkingAuth)
-  const canRevealCard = useAppSelector((state) => state.player.canRevealCard)
   const betAmount = useAppSelector((state) => state.player.betAmount)
   const raiseAmount = useAppSelector((state) => state.player.raiseAmount)
   const game = useAppSelector((state) => state.game.game)
@@ -44,37 +41,6 @@ export function usePlayerGame(roomCode: string | undefined) {
 
   const playerNameStorageKey = roomCode ? `holdem:${roomCode}:playerName` : null
 
-  const checkCanRevealCard = (gameState: GameState, myPlayerName: string | null): boolean => {
-    if (!myPlayerName || gameState.status !== 'active') {
-      return false
-    }
-
-    if (
-      !gameState.currentRound ||
-      gameState.currentRound === 'preflop' ||
-      gameState.currentRound === 'showdown'
-    ) {
-      return false
-    }
-
-    const playersWithChips = gameState.players.filter(
-      (p: { chips: number; status: string }) =>
-        p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
-    )
-
-    if (playersWithChips.length !== 1) {
-      return false
-    }
-
-    const allInPlayers = gameState.players.filter((p: { status: string }) => p.status === 'all_in')
-    if (allInPlayers.length === 0) {
-      return false
-    }
-
-    const myPlayer = gameState.players.find((p: { name: string }) => p.name === myPlayerName)
-    return (myPlayer?.chips ?? 0) > 0
-  }
-
   const updateValidActions = async (nextGame: GameState) => {
     const myName = playerNameRef.current
     const me = myName ? nextGame.players.find((p: Player) => p.name === myName) : undefined
@@ -84,9 +50,6 @@ export function usePlayerGame(roomCode: string | undefined) {
       nextGame.status === 'active' &&
       nextGame.currentPlayerPosition !== null &&
       nextGame.currentPlayerPosition === (me?.position ?? -1)
-
-    const canReveal = checkCanRevealCard(nextGame, myName)
-    dispatch(setCanRevealCard(canReveal))
 
     if (isMyTurnNow && nextGame.id) {
       await dispatch(fetchValidActionsThunk(String(nextGame.id)))
@@ -222,7 +185,6 @@ export function usePlayerGame(roomCode: string | undefined) {
     joined,
     error,
     checkingAuth,
-    canRevealCard,
     wsConnected: wsManagerRef.current?.isConnected() ?? false,
     betAmount,
     raiseAmount,

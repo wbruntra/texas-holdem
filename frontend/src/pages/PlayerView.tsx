@@ -17,7 +17,6 @@ export default function PlayerView() {
     joined,
     error,
     checkingAuth,
-    canRevealCard,
     wsConnected,
     betAmount,
     raiseAmount,
@@ -344,10 +343,7 @@ export default function PlayerView() {
               </div>
             ) : (
               <div className="text-center">
-                {canRevealCard &&
-                game.currentRound &&
-                game.currentRound !== 'preflop' &&
-                game.currentRound !== 'showdown' ? (
+                {validActions?.canReveal ? (
                   <button
                     onClick={revealCard}
                     className="btn btn-info btn-lg w-100 py-3 fw-bold mb-3 shadow"
@@ -356,7 +352,7 @@ export default function PlayerView() {
                   </button>
                 ) : null}
 
-                {!canRevealCard &&
+                {!validActions?.canReveal &&
                 game.currentPlayerPosition === null &&
                 myPlayer &&
                 myPlayer.status !== 'folded' &&
