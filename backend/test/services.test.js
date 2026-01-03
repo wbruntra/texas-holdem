@@ -6,7 +6,7 @@
 process.env.NODE_ENV = 'test'
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
-const db = require('@holdem/root/db')
+const db = require('@holdem/database/db')
 const gameService = require('../services/game-service')
 const playerService = require('../services/player-service')
 const actionService = require('../services/action-service')

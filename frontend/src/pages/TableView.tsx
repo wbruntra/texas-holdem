@@ -6,19 +6,23 @@ import { BACKEND_LOCAL_PORT } from '@holdem/shared/config'
 
 import PokerTableScene from '~/components/table/PokerTableScene'
 import GameOverModal from '~/components/GameOverModal'
-import type { GameState } from '~/components/table/types'
+import { useAppDispatch, useAppSelector } from '~/store/hooks'
+import { setGame, setLoading, setError, setWsConnected } from '~/store/gameSlice'
 import { useSoundEffects } from '~/hooks/useSoundEffects'
+import type { Player } from '~/components/table/types'
 
 export default function TableView() {
   const { roomCode } = useParams<{ roomCode: string }>()
-  const [game, setGame] = useState<GameState | null>(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
+  const dispatch = useAppDispatch()
+  const game = useAppSelector((state) => state.game.game)
+  const loading = useAppSelector((state) => state.game.loading)
+  const error = useAppSelector((state) => state.game.error)
+  const wsConnected = useAppSelector((state) => state.game.wsConnected)
   const [showGameOverModal, setShowGameOverModal] = useState(true)
-  const [wsConnected, setWsConnected] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const { playCheckSound, playBetSound, playCardFlipSound } = useSoundEffects()
-  const previousActionsRef = useRef<Map<string, string | null>>(new Map())
+
+  const previousActionsRef = useRef<Record<string, string | null>>({})
   const previousCommunityCardsCountRef = useRef(0)
 
   const getApiErrorMessage = (err: unknown, fallback: string) => {
@@ -27,15 +31,13 @@ export default function TableView() {
     return data?.error || fallback
   }
 
-  // Watch for player actions and play sounds
   useEffect(() => {
     if (!game) return
 
-    game.players.forEach((player) => {
-      const previousAction = previousActionsRef.current.get(player.id)
+    game.players.forEach((player: Player) => {
+      const previousAction = previousActionsRef.current[player.id]
       const currentAction = player.lastAction
 
-      // Only play sound if action has changed
       if (currentAction && currentAction !== previousAction) {
         const action = currentAction.toLowerCase()
 
@@ -46,21 +48,18 @@ export default function TableView() {
         }
       }
 
-      // Update the previous action
       if (currentAction) {
-        previousActionsRef.current.set(player.id, currentAction)
+        previousActionsRef.current[player.id] = currentAction
       }
     })
   }, [game, playCheckSound, playBetSound])
 
-  // Watch for community cards being revealed and play sound
   useEffect(() => {
     if (!game) return
 
     const currentCardsCount = game.communityCards?.length || 0
     const previousCardsCount = previousCommunityCardsCountRef.current
 
-    // Play sound when new cards are revealed
     if (currentCardsCount > previousCardsCount) {
       playCardFlipSound()
     }
@@ -68,7 +67,6 @@ export default function TableView() {
     previousCommunityCardsCountRef.current = currentCardsCount
   }, [game, playCardFlipSound])
 
-  // Show game over modal when game becomes completed
   useEffect(() => {
     if (game?.status === 'completed') {
       setShowGameOverModal(true)
@@ -82,10 +80,7 @@ export default function TableView() {
     let pollInterval: number | null = null
     let reconnectTimeout: number | null = null
 
-    // WebSocket connection logic
     const connectWebSocket = () => {
-      // In development: connect directly to backend (Vite proxy doesn't forward cookies)
-      // In production: use same domain/port as the page
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const isDevelopment =
         window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -98,10 +93,9 @@ export default function TableView() {
 
       ws.onopen = () => {
         console.log('[TableView] WebSocket connected')
-        setWsConnected(true)
-        setError('')
+        dispatch(setWsConnected(true))
+        dispatch(setError(''))
 
-        // Subscribe to table stream
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(
             JSON.stringify({
@@ -127,8 +121,7 @@ export default function TableView() {
 
             case 'subscribed':
               console.log('[TableView] Subscribed to table stream')
-              setLoading(false)
-              // Stop polling when WS is active
+              dispatch(setLoading(false))
               if (pollInterval) {
                 clearInterval(pollInterval)
                 pollInterval = null
@@ -137,14 +130,14 @@ export default function TableView() {
 
             case 'game_state':
               console.log('[TableView] Game state update:', message.payload.reason)
-              setGame(message.payload.state)
-              setError('')
-              setLoading(false)
+              dispatch(setGame(message.payload.state))
+              dispatch(setError(''))
+              dispatch(setLoading(false))
               break
 
             case 'error':
               console.error('[TableView] WebSocket error:', message.payload.error)
-              setError(message.payload.error)
+              dispatch(setError(message.payload.error))
               break
           }
         } catch (err) {
@@ -152,21 +145,19 @@ export default function TableView() {
         }
       }
 
-      ws.onerror = (error) => {
-        console.error('[TableView] WebSocket error:', error)
-        setWsConnected(false)
+      ws.onerror = () => {
+        console.error('[TableView] WebSocket error')
+        dispatch(setWsConnected(false))
       }
 
       ws.onclose = () => {
         console.log('[TableView] WebSocket disconnected')
-        setWsConnected(false)
+        dispatch(setWsConnected(false))
 
-        // Fall back to polling
         if (!pollInterval) {
           startPolling()
         }
 
-        // Attempt to reconnect after 3 seconds
         reconnectTimeout = window.setTimeout(() => {
           console.log('[TableView] Attempting to reconnect...')
           connectWebSocket()
@@ -174,28 +165,25 @@ export default function TableView() {
       }
     }
 
-    // Polling fallback logic
     const startPolling = () => {
       const fetchGame = async () => {
         try {
           const response = await axios.get(`/api/games/room/${roomCode}/state`)
-          setGame(response.data)
-          setError('')
-          setLoading(false)
+          dispatch(setGame(response.data))
+          dispatch(setError(''))
+          dispatch(setLoading(false))
         } catch (err: unknown) {
-          setError(getApiErrorMessage(err, 'Failed to load game'))
-          setLoading(false)
+          dispatch(setError(getApiErrorMessage(err, 'Failed to load game')))
+          dispatch(setLoading(false))
         }
       }
 
-      fetchGame() // Initial fetch
+      fetchGame()
       pollInterval = window.setInterval(fetchGame, 2000)
     }
 
-    // Try WebSocket first
     connectWebSocket()
 
-    // Cleanup
     return () => {
       if (ws) {
         ws.close()
@@ -207,7 +195,7 @@ export default function TableView() {
         clearTimeout(reconnectTimeout)
       }
     }
-  }, [roomCode])
+  }, [roomCode, dispatch])
 
   const handleResetGame = async () => {
     if (!roomCode) return
@@ -215,11 +203,10 @@ export default function TableView() {
     setIsResetting(true)
     try {
       await axios.post(`/api/games/room/${roomCode}/reset`)
-      // Game state will be updated via WebSocket or polling
       setShowGameOverModal(false)
     } catch (err: unknown) {
       const errorMsg = getApiErrorMessage(err, 'Failed to reset game')
-      setError(errorMsg)
+      dispatch(setError(errorMsg))
       alert(errorMsg)
     } finally {
       setIsResetting(false)

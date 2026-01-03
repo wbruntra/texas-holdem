@@ -3,7 +3,7 @@
  */
 
 const bcrypt = require('bcryptjs')
-const db = require('@holdem/root/db')
+const db = require('@holdem/database/db')
 const eventLogger = require('@/services/event-logger')
 const { EVENT_TYPE } = require('@/lib/event-types')
 

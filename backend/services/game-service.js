@@ -2,7 +2,7 @@
  * Game Service - Handles game creation, state management, and persistence
  */
 
-const db = require('@holdem/root/db')
+const db = require('@holdem/database/db')
 const {
   createGameState,
   startNewHand,

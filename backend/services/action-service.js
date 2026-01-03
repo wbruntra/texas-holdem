@@ -2,7 +2,7 @@
  * Action Service - Handles player actions (bet, raise, fold, etc.)
  */
 
-const db = require('@holdem/root/db')
+const db = require('@holdem/database/db')
 const { validateAction, processAction, getValidActions } = require('@/lib/betting-logic')
 const { getGameById, saveGameState, advanceRoundIfReady } = require('@/services/game-service')
 const { getPlayerById } = require('@/services/player-service')

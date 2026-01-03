@@ -1,5 +1,5 @@
 const { describe, it, expect, beforeEach } = require('bun:test')
-const db = require('@holdem/root/db')
+const db = require('@holdem/database/db')
 const gameService = require('../services/game-service')
 const playerService = require('../services/player-service')
 const actionService = require('../services/action-service')
