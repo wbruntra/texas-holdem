@@ -20,6 +20,9 @@ export interface ValidActions {
   canAllIn?: boolean
   allInAmount?: number
   canReveal?: boolean
+  canNextHand?: boolean
+  canAdvance?: boolean
+  advanceReason?: string
   reason?: string
   nextRound?: string
 }
@@ -38,6 +41,10 @@ export function validateAction(
   amount: number = 0,
 ): ActionValidation {
   const player = state.players[playerPosition]
+
+  if (state.action_finished === true) {
+    return { valid: false, error: 'Board must be advanced before actions' }
+  }
 
   if (state.currentPlayerPosition !== playerPosition) {
     return { valid: false, error: 'Not your turn' }
@@ -232,6 +239,7 @@ export function processAction(
       currentBet: newCurrentBet,
       lastRaise: newLastRaise,
       currentPlayerPosition: null,
+      action_finished: false,
     }
   }
 
@@ -245,6 +253,7 @@ export function processAction(
       currentBet: newCurrentBet,
       lastRaise: newLastRaise,
       currentPlayerPosition: null,
+      action_finished: false,
     }
   }
 
@@ -263,6 +272,7 @@ export function processAction(
         currentBet: newCurrentBet,
         lastRaise: newLastRaise,
         currentPlayerPosition: null,
+        action_finished: false,
       }
     }
   } else {
@@ -277,6 +287,7 @@ export function processAction(
         currentBet: newCurrentBet,
         lastRaise: newLastRaise,
         currentPlayerPosition: null,
+        action_finished: false,
       }
     }
   }
@@ -290,6 +301,7 @@ export function processAction(
     currentBet: newCurrentBet,
     lastRaise: newLastRaise,
     currentPlayerPosition: nextPlayerPosition,
+    action_finished: false,
   }
 }
 
@@ -312,6 +324,33 @@ export function getNextPlayerToAct(players: Player[], currentPosition: number): 
 export function getValidActions(state: GameState, playerPosition: number): ValidActions {
   const player = state.players[playerPosition]
 
+  const isPlayerInHand =
+    player.status !== PLAYER_STATUS.FOLDED && player.status !== PLAYER_STATUS.OUT
+
+  const canAdvance =
+    state.status === 'active' &&
+    state.currentRound !== 'showdown' &&
+    state.currentPlayerPosition === null
+
+  if (canAdvance && isPlayerInHand) {
+    return {
+      canAct: false,
+      canAdvance: true,
+      advanceReason: state.action_finished ? 'all_in_situation' : 'normal',
+    }
+  }
+
+  if (state.action_finished) {
+    if (!isPlayerInHand) {
+      return { canAct: false }
+    }
+    return {
+      canAct: false,
+      canAdvance: true,
+      advanceReason: 'all_in_situation',
+    }
+  }
+
   if (state.currentPlayerPosition !== playerPosition) {
     return { canAct: false }
   }
@@ -320,30 +359,25 @@ export function getValidActions(state: GameState, playerPosition: number): Valid
     return { canAct: false }
   }
 
-  const playersWithChips = state.players.filter(
-    (p) => p.chips > 0 && p.status === PLAYER_STATUS.ACTIVE,
-  )
-  const allInPlayers = state.players.filter((p) => p.status === PLAYER_STATUS.ALL_IN)
-
-  if (playersWithChips.length === 1 && allInPlayers.length > 0) {
-    if (player.currentBet >= state.currentBet) {
-      return {
-        canAct: false,
-        canReveal: true,
-        reason: 'All other players are all-in. Reveal cards to continue.',
-      }
-    }
-  }
-
   const callAmount = state.currentBet - player.currentBet
   const canCheck = callAmount === 0
   const canCall = callAmount > 0 && player.chips > 0
   const canBet = state.currentBet === 0 && player.chips >= state.bigBlind
-  const canRaise = state.currentBet > 0 && player.chips >= callAmount + state.lastRaise
+
+  const otherAllInPlayers = state.players.filter(
+    (p) => p.id !== player.id && p.status === PLAYER_STATUS.ALL_IN,
+  )
+  const canRaise =
+    state.currentBet > 0 &&
+    player.chips >= callAmount + state.lastRaise &&
+    otherAllInPlayers.length === 0
+
   const canAllIn = player.chips > 0
   const maxRaise = Math.max(0, player.chips - callAmount)
 
   const actualCallAmount = Math.min(callAmount, player.chips)
+
+  const advanceReason = undefined
 
   return {
     canAct: true,
@@ -358,6 +392,8 @@ export function getValidActions(state: GameState, playerPosition: number): Valid
     maxRaise,
     canAllIn,
     allInAmount: player.chips,
+    canAdvance,
+    advanceReason,
   }
 }
 
@@ -399,15 +435,11 @@ export function canRevealCard(state: GameState, playerPosition: number): CardRev
     }
   }
 
-  const playersWithChips = state.players.filter(
-    (p) => p.chips > 0 && p.status === PLAYER_STATUS.ACTIVE,
-  ).length
-
-  if (playersWithChips !== 1) {
+  if (state.action_finished !== true) {
     return {
       canReveal: false,
-      error: `Cannot reveal: ${playersWithChips} players still have chips`,
-      reason: `Need exactly 1 player with chips, have ${playersWithChips}`,
+      error: 'Round not ready for advance',
+      reason: 'Waiting for all players to act',
     }
   }
 

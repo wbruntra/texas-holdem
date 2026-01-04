@@ -18,7 +18,7 @@ const config = {
   test: {
     client: 'sqlite3',
     connection: {
-      filename: ':memory:',
+      filename: path.join(__dirname, 'holdem-test.sqlite3'),
     },
     useNullAsDefault: true,
     migrations: {

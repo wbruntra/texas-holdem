@@ -80,6 +80,12 @@ export async function submitAction(playerId: number, action: string, amount: num
 
   let newState = processAction(game, playerPosition, action, amount)
 
+  const { shouldSetActionFinished } = await import('@/lib/game-state-machine')
+
+  if (shouldSetActionFinished(newState)) {
+    newState = { ...newState, action_finished: true }
+  }
+
   await gameService.saveGameState(game.id, newState)
 
   const eventTypeMap: Record<string, string> = {
@@ -129,7 +135,6 @@ export async function submitAction(playerId: number, action: string, amount: num
 
     // Create showdown history record
     // Get the most recent hand ID for this game
-    const db = require('@holdem/database/db')
     const recentHand = await db('hands')
       .where({ game_id: game.id })
       .orderBy('hand_number', 'desc')

@@ -328,8 +328,7 @@ class WebSocketService {
       (p: any) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
     )
     const allInPlayers = game.players.filter((p: any) => p.status === 'all_in')
-    const shouldRevealAllCards =
-      isShowdown || (playersWithChips.length === 1 && allInPlayers.length > 0)
+    const shouldRevealAllCards = isShowdown || game.action_finished === true
 
     let pots = calculatePots(game.players)
 
@@ -351,6 +350,7 @@ class WebSocketService {
       currentBet: game.currentBet,
       currentPlayerPosition: game.currentPlayerPosition,
       handNumber: game.handNumber,
+      action_finished: game.action_finished || false,
       communityCards: game.communityCards || [],
       winners: game.winners || undefined,
       players: game.players.map((p: any) => ({
@@ -401,6 +401,7 @@ class WebSocketService {
       currentBet: game.currentBet,
       currentPlayerPosition: game.currentPlayerPosition,
       handNumber: game.handNumber,
+      action_finished: game.action_finished || false,
       communityCards: game.communityCards || [],
       winners: game.winners || undefined,
       players: game.players.map((p: any) => ({

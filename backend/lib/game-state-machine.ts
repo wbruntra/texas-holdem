@@ -151,6 +151,7 @@ export function startNewHand(state: GameState): GameState {
     lastRaise: bigBlindAmount,
     winners: [],
     showdownProcessed: false,
+    action_finished: false,
   }
 }
 
@@ -195,6 +196,30 @@ export function shouldAutoAdvance(state: GameState): boolean {
   }
 
   return false
+}
+
+export function isAllInSituation(state: GameState): boolean {
+  const playersInHand = state.players.filter(
+    (p) => p.status === PLAYER_STATUS.ACTIVE || p.status === PLAYER_STATUS.ALL_IN,
+  )
+
+  if (playersInHand.length === 0) return false
+
+  const activeCount = playersInHand.filter((p) => p.status === PLAYER_STATUS.ACTIVE).length
+  const allInCount = playersInHand.filter((p) => p.status === PLAYER_STATUS.ALL_IN).length
+
+  const scenario1 = activeCount === 1 && allInCount >= 1
+  const scenario2 = activeCount === 0 && allInCount >= 2
+
+  return scenario1 || scenario2
+}
+
+export function shouldSetActionFinished(state: GameState): boolean {
+  if (state.status !== GAME_STATUS.ACTIVE) return false
+  if (!state.currentRound || state.currentRound === ROUND.SHOWDOWN) return false
+  if (state.currentPlayerPosition !== null) return false
+
+  return isBettingRoundComplete(state) && isAllInSituation(state)
 }
 
 export function getNextActivePosition(players: Player[], currentPosition: number): number {
@@ -299,6 +324,8 @@ export function advanceRound(state: GameState): GameState {
 
   const firstToAct = getNextActingPosition(players, state.dealerPosition)
 
+  const allInResult = isAllInSituation(state)
+
   return {
     ...state,
     currentRound: newRound,
@@ -309,6 +336,7 @@ export function advanceRound(state: GameState): GameState {
     currentBet: 0,
     pot: newPot,
     lastRaise: 0,
+    action_finished: allInResult,
   }
 }
 

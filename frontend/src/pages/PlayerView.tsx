@@ -353,33 +353,40 @@ export default function PlayerView() {
                 ) : null}
 
                 {!validActions?.canReveal &&
-                game.currentPlayerPosition === null &&
+                validActions?.canAdvance &&
                 myPlayer &&
                 myPlayer.status !== 'folded' &&
                 myPlayer.status !== 'out' &&
                 game.currentRound !== 'showdown' ? (
-                  <button
-                    onClick={advanceRound}
-                    className="btn btn-primary btn-lg w-100 py-3 fw-bold mb-3 shadow"
-                  >
-                    {(() => {
-                      const activeCount = game.players.filter(
-                        (p: Player) => p.status === 'active',
-                      ).length
-                      const allInCount = game.players.filter(
-                        (p: Player) => p.status === 'all_in',
-                      ).length
-                      if (activeCount <= 1 && allInCount === 0) return '🏆 Claim Pot'
+                  <>
+                    {validActions?.advanceReason === 'all_in_situation' && (
+                      <div className="alert alert-warning py-2 mb-3">
+                        All-in situation detected. Deal the next card to continue.
+                      </div>
+                    )}
+                    <button
+                      onClick={advanceRound}
+                      className={`btn ${validActions?.advanceReason === 'all_in_situation' ? 'btn-warning' : 'btn-primary'} btn-lg w-100 py-3 fw-bold mb-3 shadow`}
+                    >
+                      {(() => {
+                        const activeCount = game.players.filter(
+                          (p: Player) => p.status === 'active',
+                        ).length
+                        const allInCount = game.players.filter(
+                          (p: Player) => p.status === 'all_in',
+                        ).length
+                        if (activeCount <= 1 && allInCount === 0) return '🏆 Claim Pot'
 
-                      return game.currentRound === 'preflop'
-                        ? '🎲 Deal Flop'
-                        : game.currentRound === 'flop'
-                          ? '🎲 Deal Turn'
-                          : game.currentRound === 'turn'
-                            ? '🎲 Deal River'
-                            : '👁️ Go to Showdown'
-                    })()}
-                  </button>
+                        return game.currentRound === 'preflop'
+                          ? '🎲 Deal Flop'
+                          : game.currentRound === 'flop'
+                            ? '🎲 Deal Turn'
+                            : game.currentRound === 'turn'
+                              ? '🎲 Deal River'
+                              : '👁️ Go to Showdown'
+                      })()}
+                    </button>
+                  </>
                 ) : (
                   <div className="alert alert-secondary py-3">
                     {myPlayer?.status === 'folded' ? 'You folded' : 'Waiting for other players...'}

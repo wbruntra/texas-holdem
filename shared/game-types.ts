@@ -57,6 +57,7 @@ export interface GameState {
   handNumber: number
   lastRaise: number
   showdownProcessed: boolean
+  action_finished?: boolean
   winners?: number[]
 }
 
@@ -83,6 +84,7 @@ export interface ApiGameState {
   pots?: Pot[]
   currentBet: number
   currentPlayerPosition: number | null
+  action_finished?: boolean
   communityCards: Card[]
   players: ApiPlayer[]
   dealerPosition: number
@@ -106,6 +108,8 @@ export interface ValidActions {
   maxRaise?: number
   canReveal?: boolean
   canNextHand?: boolean
+  canAdvance?: boolean
+  advanceReason?: string
   reason?: string
 }
 

@@ -51,7 +51,13 @@ export function usePlayerGame(roomCode: string | undefined) {
       nextGame.currentPlayerPosition !== null &&
       nextGame.currentPlayerPosition === (me?.position ?? -1)
 
-    if (isMyTurnNow && nextGame.id) {
+    const canAdvance =
+      nextGame.action_finished === true ||
+      (nextGame.status === 'active' &&
+        nextGame.currentRound !== 'showdown' &&
+        nextGame.currentPlayerPosition === null)
+
+    if ((isMyTurnNow || canAdvance) && nextGame.id) {
       await dispatch(fetchValidActionsThunk(String(nextGame.id)))
     } else {
       dispatch(clearValidActions())

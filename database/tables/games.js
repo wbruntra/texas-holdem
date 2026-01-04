@@ -21,6 +21,7 @@ CREATE TABLE games (
     deck TEXT,
     winners TEXT,
     showdown_processed boolean NOT NULL DEFAULT '0',
+    action_finished boolean NOT NULL DEFAULT '0',
     PRIMARY KEY (id),
     CONSTRAINT games_room_code_unique UNIQUE (room_code)
 );
@@ -82,6 +83,7 @@ class Games extends Model {
           type: ['array', 'null'],
           items: { type: 'string' },
         },
+        action_finished: { type: 'boolean' },
       },
     }
   }

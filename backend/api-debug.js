@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 const jwt = require('jsonwebtoken')
-const db = require('../database/db')
+const db = require('../database/db').default
 const { execSync } = require('child_process')
 const { readFileSync } = require('fs')
 const { resolve } = require('path')

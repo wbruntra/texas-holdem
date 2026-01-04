@@ -130,6 +130,7 @@ export async function getGameById(gameId: number) {
     handNumber: game.hand_number,
     lastRaise: game.last_raise,
     showdownProcessed: game.showdown_processed === 1 || game.showdown_processed === true,
+    action_finished: game.action_finished === 1 || game.action_finished === true,
     players: players.map((p: any) => ({
       id: p.id,
       name: p.name,
@@ -255,6 +256,7 @@ export async function saveGameState(gameId: number, state: any): Promise<void> {
         hand_number: state.handNumber,
         last_raise: state.lastRaise,
         showdown_processed: state.showdownProcessed === true || state.showdownProcessed === 1,
+        action_finished: state.action_finished === true || state.action_finished === 1,
         updated_at: new Date(),
       })
 
@@ -289,13 +291,19 @@ export async function advanceOneRound(gameId: number) {
 
   let gameState: any = game
 
-  if (!isBettingRoundComplete(gameState) && !shouldAutoAdvance(gameState)) {
+  if (
+    !isBettingRoundComplete(gameState) &&
+    !shouldAutoAdvance(gameState) &&
+    !gameState.action_finished
+  ) {
     return gameState
   }
 
   if (gameState.currentRound === ROUND.SHOWDOWN) {
     return gameState
   }
+
+  gameState.action_finished = false
 
   if (shouldContinueToNextRound(gameState)) {
     gameState = advanceRound(gameState)

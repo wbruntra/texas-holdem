@@ -49,6 +49,20 @@ router.post('/', async (req, res, next) => {
   try {
     const { smallBlind, bigBlind, startingChips } = req.body
 
+    // Basic validation
+    if (smallBlind !== undefined && (!Number.isInteger(smallBlind) || smallBlind <= 0)) {
+      return res.status(400).json({ error: 'smallBlind must be a positive integer' })
+    }
+    if (bigBlind !== undefined && (!Number.isInteger(bigBlind) || bigBlind <= 0)) {
+      return res.status(400).json({ error: 'bigBlind must be a positive integer' })
+    }
+    if (startingChips !== undefined && (!Number.isInteger(startingChips) || startingChips <= 0)) {
+      return res.status(400).json({ error: 'startingChips must be a positive integer' })
+    }
+    if (smallBlind !== undefined && bigBlind !== undefined && smallBlind >= bigBlind) {
+      return res.status(400).json({ error: 'smallBlind must be less than bigBlind' })
+    }
+
     const game = await gameService.createGame({
       smallBlind,
       bigBlind,
@@ -338,9 +352,9 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
 
     res.json(sanitizedState)
   } catch (error) {
-    if (error instanceof Error) {
-      return res.status(400).json({ error: error.message || 'Invalid action' })
-    }
+    // if (error instanceof Error) {
+    //   return res.status(400).json({ error: error.message || 'Invalid action' })
+    // }
     next(error)
   }
 })
@@ -400,7 +414,7 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
       return res.status(404).json({ error: 'Game not found' })
     }
 
-    if (!isBettingRoundComplete(game) && !shouldAutoAdvance(game)) {
+    if (!isBettingRoundComplete(game) && !shouldAutoAdvance(game) && !game.action_finished) {
       return res.status(400).json({ error: 'Betting round not complete' })
     }
 
@@ -429,7 +443,8 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
       })),
     }
 
-    gameEvents.emitGameUpdate(gameId, 'advance')
+    const reason = nextState.action_finished ? 'advance_all_in' : 'advance'
+    gameEvents.emitGameUpdate(gameId, reason)
 
     res.json(sanitizedState)
   } catch (error) {
