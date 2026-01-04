@@ -20,6 +20,7 @@ CREATE TABLE games (
     updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deck TEXT,
     winners TEXT,
+    showdown_processed boolean NOT NULL DEFAULT '0',
     PRIMARY KEY (id),
     CONSTRAINT games_room_code_unique UNIQUE (room_code)
 );

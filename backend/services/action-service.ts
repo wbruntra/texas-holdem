@@ -310,14 +310,3 @@ export async function getGameActions(gameId: number, handNumber: number | null =
     timestamp: a.created_at,
   }))
 }
-
-export default {
-  normalizeTurnIfNeeded,
-  submitAction,
-  getPlayerValidActions,
-  recordAction,
-  recordBlindPost,
-  getHandActions,
-  revealCard,
-  getGameActions,
-}

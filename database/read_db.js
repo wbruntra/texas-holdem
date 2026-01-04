@@ -1,5 +1,4 @@
-const knex = require('./db')
-const config = require('./config')
+const knex = require('./db').default
 const fs = require('fs')
 const path = require('path')
 
