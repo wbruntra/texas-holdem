@@ -4,38 +4,19 @@ import {
   dealHoleCards,
   determineWinners,
   evaluateHand,
-  type Card,
   type HandEvaluation,
 } from './poker-engine'
-import { calculatePots, distributePots, awardPots, type Player, type Pot } from './pot-manager'
-import {
-  GAME_STATUS,
-  ROUND,
-  PLAYER_STATUS,
-  ACTION_TYPE,
-  type GameStatus,
-  type Round,
-  type PlayerStatus,
-} from './game-constants'
-
-export interface GameState {
-  status: GameStatus
-  smallBlind: number
-  bigBlind: number
-  players: Player[]
-  dealerPosition: number
-  currentRound: Round | null
-  currentPlayerPosition: number | null
-  pot: number
-  pots: Pot[]
-  currentBet: number
-  communityCards: Card[]
-  deck: Card[]
-  handNumber: number
-  lastRaise: number
-  showdownProcessed: boolean
-  winners?: number[]
-}
+import { calculatePots, distributePots, awardPots } from './pot-manager'
+import { GAME_STATUS, ROUND, PLAYER_STATUS, ACTION_TYPE } from './game-constants'
+import type {
+  GameState,
+  Player,
+  Pot,
+  GameStatus,
+  Round,
+  PlayerStatus,
+  Card,
+} from '@holdem/shared/game-types'
 
 interface GameConfig {
   smallBlind?: number

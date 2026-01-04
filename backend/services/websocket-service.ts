@@ -275,6 +275,8 @@ class WebSocketService {
 
       game = (await actionService.normalizeTurnIfNeeded(gameId)) || game
 
+      if (!game) return
+
       const revision = game.handNumber ? String(game.handNumber) : '0'
 
       for (const [ws, subscription] of this.subscriptions.entries()) {

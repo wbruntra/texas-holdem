@@ -1,30 +1,7 @@
-import { PLAYER_STATUS, type PlayerStatus } from './game-constants'
-import type { Card, HandEvaluation } from './poker-engine'
+import { PLAYER_STATUS } from './game-constants'
+import type { HandEvaluation } from './poker-engine'
 import { compareHands } from './poker-engine'
-
-export interface Player {
-  id: string | number
-  name: string
-  position: number
-  chips: number
-  currentBet: number
-  totalBet?: number
-  holeCards: Card[]
-  status: PlayerStatus
-  isDealer: boolean
-  isSmallBlind: boolean
-  isBigBlind: boolean
-  lastAction: string | null
-  showCards: boolean
-}
-
-export interface Pot {
-  amount: number
-  eligiblePlayers: number[]
-  winners: number[] | null
-  winAmount?: number
-  winningRankName?: string
-}
+import type { Player, Pot, PlayerStatus, Card } from '@holdem/shared/game-types'
 
 interface ContributionPlayer {
   position: number

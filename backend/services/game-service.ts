@@ -13,7 +13,7 @@ import { GAME_STATUS, ROUND } from '@/lib/game-constants'
 import eventLogger from '@/services/event-logger'
 import { EVENT_TYPE } from '@/lib/event-types'
 import type { Card } from '@/lib/poker-engine'
-import type { Player } from '@/lib/pot-manager'
+import type { Player, GameState } from '@holdem/shared/game-types'
 
 interface GameConfig {
   smallBlind?: number
@@ -203,10 +203,10 @@ export async function startGame(gameId: number) {
     const bbPlayer = players.find((p) => p.isBigBlind)
 
     if (sbPlayer && sbPlayer.currentBet > 0) {
-      await recordBlindPost(gameId, sbPlayer.id, 'small_blind', sbPlayer.currentBet)
+      await recordBlindPost(gameId, Number(sbPlayer.id), 'small_blind', sbPlayer.currentBet)
     }
     if (bbPlayer && bbPlayer.currentBet > 0) {
-      await recordBlindPost(gameId, bbPlayer.id, 'big_blind', bbPlayer.currentBet)
+      await recordBlindPost(gameId, Number(bbPlayer.id), 'big_blind', bbPlayer.currentBet)
     }
   } catch (error) {
     console.error('Failed to record blind posts:', error)
@@ -438,10 +438,10 @@ export async function startNextHand(gameId: number) {
     const bbPlayer = players.find((p: any) => p.isBigBlind)
 
     if (sbPlayer && sbPlayer.currentBet > 0) {
-      await recordBlindPost(gameId, sbPlayer.id, 'small_blind', sbPlayer.currentBet)
+      await recordBlindPost(gameId, Number(sbPlayer.id), 'small_blind', sbPlayer.currentBet)
     }
     if (bbPlayer && bbPlayer.currentBet > 0) {
-      await recordBlindPost(gameId, bbPlayer.id, 'big_blind', bbPlayer.currentBet)
+      await recordBlindPost(gameId, Number(bbPlayer.id), 'big_blind', bbPlayer.currentBet)
     }
   } catch (error) {
     console.error('Failed to record blind posts:', error)

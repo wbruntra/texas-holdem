@@ -1,52 +1,5 @@
-import {
-  PLAYER_STATUS,
-  ACTION_TYPE,
-  ROUND,
-  type PlayerStatus,
-  type ActionType,
-} from './game-constants'
-import type { Card } from './poker-engine'
-
-export interface Player {
-  id: string | number
-  name: string
-  position: number
-  chips: number
-  currentBet: number
-  totalBet?: number
-  holeCards: Card[]
-  status: PlayerStatus
-  isDealer: boolean
-  isSmallBlind: boolean
-  isBigBlind: boolean
-  lastAction: string | null
-  showCards: boolean
-}
-
-export interface GameState {
-  status: string
-  smallBlind: number
-  bigBlind: number
-  players: Player[]
-  dealerPosition: number
-  currentRound: string | null
-  currentPlayerPosition: number | null
-  pot: number
-  pots: Array<{
-    amount: number
-    eligiblePlayers: number[]
-    winners: number[] | null
-    winAmount?: number
-    winningRankName?: string
-  }>
-  currentBet: number
-  communityCards: Card[]
-  deck: Card[]
-  handNumber: number
-  lastRaise: number
-  showdownProcessed: boolean
-  winners?: number[]
-}
+import { PLAYER_STATUS, ACTION_TYPE, ROUND } from './game-constants'
+import type { Player, GameState, PlayerStatus, Card, Pot } from '@holdem/shared/game-types'
 
 export interface ActionValidation {
   valid: boolean

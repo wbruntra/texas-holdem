@@ -1,22 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 import axios from 'axios'
 import type { GameState } from '../components/table/types'
-
-export interface ValidActions {
-  canAct: boolean
-  canFold: boolean
-  canCheck: boolean
-  canCall: boolean
-  callAmount?: number
-  canBet: boolean
-  minBet?: number
-  maxBet?: number
-  canRaise: boolean
-  minRaise?: number
-  maxRaise?: number
-  canReveal?: boolean
-  reason?: string
-}
+import type { ValidActions } from '@holdem/shared/game-types'
 
 interface PlayerState {
   validActions: ValidActions | null
