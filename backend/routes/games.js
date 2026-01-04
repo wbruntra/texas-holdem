@@ -1,13 +1,13 @@
 import express from 'express'
-import gameService from '../services/game-service'
+import gameService from '@/services/game-service'
 import playerService from '@/services/player-service'
-import actionService from '../services/action-service'
-import gameEvents from '../lib/game-events'
-import { isBettingRoundComplete, shouldAutoAdvance } from '../lib/game-state-machine'
-import { calculatePots, distributePots } from '../lib/pot-manager'
-import { evaluateHand } from '../lib/poker-engine'
-import eventLogger from '../services/event-logger'
-import { getPlayerIdFromRequest, generateToken, requireAuth } from '../middleware/auth'
+import actionService from '@/services/action-service'
+import gameEvents from '@/lib/game-events'
+import { isBettingRoundComplete, shouldAutoAdvance } from '@/lib/game-state-machine'
+import { calculatePots, distributePots } from '@/lib/pot-manager'
+import { evaluateHand } from '@/lib/poker-engine'
+import eventLogger from '@/services/event-logger'
+import { getPlayerIdFromRequest, generateToken, requireAuth } from '@/middleware/auth'
 
 const router = express.Router()
 
@@ -24,15 +24,6 @@ function shouldRevealAllCards(game) {
   const allInPlayers = game.players.filter((p) => p.status === 'all_in')
 
   return playersWithChips.length === 1 && allInPlayers.length > 0
-}
-
-const requireAuthMiddleware = async (req, res, next) => {
-  const playerId = await getPlayerIdFromRequest(req)
-  if (!playerId) {
-    return res.status(401).json({ error: 'Not authenticated' })
-  }
-  req.playerId = playerId
-  next()
 }
 
 async function loadPlayer(req, res, next) {
@@ -154,7 +145,7 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
   }
 })
 
-router.get('/:gameId', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
+router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     let game = await gameService.getGameById(gameId)
@@ -266,7 +257,7 @@ router.post('/:gameId/auth', async (req, res, next) => {
   }
 })
 
-router.post('/:gameId/start', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/start', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     if (req.player.gameId !== gameId) {
@@ -305,7 +296,7 @@ router.post('/room/:roomCode/reset', async (req, res, next) => {
   }
 })
 
-router.post('/:gameId/actions', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     const { action, amount } = req.body
@@ -354,7 +345,7 @@ router.post('/:gameId/actions', requireAuthMiddleware, loadPlayer, async (req, r
   }
 })
 
-router.post('/:gameId/reveal-card', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     if (req.player.gameId !== gameId) {
@@ -397,7 +388,7 @@ router.post('/:gameId/reveal-card', requireAuthMiddleware, loadPlayer, async (re
   }
 })
 
-router.post('/:gameId/advance', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     if (req.player.gameId !== gameId) {
@@ -449,7 +440,7 @@ router.post('/:gameId/advance', requireAuthMiddleware, loadPlayer, async (req, r
   }
 })
 
-router.get('/:gameId/actions/valid', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
+router.get('/:gameId/actions/valid', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     if (req.player.gameId !== gameId) {
@@ -464,7 +455,7 @@ router.get('/:gameId/actions/valid', requireAuthMiddleware, loadPlayer, async (r
   }
 })
 
-router.post('/:gameId/next-hand', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     if (req.player.gameId !== gameId) {
@@ -511,7 +502,7 @@ router.post('/:gameId/next-hand', requireAuthMiddleware, loadPlayer, async (req,
   }
 })
 
-router.post('/:gameId/show-cards', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/show-cards', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     const { showCards } = req.body
@@ -539,7 +530,7 @@ router.post('/:gameId/show-cards', requireAuthMiddleware, loadPlayer, async (req
   }
 })
 
-router.post('/:gameId/leave', requireAuthMiddleware, loadPlayer, async (req, res, next) => {
+router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     if (req.player.gameId !== gameId) {

@@ -234,6 +234,9 @@ class WebSocketService {
     }
   }
 
+  /**
+   * Handle resume requests for existing subscriptions
+   */
   async handleResume(ws: WebSocket, payload: any, requestId?: string): Promise<void> {
     const subscription = this.subscriptions.get(ws)
 
@@ -273,6 +276,9 @@ class WebSocketService {
     }
   }
 
+  /**
+   * Broadcast game update to all subscribers
+   */
   async broadcastGameUpdate(gameId: number, reason: string): Promise<void> {
     try {
       let game = await gameService.getGameById(gameId)
@@ -312,6 +318,9 @@ class WebSocketService {
     }
   }
 
+  /**
+   * Sanitize game state for table view (hides hole cards)
+   */
   sanitizeTableState(game: any): any {
     const isShowdown = game.currentRound === SHOWDOWN_ROUND
 
@@ -366,6 +375,9 @@ class WebSocketService {
     }
   }
 
+  /**
+   * Sanitize game state for player view (shows own hole cards)
+   */
   sanitizePlayerState(game: any, playerId: number): any {
     const isShowdown = game.currentRound === SHOWDOWN_ROUND
 
@@ -416,6 +428,9 @@ class WebSocketService {
     }
   }
 
+  /**
+   * Parse session from WebSocket request
+   */
   parseSession(req: any): { playerId: number } | null {
     try {
       const cookies = this.parseCookies(req.headers.cookie || '')
@@ -459,6 +474,9 @@ class WebSocketService {
     }
   }
 
+  /**
+   * Parse cookies from header
+   */
   parseCookies(cookieHeader: string): Record<string, string> {
     const cookies: Record<string, string> = {}
 
@@ -479,12 +497,18 @@ class WebSocketService {
     return cookies
   }
 
+  /**
+   * Send message to WebSocket client
+   */
   sendMessage(ws: WebSocket, message: Record<string, unknown>): void {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message))
     }
   }
 
+  /**
+   * Send error message to WebSocket client
+   */
   sendError(ws: WebSocket, errorMessage: string, requestId?: string): void {
     this.sendMessage(ws, {
       type: 'error',
@@ -495,6 +519,9 @@ class WebSocketService {
     })
   }
 
+  /**
+   * Close WebSocket server
+   */
   close(): void {
     if (this.wss) {
       this.wss.close()
