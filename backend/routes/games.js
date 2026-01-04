@@ -1,12 +1,12 @@
 import express from 'express'
 import gameService from '@/services/game-service'
-import playerService from '@/services/player-service'
-import actionService from '@/services/action-service'
+import * as playerService from '@/services/player-service'
+import * as actionService from '@/services/action-service'
 import gameEvents from '@/lib/game-events'
 import { isBettingRoundComplete, shouldAutoAdvance } from '@/lib/game-state-machine'
 import { calculatePots, distributePots } from '@/lib/pot-manager'
 import { evaluateHand } from '@/lib/poker-engine'
-import eventLogger from '@/services/event-logger'
+import * as eventLogger from '@/services/event-logger'
 import { getPlayerIdFromRequest, generateToken, requireAuth } from '@/middleware/auth'
 
 const router = express.Router()

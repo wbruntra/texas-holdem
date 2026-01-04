@@ -7,7 +7,7 @@ import gameService from '@/services/game-service'
 // @ts-ignore
 import playerService from '@/services/player-service'
 // @ts-ignore
-import actionService from '@/services/action-service'
+import * as actionService from '@/services/action-service'
 import gameEvents from '@/lib/game-events'
 import { calculatePots, distributePots } from '@/lib/pot-manager'
 import { evaluateHand } from '@/lib/poker-engine'
