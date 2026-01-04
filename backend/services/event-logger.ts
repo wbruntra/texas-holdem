@@ -28,6 +28,9 @@ class EventLogger {
     }
   }
 
+  /**
+   * Initialize empty log file
+   */
   initializeLogFile(): void {
     try {
       fs.writeFileSync(this.logFilePath, JSON.stringify([], null, 2))
@@ -36,6 +39,9 @@ class EventLogger {
     }
   }
 
+  /**
+   * Log an event with optional game ID and data
+   */
   logEvent(
     eventType: EventType,
     data: Record<string, unknown> = {},
@@ -64,6 +70,9 @@ class EventLogger {
     )
   }
 
+  /**
+   * Write all events to log file
+   */
   flushToFile(): void {
     if (!this.enabled) return
 
@@ -74,14 +83,23 @@ class EventLogger {
     }
   }
 
+  /**
+   * Get all logged events
+   */
   getEvents(): LoggedEvent[] {
     return this.events
   }
 
+  /**
+   * Get events for a specific game
+   */
   getGameEvents(gameId: string | number): LoggedEvent[] {
     return this.events.filter((e) => e.gameId === gameId)
   }
 
+  /**
+   * Clear all events and reset log file
+   */
   clear(): void {
     this.events = []
     if (this.enabled) {
@@ -89,6 +107,9 @@ class EventLogger {
     }
   }
 
+  /**
+   * Export events to specified file path
+   */
   exportToFile(filePath: string): boolean {
     try {
       fs.writeFileSync(filePath, JSON.stringify(this.events, null, 2))

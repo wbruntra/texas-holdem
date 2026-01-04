@@ -35,6 +35,9 @@ interface JoinGameResult {
   gameId: number
 }
 
+/**
+ * Join a game or rejoin with existing credentials
+ */
 export async function joinGame(
   gameId: number,
   playerName: string,
@@ -139,6 +142,9 @@ export async function joinGame(
   }
 }
 
+/**
+ * Get player by ID with full details
+ */
 export async function getPlayerById(playerId: number): Promise<Player | null> {
   const player = await db('players').where({ id: playerId }).first()
   if (!player) return null
@@ -161,6 +167,9 @@ export async function getPlayerById(playerId: number): Promise<Player | null> {
   }
 }
 
+/**
+ * Remove player from game (disconnect or delete)
+ */
 export async function leaveGame(playerId: number): Promise<void> {
   const player = await getPlayerById(playerId)
   if (!player) {
@@ -193,12 +202,18 @@ export async function leaveGame(playerId: number): Promise<void> {
   }
 }
 
+/**
+ * Update player connection status
+ */
 export async function updateConnectionStatus(playerId: number, connected: boolean): Promise<void> {
   await db('players')
     .where({ id: playerId })
     .update({ connected: connected ? 1 : 0, updated_at: new Date() })
 }
 
+/**
+ * Get all players in a game
+ */
 export async function getPlayersInGame(gameId: number) {
   const players = await db('players').where({ game_id: gameId }).orderBy('position')
 
@@ -213,6 +228,9 @@ export async function getPlayersInGame(gameId: number) {
   }))
 }
 
+/**
+ * Authenticate player credentials
+ */
 export async function authenticatePlayer(
   gameId: number,
   playerName: string,
@@ -247,6 +265,9 @@ export async function authenticatePlayer(
   return fullPlayer
 }
 
+/**
+ * Set player card visibility status
+ */
 export async function setShowCards(playerId: number, showCards: boolean): Promise<void> {
   const player = await getPlayerById(playerId)
   await db('players')
@@ -265,6 +286,9 @@ export async function setShowCards(playerId: number, showCards: boolean): Promis
   }
 }
 
+/**
+ * Alias for getPlayersInGame
+ */
 export function getAllPlayersInGame(gameId: number) {
   return getPlayersInGame(gameId)
 }

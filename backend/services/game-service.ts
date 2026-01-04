@@ -37,6 +37,9 @@ interface PlayerStackInfo {
   chips: number
 }
 
+/**
+ * Generate unique 6-character room code
+ */
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   let code = ''
@@ -46,6 +49,9 @@ function generateRoomCode(): string {
   return code
 }
 
+/**
+ * Create new poker game with unique room code
+ */
 export async function createGame(config: GameConfig = {}): Promise<Game> {
   const { smallBlind = 5, bigBlind = 10, startingChips = 1000 } = config
 
@@ -96,6 +102,9 @@ export async function createGame(config: GameConfig = {}): Promise<Game> {
   }
 }
 
+/**
+ * Get game by ID with full state
+ */
 export async function getGameById(gameId: number) {
   const game = await db('games').where({ id: gameId }).first()
   if (!game) return null
@@ -140,6 +149,9 @@ export async function getGameById(gameId: number) {
   }
 }
 
+/**
+ * Get game by room code
+ */
 export async function getGameByRoomCode(roomCode: string) {
   const game = await db('games').where({ room_code: roomCode }).first()
   if (!game) return null
@@ -147,6 +159,9 @@ export async function getGameByRoomCode(roomCode: string) {
   return getGameById(game.id)
 }
 
+/**
+ * Start poker game with first hand
+ */
 export async function startGame(gameId: number) {
   const game = await getGameById(gameId)
   if (!game) {
@@ -215,6 +230,9 @@ export async function startGame(gameId: number) {
   return getGameById(gameId)
 }
 
+/**
+ * Save complete game state to database
+ */
 export async function saveGameState(gameId: number, state: any): Promise<void> {
   await db.transaction(async (trx: any) => {
     await trx('games')
@@ -259,6 +277,9 @@ export async function saveGameState(gameId: number, state: any): Promise<void> {
   })
 }
 
+/**
+ * Advance to next betting round
+ */
 export async function advanceOneRound(gameId: number) {
   const game = await getGameById(gameId)
   if (!game) {
@@ -306,6 +327,9 @@ export async function advanceOneRound(gameId: number) {
   return gameState
 }
 
+/**
+ * Auto-advance through rounds if ready
+ */
 export async function advanceRoundIfReady(gameId: number) {
   const game = await getGameById(gameId)
   if (!game) {
@@ -393,6 +417,9 @@ export async function advanceRoundIfReady(gameId: number) {
   return getGameById(gameId)
 }
 
+/**
+ * Start next hand after showdown
+ */
 export async function startNextHand(gameId: number) {
   const game = await getGameById(gameId)
   if (!game) {
@@ -450,6 +477,9 @@ export async function startNextHand(gameId: number) {
   return getGameById(gameId)
 }
 
+/**
+ * Create hand record for database
+ */
 export async function createHandRecord(gameId: number, gameState: any): Promise<number> {
   const playerStacksStart: PlayerStackInfo[] = gameState.players.map((p: Player) => ({
     player_id: p.id,
@@ -481,6 +511,9 @@ export async function createHandRecord(gameId: number, gameState: any): Promise<
   return handId
 }
 
+/**
+ * Complete hand record with final results
+ */
 export async function completeHandRecord(gameId: number, gameState: any): Promise<void> {
   const hand = await db('hands').where({ game_id: gameId }).orderBy('hand_number', 'desc').first()
 
@@ -507,6 +540,9 @@ export async function completeHandRecord(gameId: number, gameState: any): Promis
     })
 }
 
+/**
+ * Record hand history with results
+ */
 export async function recordHandHistory(gameId: number, gameState: any): Promise<void> {
   const existingHand = await db('hands')
     .where({ game_id: gameId, hand_number: gameState.handNumber })
@@ -527,6 +563,9 @@ export async function recordHandHistory(gameId: number, gameState: any): Promise
   }
 }
 
+/**
+ * Reset game to waiting state
+ */
 export async function resetGame(gameId: number) {
   const game = await db('games').where({ id: gameId }).first()
   if (!game) {
@@ -586,6 +625,9 @@ export async function resetGame(gameId: number) {
   return getGameById(gameId)
 }
 
+/**
+ * Delete game from database
+ */
 export async function deleteGame(gameId: number): Promise<void> {
   await db('games').where({ id: gameId }).delete()
 }

@@ -20,6 +20,9 @@ interface ActionRecord {
   timestamp: Date
 }
 
+/**
+ * Normalize turn to next active player if current player cannot act
+ */
 export async function normalizeTurnIfNeeded(gameId: number) {
   const game = await gameService.getGameById(gameId)
   if (!game || game.status !== 'active') return game
@@ -44,6 +47,9 @@ export async function normalizeTurnIfNeeded(gameId: number) {
   return gameService.getGameById(game.id)
 }
 
+/**
+ * Submit and process a player action (check, bet, call, raise, fold, all-in)
+ */
 export async function submitAction(playerId: number, action: string, amount: number = 0) {
   const player = await playerService.getPlayerById(playerId)
   if (!player) {
@@ -142,6 +148,9 @@ export async function submitAction(playerId: number, action: string, amount: num
   return normalizedState
 }
 
+/**
+ * Get valid actions for a player based on current game state
+ */
 export async function getPlayerValidActions(playerId: number) {
   const player = await playerService.getPlayerById(playerId)
   if (!player) {
@@ -167,6 +176,9 @@ export async function getPlayerValidActions(playerId: number) {
   return getValidActions(game, playerPosition)
 }
 
+/**
+ * Record an action in the database for hand history
+ */
 export async function recordAction(
   gameId: number,
   playerId: number,
@@ -198,6 +210,9 @@ export async function recordAction(
   })
 }
 
+/**
+ * Record blind posting (small blind or big blind) in database and events
+ */
 export async function recordBlindPost(
   gameId: number,
   playerId: number,
@@ -216,6 +231,9 @@ export async function recordBlindPost(
   await recordAction(gameId, playerId, blindType, amount, 'preflop')
 }
 
+/**
+ * Get all actions for a specific hand
+ */
 export async function getHandActions(handId: number) {
   const actions = await db('actions')
     .where({ hand_id: handId })
@@ -233,6 +251,9 @@ export async function getHandActions(handId: number) {
   }))
 }
 
+/**
+ * Reveal next community card when all players are all-in
+ */
 export async function revealCard(playerId: number) {
   const player = await playerService.getPlayerById(playerId)
   if (!player) {
@@ -283,6 +304,9 @@ export async function revealCard(playerId: number) {
   return gameService.getGameById(game.id)
 }
 
+/**
+ * Get all actions for a game, optionally filtered by hand number
+ */
 export async function getGameActions(gameId: number, handNumber: number | null = null) {
   let query = db('actions')
     .join('hands', 'actions.hand_id', 'hands.id')

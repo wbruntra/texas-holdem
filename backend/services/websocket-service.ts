@@ -36,6 +36,9 @@ class WebSocketService {
   private wss: WebSocket.Server | null = null
   private subscriptions: Map<WebSocket, Subscription> = new Map()
 
+  /**
+   * Initialize WebSocket server
+   */
   initialize(server: any): void {
     this.wss = new WebSocket.Server({
       server,
@@ -95,6 +98,9 @@ class WebSocketService {
     console.log('[WS] WebSocket server initialized on /ws')
   }
 
+  /**
+   * Handle incoming WebSocket messages
+   */
   async handleMessage(ws: WebSocket, message: WSMessage): Promise<void> {
     const { type, requestId, payload } = message
 
@@ -112,6 +118,9 @@ class WebSocketService {
     }
   }
 
+  /**
+   * Handle subscription requests
+   */
   async handleSubscribe(ws: WebSocket, payload: any, requestId?: string): Promise<void> {
     const {
       roomCode,
