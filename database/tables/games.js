@@ -28,6 +28,7 @@ CREATE TABLE games (
 -- Referenced by:
 -- * hands.game_id (fk_hands_game_id_games_id)
 -- * players.game_id (fk_players_game_id_games_id)
+-- * showdown_history.game_id (fk_showdown_history_game_id_games_id)
  * END_DDL
  */
 const { Model } = require('objection')

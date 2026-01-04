@@ -7,6 +7,7 @@ import { ACTION_TYPE, PLAYER_STATUS, ROUND } from '@/lib/game-constants'
 import { getNextActingPosition } from '@/lib/game-state-machine'
 import eventLogger from '@/services/event-logger'
 import { EVENT_TYPE } from '@/lib/event-types'
+import { createShowdownHistory } from './showdown-service'
 
 interface ActionRecord {
   id: number
@@ -125,6 +126,18 @@ export async function submitAction(playerId: number, action: string, amount: num
     await gameService.saveGameState(game.id, newState)
 
     await gameService.completeHandRecord(game.id, newState)
+
+    // Create showdown history record
+    // Get the most recent hand ID for this game
+    const db = require('@holdem/database/db')
+    const recentHand = await db('hands')
+      .where({ game_id: game.id })
+      .orderBy('hand_number', 'desc')
+      .first()
+
+    if (recentHand) {
+      await createShowdownHistory(game.id, recentHand.id, newState)
+    }
   }
 
   const { isBettingRoundComplete, shouldAutoAdvance } = await import('@/lib/game-state-machine')
@@ -299,6 +312,16 @@ export async function revealCard(playerId: number) {
     const { processShowdown } = await import('@/lib/game-state-machine')
     newState = processShowdown(newState)
     await gameService.saveGameState(game.id, newState)
+
+    // Get the most recent hand ID for this game
+    const recentHand = await db('hands')
+      .where({ game_id: game.id })
+      .orderBy('hand_number', 'desc')
+      .first()
+
+    if (recentHand) {
+      await createShowdownHistory(game.id, recentHand.id, newState)
+    }
   }
 
   return gameService.getGameById(game.id)

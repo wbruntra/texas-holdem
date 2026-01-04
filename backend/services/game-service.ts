@@ -12,6 +12,7 @@ import {
 import { GAME_STATUS, ROUND } from '@/lib/game-constants'
 import eventLogger from '@/services/event-logger'
 import { EVENT_TYPE } from '@/lib/event-types'
+import { createShowdownHistory } from './showdown-service'
 import type { Card } from '@/lib/poker-engine'
 import type { Player, GameState } from '@holdem/shared/game-types'
 
@@ -538,6 +539,11 @@ export async function completeHandRecord(gameId: number, gameState: any): Promis
       completed_at: new Date(),
       updated_at: new Date(),
     })
+
+  // Create showdown history record after hand completion
+  if (gameState.currentRound === 'showdown' || gameState.showdownProcessed) {
+    await createShowdownHistory(gameId, hand.id, gameState)
+  }
 }
 
 /**

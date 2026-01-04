@@ -25,6 +25,7 @@ CREATE TABLE hands (
 
 -- Referenced by:
 -- * actions.hand_id (fk_actions_hand_id_hands_id)
+-- * showdown_history.hand_id (fk_showdown_history_hand_id_hands_id)
 
 -- References:
 -- * games via game_id (fk_hands_game_id_games_id)
