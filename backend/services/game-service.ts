@@ -1,5 +1,6 @@
 // @ts-ignore
 import db from '@holdem/database/db'
+import crypto from 'crypto'
 import {
   createGameState,
   startNewHand,
@@ -82,7 +83,7 @@ export async function createGame(config: GameConfig = {}): Promise<Game> {
     current_bet: 0,
     hand_number: 0,
     last_raise: 0,
-    seed: seed ? String(seed) : null,
+    seed: seed ? String(seed) : crypto.randomUUID(),
   })
 
   eventLogger.logEvent(
@@ -103,7 +104,6 @@ export async function createGame(config: GameConfig = {}): Promise<Game> {
     smallBlind,
     bigBlind,
     startingChips,
-    seed: seed ? String(seed) : undefined,
   }
 }
 
@@ -619,6 +619,7 @@ export async function resetGame(gameId: number) {
     last_raise: 0,
     deck: null,
     winners: null,
+    seed: crypto.randomUUID(),
     updated_at: new Date(),
   })
 
