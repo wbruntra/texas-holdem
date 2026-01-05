@@ -413,3 +413,76 @@ export function determineWinners(
 
   return winners
 }
+
+// Mock evaluator interface for testing
+export interface MockHandEvaluation {
+  position: number
+  rank: number // 1-10 (higher = better)
+  tieBreaker: number // Higher wins ties
+  description?: string
+}
+
+// Type alias for evaluator function (both real and mock)
+export type HandEvaluator = (holeCards: Card[], communityCards: Card[]) => HandEvaluation
+
+// Mock evaluator for testing - skips card logic entirely
+export function createMockEvaluator(
+  mockHands: Array<{ position: number; rank: number; tieBreaker: number }>,
+): HandEvaluator {
+  return function mockEvaluator(holeCards: Card[], communityCards: Card[]): HandEvaluation {
+    // Find the mock hand by looking up player position from hole cards
+    // This is a hack for testing - we assume holeCards contain position info somehow
+    // In real tests, we'll map positions differently
+
+    // For now, return a default hand that won't be used in real game
+    return {
+      rank: HAND_RANKINGS.HIGH_CARD,
+      rankName: 'Mock Hand',
+      value: 0,
+      cards: [...holeCards, ...communityCards],
+    }
+  }
+}
+
+// Pure winner determination from pre-evaluated hands
+export function determineWinnersFromEvaluations(
+  evaluations: Array<{ position: number; hand: HandEvaluation }>,
+): number[] {
+  if (evaluations.length === 0) return []
+
+  let bestHand = evaluations[0].hand
+  const winnerIndices = [evaluations[0].position]
+
+  for (let i = 1; i < evaluations.length; i++) {
+    const comparison = compareHands(evaluations[i].hand, bestHand)
+    if (comparison > 0) {
+      bestHand = evaluations[i].hand
+      winnerIndices.length = 0
+      winnerIndices.push(evaluations[i].position)
+    } else if (comparison === 0) {
+      winnerIndices.push(evaluations[i].position)
+    }
+  }
+
+  return winnerIndices
+}
+
+// Even simpler winner determination from mock hands
+export function determineWinnersFromMockHands(hands: MockHandEvaluation[]): number[] {
+  if (hands.length === 0) return []
+
+  // Sort by rank (descending), then by tieBreaker (descending)
+  const sortedHands = [...hands].sort((a, b) => {
+    if (b.rank !== a.rank) {
+      return b.rank - a.rank
+    }
+    return b.tieBreaker - a.tieBreaker
+  })
+
+  const bestRank = sortedHands[0].rank
+  const bestTieBreaker = sortedHands[0].tieBreaker
+
+  return hands
+    .filter((hand) => hand.rank === bestRank && hand.tieBreaker === bestTieBreaker)
+    .map((hand) => hand.position)
+}

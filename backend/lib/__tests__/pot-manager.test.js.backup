@@ -1,0 +1,285 @@
+const { describe, it, expect } = require('bun:test')
+const { calculatePots, distributePots, awardPots, getTotalPot } = require('../pot-manager')
+const { PLAYER_STATUS } = require('../game-constants')
+
+function createTestPlayer(position, chips, totalBet, status = PLAYER_STATUS.ACTIVE) {
+  return {
+    position,
+    chips,
+    totalBet,
+    holeCards: [],
+    status,
+  }
+}
+
+describe('calculatePots', () => {
+  it('should handle simple pot with equal bets', () => {
+    const players = [
+      createTestPlayer(0, 900, 100),
+      createTestPlayer(1, 900, 100),
+      createTestPlayer(2, 900, 100),
+    ]
+
+    const pots = calculatePots(players)
+
+    expect(pots).toHaveLength(1)
+    expect(pots[0].amount).toBe(300)
+    expect(pots[0].eligiblePlayers).toEqual([0, 1, 2])
+  })
+
+  it('should create side pot when player is all-in for less', () => {
+    const players = [
+      createTestPlayer(0, 0, 500), // All-in (500 bet)
+      createTestPlayer(1, 800, 200), // 200 bet
+      createTestPlayer(2, 800, 200), // 200 bet
+    ]
+
+    const pots = calculatePots(players)
+
+    expect(pots).toHaveLength(2)
+    expect(pots[0].amount).toBe(600) // Main pot: 200 * 3 (lowest bet)
+    expect(pots[0].eligiblePlayers).toEqual([0, 1, 2])
+    expect(pots[1].amount).toBe(300) // Side pot: 300 from player 0's remaining bet
+    expect(pots[1].eligiblePlayers).toEqual([0]) // Only player 0 is in this side pot
+  })
+
+  it('should handle multiple all-in players with different amounts', () => {
+    const players = [
+      createTestPlayer(0, 0, 200), // All-in (200 bet)
+      createTestPlayer(1, 0, 300), // All-in (300 bet)
+      createTestPlayer(2, 800, 200), // 200 bet
+    ]
+
+    const pots = calculatePots(players)
+
+    // First pot: 200 from each player (600 total)
+    expect(pots[0].amount).toBe(600)
+    expect(pots[0].eligiblePlayers).toEqual([0, 1, 2])
+
+    // Second pot: 100 more from player 1 only (player 2 only had 200 total)
+    expect(pots[1].amount).toBe(100)
+    expect(pots[1].eligiblePlayers).toEqual([1])
+
+    expect(pots).toHaveLength(2)
+  })
+
+  it('should exclude folded players from pot calculation', () => {
+    const players = [
+      createTestPlayer(0, 900, 100),
+      createTestPlayer(1, 900, 100, PLAYER_STATUS.FOLDED),
+      createTestPlayer(2, 900, 100),
+    ]
+
+    const pots = calculatePots(players)
+
+    expect(pots).toHaveLength(1)
+    expect(pots[0].amount).toBe(300) // Folded player still contributes to pot
+    expect(pots[0].eligiblePlayers).toEqual([0, 2]) // But can't win
+  })
+
+  it('should handle no eligible players', () => {
+    const players = [
+      createTestPlayer(0, 900, 100, PLAYER_STATUS.FOLDED),
+      createTestPlayer(1, 900, 100, PLAYER_STATUS.OUT),
+    ]
+
+    const pots = calculatePots(players)
+
+    expect(pots).toHaveLength(1)
+    expect(pots[0].amount).toBe(200)
+    expect(pots[0].eligiblePlayers).toEqual([])
+  })
+})
+
+describe('getTotalPot', () => {
+  it('should sum all pot amounts', () => {
+    const pots = [
+      { amount: 100, eligiblePlayers: [0, 1] },
+      { amount: 50, eligiblePlayers: [1, 2] },
+      { amount: 25, eligiblePlayers: [0] },
+    ]
+
+    expect(getTotalPot(pots)).toBe(175)
+  })
+
+  it('should return 0 for empty pots array', () => {
+    expect(getTotalPot([])).toBe(0)
+  })
+})
+
+describe('awardPots', () => {
+  it('should award pot to single winner', () => {
+    const players = [
+      createTestPlayer(0, 1000, 0),
+      createTestPlayer(1, 1000, 0),
+      createTestPlayer(2, 1000, 0),
+    ]
+
+    const pots = [{ amount: 300, eligiblePlayers: [0, 1, 2], winners: [1] }]
+
+    const result = awardPots(pots, players)
+
+    expect(result[0].chips).toBe(1000)
+    expect(result[1].chips).toBe(1300) // 1000 + 300
+    expect(result[2].chips).toBe(1000)
+  })
+
+  it('should split pot between multiple winners', () => {
+    const players = [
+      createTestPlayer(0, 1000, 0),
+      createTestPlayer(1, 1000, 0),
+      createTestPlayer(2, 1000, 0),
+    ]
+
+    const pots = [
+      { amount: 301, eligiblePlayers: [0, 1, 2], winners: [0, 2] }, // Odd amount
+    ]
+
+    const result = awardPots(pots, players)
+
+    expect(result[0].chips).toBe(1151) // 1000 + 150 + 1 (remainder)
+    expect(result[1].chips).toBe(1000)
+    expect(result[2].chips).toBe(1150) // 1000 + 150
+  })
+
+  it('should handle multiple pots with different winners', () => {
+    const players = [
+      createTestPlayer(0, 1000, 0),
+      createTestPlayer(1, 1000, 0),
+      createTestPlayer(2, 1000, 0),
+    ]
+
+    const pots = [
+      { amount: 200, eligiblePlayers: [0, 1, 2], winners: [0] }, // Main pot
+      { amount: 100, eligiblePlayers: [1, 2], winners: [1, 2] }, // Side pot
+    ]
+
+    const result = awardPots(pots, players)
+
+    expect(result[0].chips).toBe(1200) // 1000 + 200
+    expect(result[1].chips).toBe(1050) // 1000 + 50
+    expect(result[2].chips).toBe(1050) // 1000 + 50
+  })
+
+  it('should not award chips when no winners', () => {
+    const players = [createTestPlayer(0, 1000, 0), createTestPlayer(1, 1000, 0)]
+
+    const pots = [{ amount: 200, eligiblePlayers: [0, 1], winners: [] }]
+
+    const result = awardPots(pots, players)
+
+    expect(result[0].chips).toBe(1000)
+    expect(result[1].chips).toBe(1000)
+  })
+})
+
+describe('distributePots with mock hands', () => {
+  it('should determine winner for single pot using mock evaluator', () => {
+    // Instead of dealing with cards, let's create a mock evaluator
+    // that returns predetermined hands for each position
+    const mockEvaluateHand = (holeCards, communityCards = []) => {
+      // Mock different hand strengths based on some logic
+      // For this test, we'll make player 0 win with higher hand
+      if (holeCards && holeCards[0] === 'mock-winner') {
+        return {
+          rank: 8, // Four of a kind
+          rankName: 'Four of a Kind',
+          value: 100,
+          cards: [],
+        }
+      }
+      return {
+        rank: 3, // Two pair
+        rankName: 'Two Pair',
+        value: 50,
+        cards: [],
+      }
+    }
+    
+    const players = [
+      createTestPlayer(0, 1000, 0),
+      createTestPlayer(1, 1000, 0),
+    ]
+    // Use special marker cards to trigger mock hands
+    players[0].holeCards = ['mock-winner', 'mock']
+    players[1].holeCards = ['mock-loser', 'mock']
+    
+    const pots = [
+      { amount: 200, eligiblePlayers: [0, 1] },
+    ]
+    
+    const result = distributePots(pots, players, [], mockEvaluateHand)
+    
+    expect(result).toHaveLength(1)
+    expect(result[0].winners).toEqual([0]) // Player 0 has stronger hand
+    expect(result[0].winAmount).toBe(200)
+    expect(result[0].winningRankName).toBe('Four of a Kind')
+  })
+
+  it('should handle tie with mock evaluator', () => {
+    const mockEvaluateHand = (holeCards, communityCards = []) => {
+      // Return same hand strength for both players
+      return {
+        rank: 3, // Two pair
+        rankName: 'Two Pair',
+        value: 50,
+        cards: [],
+      }
+    }
+    
+    const players = [
+      createTestPlayer(0, 1000, 0),
+      createTestPlayer(1, 1000, 0),
+    ]
+    players[0].holeCards = ['mock-tie', 'mock']
+    players[1].holeCards = ['mock-tie', 'mock']
+    
+    const pots = [
+      { amount: 200, eligiblePlayers: [0, 1] },
+    ]
+    
+    const result = distributePots(pots, players, [], mockEvaluateHand)
+    
+    expect(result).toHaveLength(1)
+    expect(result[0].winners).toEqual([0, 1]) // Both tie
+    expect(result[0].winAmount).toBe(100)
+    expect(result[0].winningRankName).toBe('Two Pair')
+  })
+})
+
+  it('should determine winner for single pot', () => {
+    const players = [createTestPlayer(0, 1000, 0), createTestPlayer(1, 1000, 0)]
+    players[0].holeCards = ['A♠', 'K♠']
+    players[1].holeCards = ['2♥', '2♦']
+
+    const pots = [{ amount: 200, eligiblePlayers: [0, 1] }]
+
+    const result = distributePots(pots, players, [], mockEvaluateHand)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].winners).toEqual([0, 1]) // Both get same hand eval, so tie
+    expect(result[0].winAmount).toBe(100)
+    expect(result[0].winningRankName).toBe('High Card')
+  })
+
+  it('should handle empty eligible players', () => {
+    const players = [createTestPlayer(0, 1000, 0), createTestPlayer(1, 1000, 0)]
+
+    const pots = [{ amount: 200, eligiblePlayers: [] }]
+
+    const result = distributePots(pots, players, [], mockEvaluateHand)
+
+    expect(result[0].winners).toEqual([])
+  })
+
+  it('should handle players without hole cards', () => {
+    const players = [createTestPlayer(0, 1000, 0), createTestPlayer(1, 1000, 0)]
+    // No hole cards set
+
+    const pots = [{ amount: 200, eligiblePlayers: [0, 1] }]
+
+    const result = distributePots(pots, players, [], mockEvaluateHand)
+
+    expect(result[0].winners).toEqual([])
+  })
+})

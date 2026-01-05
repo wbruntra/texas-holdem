@@ -47,7 +47,7 @@ async function loadPlayer(req, res, next) {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { smallBlind, bigBlind, startingChips } = req.body
+    const { smallBlind, bigBlind, startingChips, seed } = req.body
 
     // Basic validation
     if (smallBlind !== undefined && (!Number.isInteger(smallBlind) || smallBlind <= 0)) {
@@ -67,6 +67,7 @@ router.post('/', async (req, res, next) => {
       smallBlind,
       bigBlind,
       startingChips,
+      seed,
     })
 
     res.status(201).json(game)

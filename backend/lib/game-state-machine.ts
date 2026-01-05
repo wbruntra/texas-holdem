@@ -22,11 +22,12 @@ interface GameConfig {
   smallBlind?: number
   bigBlind?: number
   startingChips?: number
+  seed?: string | number
   players?: Array<{ id: string | number; name: string; chips?: number }>
 }
 
 export function createGameState(config: GameConfig = {}): GameState {
-  const { smallBlind = 5, bigBlind = 10, startingChips = 1000, players = [] } = config
+  const { smallBlind = 5, bigBlind = 10, startingChips = 1000, seed, players = [] } = config
 
   return {
     status: GAME_STATUS.WAITING,
@@ -57,10 +58,11 @@ export function createGameState(config: GameConfig = {}): GameState {
     handNumber: 0,
     lastRaise: 0,
     showdownProcessed: false,
+    seed: seed ? String(seed) : undefined,
   }
 }
 
-export function startNewHand(state: GameState): GameState {
+export function startNewHand(state: GameState, seed?: string | number): GameState {
   const activePlayers = state.players.filter((p) => p.chips > 0 && p.status !== PLAYER_STATUS.OUT)
 
   if (activePlayers.length < 2) {
@@ -117,7 +119,9 @@ export function startNewHand(state: GameState): GameState {
 
   const pot = smallBlindAmount + bigBlindAmount
 
-  const deck = shuffleDeck(createDeck())
+  // Use provided seed or generate one from game seed + hand number
+  const handSeed = seed || `${state.seed || 'random'}-${state.handNumber + 1}`
+  const deck = shuffleDeck(createDeck(), handSeed)
 
   const activePlayerIndices = players
     .map((p, i) => ({ player: p, index: i }))

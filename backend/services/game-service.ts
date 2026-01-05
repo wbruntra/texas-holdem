@@ -20,6 +20,7 @@ interface GameConfig {
   smallBlind?: number
   bigBlind?: number
   startingChips?: number
+  seed?: string | number
 }
 
 interface Game {
@@ -29,6 +30,7 @@ interface Game {
   smallBlind: number
   bigBlind: number
   startingChips: number
+  seed?: string
 }
 
 interface PlayerStackInfo {
@@ -54,7 +56,7 @@ function generateRoomCode(): string {
  * Create new poker game with unique room code
  */
 export async function createGame(config: GameConfig = {}): Promise<Game> {
-  const { smallBlind = 5, bigBlind = 10, startingChips = 1000 } = config
+  const { smallBlind = 5, bigBlind = 10, startingChips = 1000, seed } = config
 
   let roomCode: string
   let attempts = 0
@@ -80,6 +82,7 @@ export async function createGame(config: GameConfig = {}): Promise<Game> {
     current_bet: 0,
     hand_number: 0,
     last_raise: 0,
+    seed: seed ? String(seed) : null,
   })
 
   eventLogger.logEvent(
@@ -100,6 +103,7 @@ export async function createGame(config: GameConfig = {}): Promise<Game> {
     smallBlind,
     bigBlind,
     startingChips,
+    seed: seed ? String(seed) : undefined,
   }
 }
 
@@ -125,6 +129,7 @@ export async function getGameById(gameId: number) {
     communityCards: game.community_cards ? JSON.parse(game.community_cards) : [],
     deck: game.deck ? JSON.parse(game.deck) : [],
     winners: game.winners ? JSON.parse(game.winners) : undefined,
+    seed: game.seed,
     currentBet: game.current_bet,
     currentPlayerPosition: game.current_player_position,
     handNumber: game.hand_number,
@@ -185,7 +190,7 @@ export async function startGame(gameId: number) {
     players: game.players,
   })
 
-  const newState = startNewHand(gameState)
+  const newState = startNewHand(gameState, game.seed)
 
   await saveGameState(gameId, newState)
 
@@ -309,28 +314,38 @@ export async function advanceOneRound(gameId: number) {
     gameState = advanceRound(gameState)
     await saveGameState(gameId, gameState)
   } else {
+    // Check if we're advancing from river to showdown
+    const isAdvancingFromRiver = gameState.currentRound === ROUND.RIVER
+
     gameState = advanceRound(gameState)
-    eventLogger.logEvent(
-      EVENT_TYPE.SHOWDOWN,
-      {
-        communityCards: gameState.communityCards,
-        pot: gameState.pot,
-      },
-      gameId,
-    )
-    gameState = processShowdown(gameState)
-    await saveGameState(gameId, gameState)
 
-    await completeHandRecord(gameId, gameState)
+    if (isAdvancingFromRiver) {
+      // We just moved from river to showdown, process it
+      eventLogger.logEvent(
+        EVENT_TYPE.SHOWDOWN,
+        {
+          communityCards: gameState.communityCards,
+          pot: gameState.pot,
+        },
+        gameId,
+      )
+      gameState = processShowdown(gameState)
+      await saveGameState(gameId, gameState)
 
-    eventLogger.logEvent(
-      EVENT_TYPE.HAND_COMPLETED,
-      {
-        winners: gameState.winners,
-        handNumber: gameState.handNumber,
-      },
-      gameId,
-    )
+      await completeHandRecord(gameId, gameState)
+
+      eventLogger.logEvent(
+        EVENT_TYPE.HAND_COMPLETED,
+        {
+          winners: gameState.winners,
+          handNumber: gameState.handNumber,
+        },
+        gameId,
+      )
+    } else {
+      // Not advancing from river, just save the state
+      await saveGameState(gameId, gameState)
+    }
   }
 
   return gameState

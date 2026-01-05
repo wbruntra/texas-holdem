@@ -58,6 +58,7 @@ export interface GameState {
   lastRaise: number
   showdownProcessed: boolean
   action_finished?: boolean
+  seed?: string
   winners?: number[]
 }
 

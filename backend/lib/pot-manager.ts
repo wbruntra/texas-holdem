@@ -1,6 +1,6 @@
 import { PLAYER_STATUS } from './game-constants'
+import { compareHands, determineWinnersFromEvaluations } from './poker-engine'
 import type { HandEvaluation } from './poker-engine'
-import { compareHands } from './poker-engine'
 import type { Player, Pot, PlayerStatus, Card } from '@holdem/shared/game-types'
 
 interface ContributionPlayer {
@@ -84,23 +84,20 @@ export function distributePots(
       return { position, hand }
     })
 
-    let bestHand = evaluations[0].hand
-    for (let i = 1; i < evaluations.length; i++) {
-      const comp = compareHands(evaluations[i].hand, bestHand)
-      if (comp > 0) {
-        bestHand = evaluations[i].hand
-      }
+    const winners = determineWinnersFromEvaluations(evaluations)
+
+    if (evaluations.length === 0) {
+      return { ...pot, winners: [] }
     }
 
-    const winners = evaluations
-      .filter((e) => compareHands(e.hand, bestHand) === 0)
-      .map((e) => e.position)
+    // Get the winning hand for rank name
+    const winnerHand = evaluations.find((e) => winners.includes(e.position))?.hand
 
     return {
       ...pot,
       winners,
       winAmount: Math.floor(pot.amount / winners.length),
-      winningRankName: bestHand.rankName,
+      winningRankName: winnerHand?.rankName || 'Unknown',
     }
   })
 
