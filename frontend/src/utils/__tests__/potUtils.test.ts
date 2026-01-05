@@ -41,15 +41,15 @@ describe('potUtils', () => {
 
     it('sums amounts from all pots', () => {
       const pots = [
-        { amount: 100, eligiblePlayers: [0, 1] },
-        { amount: 50, eligiblePlayers: [1, 2] },
-        { amount: 25, eligiblePlayers: [0, 1, 2] },
+        { amount: 100, eligiblePlayers: [0, 1], winners: null },
+        { amount: 50, eligiblePlayers: [1, 2], winners: null },
+        { amount: 25, eligiblePlayers: [0, 1, 2], winners: null },
       ]
       expect(calculatePotsTotal(pots)).toBe(175)
     })
 
     it('handles single pot', () => {
-      const pots = [{ amount: 200, eligiblePlayers: [0, 1, 2] }]
+      const pots = [{ amount: 200, eligiblePlayers: [0, 1, 2], winners: null }]
       expect(calculatePotsTotal(pots)).toBe(200)
     })
   })
@@ -57,7 +57,7 @@ describe('potUtils', () => {
   describe('getDisplayPot', () => {
     it('returns calculated pots total when pots array provided', () => {
       const players = [{ totalBet: 100, currentBet: 50 }]
-      const pots = [{ amount: 200, eligiblePlayers: [0] }]
+      const pots = [{ amount: 200, eligiblePlayers: [0], winners: null }]
       expect(getDisplayPot(players, pots)).toBe(200)
     })
 
@@ -75,7 +75,7 @@ describe('potUtils', () => {
 
     it('prefers pots over player bets when both provided', () => {
       const players = [{ totalBet: 500, currentBet: 100 }]
-      const pots = [{ amount: 200, eligiblePlayers: [0] }]
+      const pots = [{ amount: 200, eligiblePlayers: [0], winners: null }]
       expect(getDisplayPot(players, pots)).toBe(200)
     })
   })
