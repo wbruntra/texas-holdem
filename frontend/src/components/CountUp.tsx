@@ -10,7 +10,7 @@ type Props = {
 export default function CountUp({ end, duration = 500, prefix = '', suffix = '' }: Props) {
   const [count, setCount] = useState(0)
   const previousEnd = useRef(end)
-  const animationFrameId = useRef<number>()
+  const animationFrameId = useRef<number | undefined>(undefined)
   const hasAnimated = useRef(false)
 
   useEffect(() => {
