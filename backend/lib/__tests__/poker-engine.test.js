@@ -1,12 +1,12 @@
 const { describe, it, expect } = require('bun:test')
-const { shuffleDeck, createDeck } = require('./poker-engine')
+const { shuffleDeck, createDeck } = require('../poker-engine')
 const {
   isAllInSituation,
   shouldSetActionFinished,
   createGameState,
   startNewHand,
   advanceRound,
-} = require('./game-state-machine')
+} = require('../game-state-machine')
 
 function cardsEqual(c1, c2) {
   return c1.rank === c2.rank && c1.suit === c2.suit
@@ -161,7 +161,7 @@ describe('action_finished tracking', () => {
   })
 
   it('returns canAdvance: true when action_finished is true', () => {
-    const { getValidActions } = require('./betting-logic')
+    const { getValidActions } = require('../betting-logic')
     const state = createTestGameState([
       { id: 1, name: 'Alice', chips: 500 },
       { id: 2, name: 'Bob', chips: 0 },
@@ -181,7 +181,7 @@ describe('action_finished tracking', () => {
   })
 
   it('returns canAdvance: false when action_finished is false', () => {
-    const { getValidActions } = require('./betting-logic')
+    const { getValidActions } = require('../betting-logic')
     const state = createTestGameState([
       { id: 1, name: 'Alice', chips: 500 },
       { id: 2, name: 'Bob', chips: 500 },
@@ -200,7 +200,7 @@ describe('action_finished tracking', () => {
   })
 
   it('returns canAdvance: true between streets even when action_finished is false', () => {
-    const { getValidActions } = require('./betting-logic')
+    const { getValidActions } = require('../betting-logic')
     const state = createTestGameState([
       { id: 1, name: 'Alice', chips: 500 },
       { id: 2, name: 'Bob', chips: 500 },
@@ -219,7 +219,7 @@ describe('action_finished tracking', () => {
   })
 
   it('does not allow folded player to advance in action_finished mode', () => {
-    const { getValidActions } = require('./betting-logic')
+    const { getValidActions } = require('../betting-logic')
     const state = createTestGameState([
       { id: 1, name: 'Alice', chips: 500 },
       { id: 2, name: 'Bob', chips: 0 },
@@ -281,7 +281,7 @@ describe('action_finished tracking', () => {
   })
 
   it('blocks betting actions while action_finished is true', () => {
-    const { validateAction } = require('./betting-logic')
+    const { validateAction } = require('../betting-logic')
     const state = createTestGameState([
       { id: 1, name: 'Alice', chips: 500 },
       { id: 2, name: 'Bob', chips: 0 },
@@ -295,7 +295,7 @@ describe('action_finished tracking', () => {
   })
 
   it('cannot raise when opponent is all-in, but can call', () => {
-    const { getValidActions } = require('./betting-logic')
+    const { getValidActions } = require('../betting-logic')
     const state = createTestGameState([
       { id: 1, name: 'Alice', chips: 500 },
       { id: 2, name: 'Bob', chips: 0 },
