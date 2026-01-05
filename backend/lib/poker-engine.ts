@@ -486,3 +486,117 @@ export function determineWinnersFromMockHands(hands: MockHandEvaluation[]): numb
     .filter((hand) => hand.rank === bestRank && hand.tieBreaker === bestTieBreaker)
     .map((hand) => hand.position)
 }
+
+export function getHandDescription(hand: HandEvaluation): string {
+  const rankDisplay = (rank: Rank | undefined): string => {
+    if (!rank) return ''
+    const displayNames: Record<Rank, string> = {
+      '2': 'Twos',
+      '3': 'Threes',
+      '4': 'Fours',
+      '5': 'Fives',
+      '6': 'Sixes',
+      '7': 'Sevens',
+      '8': 'Eights',
+      '9': 'Nines',
+      '10': 'Tens',
+      J: 'Jacks',
+      Q: 'Queens',
+      K: 'Kings',
+      A: 'Aces',
+    }
+    return displayNames[rank]
+  }
+
+  const rankDisplaySingular = (rank: Rank | undefined): string => {
+    if (!rank) return ''
+    const displayNames: Record<Rank, string> = {
+      '2': 'Two',
+      '3': 'Three',
+      '4': 'Four',
+      '5': 'Five',
+      '6': 'Six',
+      '7': 'Seven',
+      '8': 'Eight',
+      '9': 'Nine',
+      '10': 'Ten',
+      J: 'Jack',
+      Q: 'Queen',
+      K: 'King',
+      A: 'Ace',
+    }
+    return displayNames[rank]
+  }
+
+  switch (hand.rank) {
+    case HAND_RANKINGS.ROYAL_FLUSH:
+      return 'Royal Flush'
+    case HAND_RANKINGS.STRAIGHT_FLUSH: {
+      const highCard = hand.highCard
+      const straightNames: Record<number, string> = {
+        14: 'Ace-high',
+        13: 'King-high',
+        12: 'Queen-high',
+        11: 'Jack-high',
+        10: 'Ten-high',
+        9: 'Nine-high',
+        8: 'Eight-high',
+        7: 'Seven-high',
+        6: 'Six-high',
+        5: 'Five-high',
+      }
+      return `Straight Flush, ${straightNames[highCard || 14] || 'high'}`
+    }
+    case HAND_RANKINGS.FOUR_OF_A_KIND:
+      if (hand.quads) {
+        return `Four of a Kind, ${rankDisplay(hand.quads)}`
+      }
+      return hand.rankName || 'Four of a Kind'
+    case HAND_RANKINGS.FULL_HOUSE:
+      if (hand.trips && hand.pair) {
+        return `Full House, ${rankDisplay(hand.trips)} over ${rankDisplay(hand.pair)}`
+      }
+      return hand.rankName || 'Full House'
+    case HAND_RANKINGS.FLUSH:
+      return `Flush, ${rankDisplaySingular(hand.cards[0]?.rank as Rank | undefined)} high`
+    case HAND_RANKINGS.STRAIGHT: {
+      const highCard = hand.highCard
+      const straightNames: Record<number, string> = {
+        14: 'Broadway',
+        13: 'King-high',
+        12: 'Queen-high',
+        11: 'Jack-high',
+        10: 'Ten-high',
+        9: 'Nine-high',
+        8: 'Eight-high',
+        7: 'Seven-high',
+        6: 'Six-high',
+        5: 'Wheel',
+      }
+      return `Straight, ${straightNames[highCard || 14] || 'high'}`
+    }
+    case HAND_RANKINGS.THREE_OF_A_KIND:
+      if (hand.trips) {
+        return `Three of a Kind, ${rankDisplay(hand.trips)}`
+      }
+      return hand.rankName || 'Three of a Kind'
+    case HAND_RANKINGS.TWO_PAIR: {
+      const pairs = hand.pairs || []
+      if (pairs.length >= 2) {
+        return `Two Pair, ${rankDisplay(pairs[0])} and ${rankDisplay(pairs[1])}`
+      }
+      return hand.rankName || 'Two Pair'
+    }
+    case HAND_RANKINGS.PAIR:
+      if (hand.pair) {
+        return `Pair of ${rankDisplay(hand.pair)}`
+      }
+      return hand.rankName || 'Pair'
+    case HAND_RANKINGS.HIGH_CARD: {
+      const highCard = hand.cards[0]?.rank
+      return `High Card, ${rankDisplaySingular(highCard as Rank | undefined)}`
+    }
+    default:
+      return hand.rankName || 'Unknown'
+  }
+}

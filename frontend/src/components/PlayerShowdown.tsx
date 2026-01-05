@@ -43,7 +43,7 @@ export default function PlayerShowdown({
                 game.pots!.length > 1 ? (idx === 0 ? 'Main Pot' : `Side Pot ${idx}`) : 'Pot'
 
               const potWinners = game.players.filter((p) => pot.winners!.includes(p.position))
-              const winAmount = pot.amount || Math.floor(pot.amount / pot.winners.length)
+              const winAmount = pot.winAmount || Math.floor(pot.amount / pot.winners.length)
 
               return (
                 <div key={idx} className="alert alert-success text-center mb-2">

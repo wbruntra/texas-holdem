@@ -42,7 +42,7 @@ export default function CommunityCenter({ game }: Props) {
 
       <div className="poker-table-pot">
         {isShowdown && game.pots && game.pots.length > 0 ? (
-          <div className="pot-display" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+          <div className="pot-display" style={{}}>
             {game.pots.map((pot, idx) => {
               if (!pot.winners || pot.winners.length === 0) return null
 

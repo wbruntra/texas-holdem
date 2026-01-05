@@ -1,5 +1,5 @@
 import { PLAYER_STATUS } from './game-constants'
-import { compareHands, determineWinnersFromEvaluations } from './poker-engine'
+import { compareHands, determineWinnersFromEvaluations, getHandDescription } from './poker-engine'
 import type { HandEvaluation } from './poker-engine'
 import type { Player, Pot, PlayerStatus, Card } from '@holdem/shared/game-types'
 
@@ -97,7 +97,7 @@ export function distributePots(
       ...pot,
       winners,
       winAmount: Math.floor(pot.amount / winners.length),
-      winningRankName: winnerHand?.rankName || 'Unknown',
+      winningRankName: winnerHand ? getHandDescription(winnerHand) : 'Unknown',
     }
   })
 
