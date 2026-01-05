@@ -25,44 +25,95 @@ export default function PlayerJoinGame({
   return (
     <div className="container d-flex flex-column justify-content-center align-items-center min-vh-100">
       <div
-        className="card p-4 bg-dark text-white border-secondary"
-        style={{ maxWidth: '420px', width: '100%' }}
+        className="card p-4 text-white"
+        style={{
+          maxWidth: '420px',
+          width: '100%',
+          background: 'linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-deep) 100%)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+        }}
       >
-        <h1 className="text-center mb-4">Join Game</h1>
-        <p className="text-center text-secondary mb-4">Room: {roomCode}</p>
+        <h1 className="text-center mb-2">Join Game</h1>
+        <p className="text-center mb-4" style={{ color: '#e2e8f0', fontSize: '1.1rem' }}>
+          Room: <strong style={{ color: '#fbbf24' }}>{roomCode}</strong>
+        </p>
 
         <form onSubmit={handleJoin} className="w-100">
-          <div className="mb-3">
+          <div className="mb-4">
+            <label
+              htmlFor="playerName"
+              className="form-label mb-2"
+              style={{ color: '#f1f5f9', fontWeight: 600 }}
+            >
+              Your Name
+            </label>
             <input
+              id="playerName"
               type="text"
-              placeholder="Your Name"
+              placeholder="Enter your name"
               value={playerName}
               maxLength={10}
               onChange={(e) => setPlayerName(e.target.value)}
-              className="form-control form-control-lg bg-dark text-white border-secondary"
+              className="form-control form-control-lg"
+              style={{
+                background: 'var(--bg-deep)',
+                color: '#f1f5f9',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '1.1rem',
+              }}
             />
           </div>
 
-          <div className="mb-3">
+          <div className="mb-4">
+            {/* <label
+              htmlFor="playerPassword"
+              className="form-label mb-2"
+              style={{ color: '#f1f5f9', fontWeight: 600 }}
+            >
+              Password
+            </label> */}
             <input
+              id="playerPassword"
               type="text"
-              placeholder="Password (4+ chars)"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="form-control form-control-lg bg-dark text-white border-secondary"
+              className="form-control form-control-lg"
+              style={{
+                background: 'var(--bg-deep)',
+                color: '#f1f5f9',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '1.1rem',
+              }}
             />
+            <div className="form-text mt-2" style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>
+              4+ characters. Use to rejoin if you disconnect.
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={!playerName.trim() || password.length < 4}
-            className="btn btn-primary btn-lg w-100 mt-2"
+            className="btn-poker btn-poker-primary btn-poker-lg w-100"
           >
             Join Game
           </button>
         </form>
 
-        {error && <div className="alert alert-danger mt-4 py-2 text-center">{error}</div>}
+        {error && (
+          <div
+            className="mt-4 py-3 text-center"
+            style={{
+              background: 'var(--accent-danger-dim)',
+              color: '#ff6b6b',
+              borderRadius: '8px',
+              border: '1px solid rgba(244, 63, 94, 0.3)',
+            }}
+          >
+            {error}
+          </div>
+        )}
       </div>
     </div>
   )

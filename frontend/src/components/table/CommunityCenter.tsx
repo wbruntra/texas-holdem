@@ -1,6 +1,7 @@
 import type { GameState } from '~/components/table/types'
 import { formatCard, getSuitColor } from '~/components/table/cardUtils'
 import { getDisplayPot } from '~/utils/potUtils'
+import CountUp from '~/components/CountUp'
 
 type Props = {
   game: GameState
@@ -10,6 +11,7 @@ export default function CommunityCenter({ game }: Props) {
   const communityCards = game.communityCards || []
   const displayPot = getDisplayPot(game.players, game.pots)
   const isShowdown = game.currentRound === 'showdown'
+  const potAnimationKey = `${displayPot}-${game.currentRound}`
 
   return (
     <div className="poker-table-center">
@@ -21,8 +23,11 @@ export default function CommunityCenter({ game }: Props) {
             return (
               <div
                 key={idx}
-                className="community-card"
-                style={{ color: getSuitColor(card.suit) }}
+                className="community-card deal-animation"
+                style={{
+                  color: getSuitColor(card.suit),
+                  animationDelay: `${idx * 0.08}s`,
+                }}
                 aria-label={`Community card ${idx + 1}: ${formatCard(card)}`}
               >
                 {formatCard(card)}
@@ -74,7 +79,9 @@ export default function CommunityCenter({ game }: Props) {
         ) : (
           <div className="pot-display">
             <div className="pot-label">Pot</div>
-            <div className="pot-amount">${displayPot}</div>
+            <div className="pot-amount">
+              <CountUp key={potAnimationKey} end={displayPot} duration={400} prefix="$" />
+            </div>
           </div>
         )}
       </div>

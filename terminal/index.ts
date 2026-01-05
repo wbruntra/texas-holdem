@@ -108,7 +108,13 @@ class PokerTerminal {
       onError: (error) => console.error('WebSocket error:', error),
     })
 
-    ws.connect(roomCode.toUpperCase(), 'table', String(gameId))
+    ws.connect(
+      roomCode.toUpperCase(),
+      'table',
+      String(gameId),
+      '',
+      this.api.getToken() || undefined,
+    )
 
     console.log('\n=== Table View Mode ===')
     const action = await this.menu.tableViewOptions()

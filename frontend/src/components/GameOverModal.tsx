@@ -60,7 +60,7 @@ export default function GameOverModal({
             </div>
 
             <div className="d-flex gap-2 justify-content-center mt-4">
-              <button onClick={onClose} className="btn btn-secondary px-4">
+              <button onClick={onClose} className="btn-poker btn-poker-outline px-4">
                 Close
               </button>
 
@@ -68,7 +68,7 @@ export default function GameOverModal({
                 <button
                   onClick={onResetGame}
                   disabled={isResetting}
-                  className="btn btn-warning px-4 fw-bold"
+                  className="btn-poker btn-poker-secondary px-4"
                 >
                   {isResetting ? (
                     <>

@@ -241,6 +241,7 @@ export class GameLoop {
           'player',
           String(this.gameId!),
           this.playerId || undefined,
+          this.api.getToken() || undefined,
         )
       },
       onClose: () => {
@@ -256,7 +257,13 @@ export class GameLoop {
       onError: (error) => console.error('WebSocket error:', error),
     })
 
-    this.ws.connect(this.roomCode, 'player', String(this.gameId), this.playerId)
+    this.ws.connect(
+      this.roomCode,
+      'player',
+      String(this.gameId),
+      this.playerId,
+      this.api.getToken() || undefined,
+    )
   }
 
   private isMyTurn(state: GameState): boolean {

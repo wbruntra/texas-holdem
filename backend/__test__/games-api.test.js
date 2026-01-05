@@ -437,4 +437,69 @@ describe('Games API', () => {
       }
     })
   })
+
+  describe('Authentication Headers Verification', () => {
+    it('should return both JWT token and session cookie when player joins', async () => {
+      // Create game
+      const gameResponse = await request(app).post('/api/games').send({
+        smallBlind: 5,
+        bigBlind: 10,
+        startingChips: 1000,
+      })
+
+      expect(gameResponse.status).toBe(201)
+      expect(gameResponse.body).toHaveProperty('id')
+      expect(gameResponse.body).toHaveProperty('roomCode')
+
+      // Player joins
+      const joinResponse = await request(app)
+        .post(`/api/games/${gameResponse.body.id}/join`)
+        .send({ name: 'AuthTestPlayer', password: 'testpass123' })
+
+      // Verify successful join
+      expect(joinResponse.status).toBe(201)
+      expect(joinResponse.body).toHaveProperty('player')
+      expect(joinResponse.body.player.name).toBe('AuthTestPlayer')
+
+      // Verify JWT token in response body
+      expect(joinResponse.body).toHaveProperty('token')
+      expect(typeof joinResponse.body.token).toBe('string')
+      expect(joinResponse.body.token.length).toBeGreaterThan(20)
+
+      // Verify cookie header exists
+      expect(joinResponse.headers).toHaveProperty('set-cookie')
+      const setCookieHeader = joinResponse.headers['set-cookie']
+      expect(Array.isArray(setCookieHeader)).toBe(true)
+      expect(setCookieHeader.length).toBeGreaterThan(0)
+
+      // Verify cookie contains session data
+      const sessionCookie = setCookieHeader[0]
+      expect(sessionCookie).toContain('holdem=')
+      expect(sessionCookie).toContain('path=/')
+
+      // Verify JWT token can be decoded and contains expected fields
+      const { verifyToken } = await import('../middleware/auth.js')
+      const decoded = verifyToken(joinResponse.body.token)
+      expect(decoded).toBeTruthy()
+      expect(decoded).toHaveProperty('playerId')
+      expect(decoded).toHaveProperty('gameId')
+      expect(decoded.playerId).toBe(joinResponse.body.player.id)
+      expect(decoded.gameId).toBe(gameResponse.body.id)
+
+      // Test that JWT token works for authenticated requests
+      const gameStateResponse = await request(app)
+        .get(`/api/games/${gameResponse.body.id}`)
+        .set('Authorization', `Bearer ${joinResponse.body.token}`)
+
+      expect(gameStateResponse.status).toBe(200)
+      expect(gameStateResponse.body).toHaveProperty('players')
+      expect(gameStateResponse.body.players.length).toBe(1)
+      expect(gameStateResponse.body.players[0].name).toBe('AuthTestPlayer')
+
+      // Test that session cookie format is correct
+      // Note: Cookie-based session testing requires more complex setup with jar
+      // so we'll just verify the cookie format is correct
+      expect(sessionCookie).toMatch(/^holdem=[^;]+; path=\/; httponly$/)
+    })
+  })
 })

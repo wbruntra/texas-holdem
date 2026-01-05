@@ -16,7 +16,6 @@ export interface JoinResult {
 export class ApiClient {
   private baseUrl: string
   private token: string | null = null
-  private cookies: Map<string, string> = new Map()
 
   constructor(options: ApiClientOptions = {}) {
     this.baseUrl = options.baseUrl || BASE_URL
@@ -32,28 +31,6 @@ export class ApiClient {
 
   clearSession() {
     this.token = null
-    this.cookies.clear()
-  }
-
-  private getCookieHeader(): string {
-    const parts: string[] = []
-    this.cookies.forEach((value, key) => {
-      parts.push(`${key}=${value}`)
-    })
-    return parts.join('; ')
-  }
-
-  private setCookie(cookieHeader: string) {
-    if (!cookieHeader) return
-    cookieHeader.split(';').forEach((cookie) => {
-      const trimmed = cookie.trim()
-      const equalsIndex = trimmed.indexOf('=')
-      if (equalsIndex > 0) {
-        const name = trimmed.substring(0, equalsIndex)
-        const value = trimmed.substring(equalsIndex + 1)
-        this.cookies.set(name, value)
-      }
-    })
   }
 
   private async request<T>(method: string, path: string, body?: object): Promise<T> {
@@ -66,21 +43,11 @@ export class ApiClient {
       headers['Authorization'] = `Bearer ${this.token}`
     }
 
-    const cookieHeader = this.getCookieHeader()
-    if (cookieHeader) {
-      headers['Cookie'] = cookieHeader
-    }
-
     const response = await fetch(url, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
     })
-
-    const setCookie = response.headers.get('set-cookie')
-    if (setCookie) {
-      this.setCookie(setCookie)
-    }
 
     const data = await response.json()
 

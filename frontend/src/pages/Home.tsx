@@ -77,7 +77,7 @@ export default function Home() {
           <button
             onClick={handleShowSettings}
             disabled={creating}
-            className="btn btn-primary btn-lg w-100 fw-bold"
+            className="btn-poker btn-poker-primary btn-poker-lg w-100"
           >
             {creating ? (
               <>
@@ -114,7 +114,7 @@ export default function Home() {
             <button
               onClick={handleJoinGame}
               disabled={!roomCode.trim()}
-              className="btn btn-success px-4 fw-bold"
+              className="btn-poker btn-poker-primary px-4"
             >
               Join
             </button>
@@ -216,14 +216,14 @@ export default function Home() {
               <div className="modal-footer border-secondary p-3">
                 <button
                   onClick={handleCancelSettings}
-                  className="btn btn-link text-secondary text-decoration-none me-auto"
+                  className="btn-poker btn-poker-outline me-auto"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateGame}
                   disabled={creating || bigBlind < 2 || startingChips < 100}
-                  className="btn btn-primary px-4 fw-bold"
+                  className="btn-poker btn-poker-primary px-4"
                 >
                   {creating ? 'Creating...' : 'Create Game'}
                 </button>

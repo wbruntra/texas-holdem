@@ -1,12 +1,17 @@
 .poker-table-page {
-  background-color: #1a472a;
+  background: radial-gradient(ellipse at center, var(--bg-surface) 0%, var(--bg-deep) 100%);
   color: #fff;
   min-height: 100vh;
 }
 
 .poker-table-surface {
-  background-color: #234a34;
-  border: 2px solid rgba(255, 215, 0, 0.45);
+  background:
+    radial-gradient(circle at center, rgba(26, 71, 42, 0.6) 0%, rgba(15, 50, 30, 0.8) 100%),
+    linear-gradient(135deg, #1a472a 0%, #0f321e 100%);
+  border: 2px solid var(--border-gold);
+  box-shadow:
+    inset 0 2px 20px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(212, 175, 55, 0.1);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -48,13 +53,24 @@
   align-items: center;
   transition:
     opacity 0.3s ease,
-    filter 0.3s ease;
+    filter 0.3s ease,
+    transform 0.3s ease;
   z-index: 10;
+  cursor: pointer;
+}
+
+.poker-seat:hover {
+  transform: translate(-50%, -50%) scale(1.05);
 }
 
 .poker-seat.inactive {
   opacity: 0.6;
   filter: grayscale(0.6);
+}
+
+.poker-seat.inactive:hover {
+  opacity: 0.8;
+  filter: grayscale(0.3);
 }
 
 .poker-seat.active {
@@ -67,15 +83,48 @@
 .seat-pill {
   display: flex;
   align-items: center;
-  background: rgba(20, 24, 30, 0.85);
+  background: linear-gradient(135deg, rgba(26, 32, 40, 0.9) 0%, rgba(15, 20, 28, 0.95) 100%);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-subtle);
   border-radius: 999px;
-  padding: 4px 16px 4px 4px; /* Space for avatar on left */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  padding: 4px 16px 4px 4px;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
   width: 100%;
+}
+
+.seat-pill:hover {
+  background: linear-gradient(135deg, rgba(30, 36, 44, 0.95) 0%, rgba(20, 25, 33, 1) 100%);
+  border-color: var(--border-highlight);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(16, 185, 129, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.seat-pill.active-turn {
+  background: linear-gradient(135deg, rgba(30, 40, 50, 0.95) 0%, rgba(20, 30, 40, 0.98) 100%);
+  border-color: var(--accent-secondary);
+  box-shadow:
+    0 0 20px rgba(212, 175, 55, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.seat-pill.is-winner {
+  border-color: var(--accent-primary);
+  box-shadow:
+    0 0 25px rgba(16, 185, 129, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.seat-pill.all-in {
+  border-color: var(--accent-danger);
+  box-shadow:
+    0 0 20px rgba(244, 63, 94, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .seat-pill.active-turn {
@@ -99,7 +148,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #445, #223);
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
   color: #fff;
   display: flex;
   align-items: center;
@@ -109,10 +158,16 @@
   border: 2px solid rgba(255, 255, 255, 0.1);
   margin-right: 10px;
   flex-shrink: 0;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .active-turn .seat-avatar {
-  border-color: #ffd700;
+  border-color: var(--accent-secondary);
+  box-shadow:
+    0 0 15px rgba(212, 175, 55, 0.4),
+    inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Player Info (Name & Stack) */
@@ -193,20 +248,75 @@
   height: 48px;
   background-color: #fff;
   border-radius: 4px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem; /* Symbol size */
+  font-size: 1.1rem;
   font-weight: bold;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: transform 0.2s;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.poker-card-small.deal-animation {
+  animation: dealHandCard 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+}
+
+.poker-card-small:hover {
+  transform: translateY(-3px) scale(1.1);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .poker-card-back {
-  background: repeating-linear-gradient(45deg, #003366, #003366 5px, #004080 5px, #004080 10px);
-  border: 1px solid #fff;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(0, 51, 102, 0.9) 0px,
+    rgba(0, 51, 102, 0.9) 5px,
+    rgba(0, 64, 128, 0.9) 5px,
+    rgba(0, 64, 128, 0.9) 10px
+  );
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes dealHandCard {
+  from {
+    opacity: 0;
+    transform: translateY(-40px) rotate(-10deg) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+  }
+}
+
+.poker-card-back {
+  background:
+    linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%),
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.03) 2px,
+      transparent 2px,
+      transparent 8px
+    );
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.poker-card-back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 /* Community Cards */
@@ -214,33 +324,97 @@
   width: clamp(60px, 8.4vw, 100px);
   height: clamp(84px, 12vw, 140px);
   background-color: #fff;
-  border-radius: 6px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: clamp(2rem, 5vw, 4rem);
   font-weight: 800;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.community-card.deal-animation {
+  animation: dealCard 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+}
+
+.community-card:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .community-card.back {
-  background: repeating-linear-gradient(45deg, #003366, #003366 5px, #004080 5px, #004080 10px);
-  border: 1px solid #fff;
+  background:
+    linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%),
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.03) 2px,
+      transparent 2px,
+      transparent 8px
+    );
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.community-card.back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+@keyframes dealCard {
+  from {
+    opacity: 0;
+    transform: translateY(-60px) rotate(-15deg) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+  }
 }
 
 /* Pot Display */
 .pot-display {
-  background: rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(15, 20, 28, 0.6) 100%);
   padding: 8px 24px;
   border-radius: 20px;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  border: 1px solid var(--border-gold);
   margin-top: 16px;
-  backdrop-filter: blur(4px);
-  /* min-width: 200px; */
+  backdrop-filter: blur(8px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.pot-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.pot-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-secondary);
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(212, 175, 55, 0.3);
 }
 
 .pot-label {

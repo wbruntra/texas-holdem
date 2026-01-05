@@ -163,7 +163,7 @@ export default function PlayerView() {
         <div className="mb-3 px-2">
           <button
             onClick={() => handleAction('fold')}
-            className="btn btn-danger btn-lg w-100 fw-bold shadow-sm py-3"
+            className="btn-poker btn-poker-danger btn-poker-lg w-100"
           >
             Fold
           </button>
@@ -192,7 +192,7 @@ export default function PlayerView() {
 
       <div className="px-1">
         {game.status === 'waiting' && (
-          <button onClick={startGame} className="btn btn-success btn-lg w-100 py-3 fw-bold shadow">
+          <button onClick={startGame} className="btn-poker btn-poker-primary btn-poker-lg w-100">
             🎮 Start Game
           </button>
         )}
@@ -204,7 +204,7 @@ export default function PlayerView() {
                 {validActions.canCheck && (
                   <button
                     onClick={() => handleAction('check')}
-                    className="btn btn-success btn-lg fw-bold py-3"
+                    className="btn-poker btn-poker-primary btn-poker-lg w-100"
                   >
                     ✓ Check
                   </button>
@@ -254,7 +254,7 @@ export default function PlayerView() {
                       onClick={() =>
                         handleAction('bet', Math.max(betAmount, validActions.minBet!))
                       }
-                      className="btn btn-info w-100 fw-bold py-2 text-white"
+                      className="btn-poker btn-poker-info w-100"
                     >
                       💰 Bet ${Math.max(betAmount, validActions.minBet)}
                     </button>
@@ -264,7 +264,7 @@ export default function PlayerView() {
                 {validActions.canCall && validActions.callAmount !== undefined && (
                   <button
                     onClick={() => handleAction('call')}
-                    className="btn btn-success btn-lg fw-bold py-3"
+                    className="btn-poker btn-poker-primary btn-poker-lg w-100"
                   >
                     Call ${validActions.callAmount}
                   </button>
@@ -331,7 +331,7 @@ export default function PlayerView() {
                                 const inc = Math.min(Math.max(raiseAmount, minInc), maxInc)
                                 handleAction('raise', inc)
                               }}
-                              className="btn btn-warning w-100 fw-bold py-2"
+                              className="btn-poker btn-poker-secondary w-100"
                             >
                               Raise to ${game.currentBet + inc}
                             </button>
@@ -346,7 +346,7 @@ export default function PlayerView() {
                 {validActions?.canReveal ? (
                   <button
                     onClick={revealCard}
-                    className="btn btn-info btn-lg w-100 py-3 fw-bold mb-3 shadow"
+                    className="btn-poker btn-poker-info btn-poker-lg w-100 mb-3"
                   >
                     {game.currentRound === 'river' ? '🏆 Go to Showdown' : '🃏 Reveal Next Card'}
                   </button>
@@ -366,7 +366,11 @@ export default function PlayerView() {
                     )}
                     <button
                       onClick={advanceRound}
-                      className={`btn ${validActions?.advanceReason === 'all_in_situation' ? 'btn-warning' : 'btn-primary'} btn-lg w-100 py-3 fw-bold mb-3 shadow`}
+                      className={`btn-poker btn-poker-lg w-100 mb-3 ${
+                        validActions?.advanceReason === 'all_in_situation'
+                          ? 'btn-poker-secondary'
+                          : 'btn-poker-primary'
+                      }`}
                     >
                       {(() => {
                         const activeCount = game.players.filter(

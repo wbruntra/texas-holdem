@@ -5,11 +5,32 @@
 
   color-scheme: dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #1a472a;
+
+  /* Refined color palette - Luxury Noir aesthetic */
+  --bg-deep: #0a0e14;
+  --bg-surface: #11161c;
+  --bg-elevated: #1a2028;
+  --bg-poker-table: #1a472a;
+
+  --accent-primary: #10b981;
+  --accent-primary-dim: rgba(16, 185, 129, 0.15);
+  --accent-secondary: #d4af37;
+  --accent-secondary-dim: rgba(212, 175, 55, 0.1);
+  --accent-danger: #f43f5e;
+  --accent-danger-dim: rgba(244, 63, 94, 0.1);
+  --accent-info: #06b6d4;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-highlight: rgba(16, 185, 129, 0.3);
+  --border-gold: rgba(212, 175, 55, 0.3);
 
   /* Bootstrap specific overrides */
-  --bs-body-bg: #1a472a;
-  --bs-body-color: #ffffff;
+  --bs-body-bg: var(--bg-deep);
+  --bs-body-color: var(--text-primary);
   --bs-body-font-family: 'Oswald', Helvetica, Arial, sans-serif;
 
   font-synthesis: none;
@@ -22,9 +43,22 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: var(--bs-body-bg);
-  color: var(--bs-body-color);
+  background-color: var(--bg-deep);
+  background-image: radial-gradient(ellipse at center, var(--bg-surface) 0%, var(--bg-deep) 100%);
+  color: var(--text-primary);
   font-family: var(--bs-body-font-family);
+  position: relative;
+}
+
+/* Noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* Card Styling - Not in Bootstrap */
@@ -37,17 +71,45 @@ body {
   width: 60px;
   height: 88px;
   text-align: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   user-select: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.card-display:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .card-display.small {
   width: 44px;
   height: 64px;
   font-size: 20px;
+}
+
+.card-display.deal-animation {
+  animation: dealPlayerCard 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+}
+
+@keyframes dealPlayerCard {
+  from {
+    opacity: 0;
+    transform: translateY(-60px) rotate(-15deg) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+  }
 }
 
 .card-red {
@@ -58,8 +120,15 @@ body {
 }
 
 .card-back {
-  background-color: #0066cc;
-  background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
+  background:
+    linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%),
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.03) 2px,
+      transparent 2px,
+      transparent 8px
+    );
   border-radius: 8px;
   font-size: 20px;
   font-weight: bold;
@@ -68,10 +137,23 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   opacity: 0.85;
   color: transparent;
   user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 /* Helper for slider input backgrounds */
@@ -88,4 +170,180 @@ body {
 }
 .card {
   transition: transform 0.2s ease-in-out;
+}
+
+/* Bright placeholder text for dark theme */
+.form-control::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+.form-control::-webkit-input-placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+.form-control::-moz-placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+.form-control:-ms-input-placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+/* Custom Button Styles */
+.btn-poker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-poker::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
+.btn-poker:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.btn-poker:active {
+  transform: translateY(0);
+}
+
+/* Primary Button - Emerald */
+.btn-poker-primary {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, #059669 100%);
+  color: #fff;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.btn-poker-primary:hover {
+  background: linear-gradient(135deg, #34d399 0%, var(--accent-primary) 100%);
+  box-shadow:
+    0 6px 20px rgba(16, 185, 129, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.btn-poker-primary:active {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* Secondary Button - Gold */
+.btn-poker-secondary {
+  background: linear-gradient(135deg, var(--accent-secondary) 0%, #b8960e 100%);
+  color: #0a0e14;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.btn-poker-secondary:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, var(--accent-secondary) 100%);
+  box-shadow:
+    0 6px 20px rgba(212, 175, 55, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.btn-poker-secondary:active {
+  background: linear-gradient(135deg, #b8960e 0%, #94730b 100%);
+}
+
+/* Danger Button - Red */
+.btn-poker-danger {
+  background: linear-gradient(135deg, var(--accent-danger) 0%, #e11d48 100%);
+  color: #fff;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+}
+
+.btn-poker-danger:hover {
+  background: linear-gradient(135deg, #f87171 0%, var(--accent-danger) 100%);
+  box-shadow:
+    0 6px 20px rgba(244, 63, 94, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.btn-poker-danger:active {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+}
+
+/* Info Button - Cyan */
+.btn-poker-info {
+  background: linear-gradient(135deg, var(--accent-info) 0%, #0891b2 100%);
+  color: #0a0e14;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.btn-poker-info:hover {
+  background: linear-gradient(135deg, #22d3ee 0%, var(--accent-info) 100%);
+  box-shadow:
+    0 6px 20px rgba(6, 182, 212, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.btn-poker-info:active {
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+}
+
+/* Outline Button */
+.btn-poker-outline {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+.btn-poker-outline:hover {
+  background: var(--accent-primary-dim);
+  border-color: var(--accent-primary);
+  color: #fff;
+}
+
+.btn-poker-outline:active {
+  background: var(--accent-primary-dim);
+  transform: translateY(0);
+}
+
+/* Button Sizes */
+.btn-poker-lg {
+  padding: 16px 32px;
+  font-size: 1.125rem;
+}
+
+.btn-poker-sm {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+}
+
+/* Disabled State */
+.btn-poker:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Button with Icon */
+.btn-poker .icon {
+  margin-right: 8px;
+  font-size: 1.2em;
 }
