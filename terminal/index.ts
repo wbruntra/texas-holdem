@@ -3,6 +3,7 @@ import { MenuSystem } from './menu'
 import { Display } from './display'
 import { ActionSelector } from './action-selector'
 import { GameLoop } from './game-loop'
+import { sessionStorage } from './session-storage'
 
 class PokerTerminal {
   private api = api
@@ -15,9 +16,17 @@ class PokerTerminal {
     this.display.printWelcome()
 
     while (true) {
-      const choice = await this.menu.mainMenu()
+      const savedSession = sessionStorage.load()
+      const choice = await this.menu.mainMenu(
+        savedSession
+          ? { roomCode: savedSession.roomCode, playerName: savedSession.playerName }
+          : undefined,
+      )
 
       switch (choice) {
+        case 'reconnect':
+          await this.handleReconnect()
+          break
         case 'create':
           await this.handleCreateGame()
           break
@@ -52,6 +61,36 @@ class PokerTerminal {
     }
   }
 
+  private async handleReconnect() {
+    const savedSession = sessionStorage.load()
+    if (!savedSession) {
+      this.display.printError('No saved session found')
+      return
+    }
+
+    console.log(`\nReconnecting to game ${savedSession.roomCode}...`)
+
+    try {
+      const game = await this.api.getGameByRoomCode(savedSession.roomCode)
+      if (!game) {
+        this.display.printError('Game not found')
+        sessionStorage.clear()
+        return
+      }
+
+      await this.api.joinGame(game.id, savedSession.playerName, savedSession.password)
+      await this.gameLoop.run(
+        game.id,
+        savedSession.roomCode,
+        savedSession.playerName,
+        savedSession.password,
+      )
+    } catch (err) {
+      this.display.printError(`Failed to reconnect: ${(err as Error).message}`)
+      sessionStorage.clear()
+    }
+  }
+
   private async handleJoinGame() {
     console.log('\n=== Join Existing Game ===')
     const roomCode = await this.menu.promptRoomCode()
@@ -74,7 +113,7 @@ class PokerTerminal {
 
     try {
       await this.api.joinGame(gameId, name, password)
-      await this.gameLoop.run(gameId, roomCode.toUpperCase(), name)
+      await this.gameLoop.run(gameId, roomCode.toUpperCase(), name, password)
     } catch (err) {
       this.display.printError(`Failed to join game: ${(err as Error).message}`)
     }

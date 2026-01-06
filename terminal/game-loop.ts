@@ -4,6 +4,7 @@ import { Display } from './display'
 import { ActionSelector, type ActionResult } from './action-selector'
 import { api, ApiClient } from './api-client'
 import type { GameState, ValidActions } from './types'
+import { sessionStorage } from './session-storage'
 
 const BACKEND_PORT = 3660
 
@@ -25,7 +26,12 @@ export class GameLoop {
     private actionSelector: ActionSelector,
   ) {}
 
-  async run(gameId: number, roomCode: string, playerName: string): Promise<void> {
+  async run(
+    gameId: number,
+    roomCode: string,
+    playerName: string,
+    password: string,
+  ): Promise<void> {
     this.gameId = gameId
     this.roomCode = roomCode.toUpperCase()
     this.playerName = playerName
@@ -36,6 +42,13 @@ export class GameLoop {
       this.playerId = me.id
     }
     this.gameState = state
+
+    sessionStorage.save({
+      roomCode: this.roomCode,
+      playerName: this.playerName,
+      password: password,
+      gameId: this.gameId,
+    })
 
     console.log(`\n✓ Joined game as ${playerName}`)
     await this.loop()
@@ -291,5 +304,6 @@ export class GameLoop {
     this.gameState = null
     this.validActions = null
     this.isHandlingTurn = false
+    sessionStorage.clear()
   }
 }

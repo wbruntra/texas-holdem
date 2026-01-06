@@ -36,3 +36,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 secrets.js
 *.sqlite3
 *.db
+
+# terminal session storage
+terminal/.last-session.json

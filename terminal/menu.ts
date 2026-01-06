@@ -9,17 +9,31 @@ export class MenuSystem {
     this.api = api
   }
 
-  async mainMenu(): Promise<'create' | 'join' | 'view' | 'exit'> {
+  async mainMenu(savedSession?: {
+    roomCode: string
+    playerName: string
+  }): Promise<'create' | 'join' | 'view' | 'exit' | 'reconnect'> {
+    const choices = []
+
+    if (savedSession) {
+      choices.push({
+        name: `Reconnect to last session (Room: ${savedSession.roomCode}, Player: ${savedSession.playerName})`,
+        value: 'reconnect',
+      })
+    }
+
+    choices.push(
+      { name: 'Create new game', value: 'create' },
+      { name: 'Join existing game', value: 'join' },
+      { name: 'View table state (no auth)', value: 'view' },
+      { name: 'Exit', value: 'exit' },
+    )
+
     const { choice } = await inquirer.prompt({
       type: 'list',
       name: 'choice',
       message: 'Main Menu',
-      choices: [
-        { name: 'Create new game', value: 'create' },
-        { name: 'Join existing game', value: 'join' },
-        { name: 'View table state (no auth)', value: 'view' },
-        { name: 'Exit', value: 'exit' },
-      ],
+      choices,
     })
     return choice
   }
