@@ -1,4 +1,5 @@
 import type { GameState } from '~/components/table/types'
+import PokerCard from '~/components/table/PokerCard'
 
 interface PlayerShowdownProps {
   game: GameState
@@ -15,27 +16,15 @@ export default function PlayerShowdown({
   onNextHand,
   onToggleShowCards,
 }: PlayerShowdownProps) {
-  const getSuitClass = (suit: string) => {
-    return suit === 'hearts' || suit === 'diamonds' ? 'card-red' : 'card-black'
-  }
-
-  const formatCard = (card: { rank: string; suit: string }) => {
-    const suitSymbols: Record<string, string> = {
-      hearts: '♥',
-      diamonds: '♦',
-      clubs: '♣',
-      spades: '♠',
-    }
-    return `${card.rank}${suitSymbols[card.suit] || card.suit}`
-  }
-
   return (
-    <div className="card bg-dark text-white border-secondary mb-4">
-      <div className="card-body">
-        <h3 className="text-center mb-3">Showdown</h3>
+    <div className="d-flex flex-column h-100">
+      <div className="text-center mb-3">
+        <h3 className="mb-0">Showdown</h3>
+      </div>
 
+      <div className="flex-grow-1 overflow-auto overflow-x-hidden p-1">
         {game.pots && game.pots.length > 0 && (
-          <div className="mb-4">
+          <div className="mb-3">
             {game.pots.map((pot, idx) => {
               if (!pot.winners || pot.winners.length === 0) return null
 
@@ -46,18 +35,22 @@ export default function PlayerShowdown({
               const winAmount = pot.winAmount || Math.floor(pot.amount / pot.winners.length)
 
               return (
-                <div key={idx} className="alert alert-success text-center mb-2">
+                <div
+                  key={idx}
+                  className="bg-success bg-opacity-25 border border-success border-opacity-25 rounded p-2 mb-2 text-center"
+                >
                   <div
-                    className="small text-uppercase text-muted mb-1"
+                    className="small text-uppercase text-white-50 mb-1"
                     style={{ fontSize: '0.7rem' }}
                   >
                     {potLabel}
                   </div>
                   {potWinners.map((winner, wIdx) => (
                     <div key={wIdx} className="mb-1">
-                      <strong>{winner.name}</strong> won <strong>${winAmount}</strong>
+                      <strong>{winner.name}</strong> won{' '}
+                      <strong className="text-warning">${winAmount}</strong>
                       {pot.winningRankName && (
-                        <span className="text-muted"> with {pot.winningRankName}</span>
+                        <div className="small text-white-50">{pot.winningRankName}</div>
                       )}
                     </div>
                   ))}
@@ -67,65 +60,51 @@ export default function PlayerShowdown({
           </div>
         )}
 
-        {(!game.pots || game.pots.length === 0) && winnerPositions.length > 0 && (
-          <div className="alert alert-success text-center mb-4">
-            <div className="h5 mb-1">
-              Winner{winnerPositions.length > 1 ? 's' : ''}:{' '}
-              <strong>
-                {game.players
-                  .filter((p) => winnerPositions.includes(p.position))
-                  .map((p) => p.name)
-                  .join(', ')}
-              </strong>
-            </div>
-          </div>
-        )}
-
-        <div className="row g-3">
+        <div className="row g-2">
           {game.players.map((p) => (
-            <div key={p.id} className="col-12 col-md-6">
+            <div key={p.id} className="col-6">
               <div
-                className={`card h-100 ${
+                className={`p-2 rounded h-100 ${
                   winnerPositions.includes(p.position)
-                    ? 'border-warning bg-opacity-25 bg-success'
-                    : 'border-secondary bg-transparent'
+                    ? 'bg-warning bg-opacity-10 border border-warning'
+                    : 'bg-black bg-opacity-25 border border-white border-opacity-10'
                 }`}
               >
-                <div className="card-body p-2 text-center">
-                  <div className="fw-bold mb-2">
-                    {p.name}
-                    {winnerPositions.includes(p.position) ? ' 🏆' : ''}
+                <div className="text-center mb-2">
+                  <div className="fw-bold text-truncate" style={{ fontSize: '0.9rem' }}>
+                    {p.name} {winnerPositions.includes(p.position) && '🏆'}
                   </div>
-                  <div className="d-flex gap-2 justify-content-center">
-                    {(p.holeCards || []).length > 0 ? (
-                      p.holeCards!.map((card, idx) => (
-                        <div key={idx} className={`card-display small ${getSuitClass(card.suit)}`}>
-                          {formatCard(card)}
-                        </div>
-                      ))
-                    ) : (
-                      <>
-                        <div className="card-back">🂠</div>
-                        <div className="card-back">🂠</div>
-                      </>
-                    )}
-                  </div>
+                </div>
+                <div className="d-flex gap-1 justify-content-center">
+                  {(p.holeCards || []).length > 0 ? (
+                    p.holeCards!.map((card, idx) => (
+                      <PokerCard key={idx} card={card} className="small" />
+                    ))
+                  ) : (
+                    <>
+                      <PokerCard hidden className="small" />
+                      <PokerCard hidden className="small" />
+                    </>
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
+      </div>
 
+      <div className="mt-3">
         {amWinner &&
           game.players.filter((p) => p.status === 'active' || p.status === 'all_in').length ===
             1 && (
-            <div className="text-center mt-3">
+            <div className="mb-3">
               <button
                 onClick={() => {
                   const me = game.players.find((p) => winnerPositions.includes(p.position))
                   if (me) onToggleShowCards(!((me as { showCards?: boolean }).showCards ?? false))
                 }}
-                className="btn btn-outline-info btn-sm"
+                className="btn-poker btn-poker-info w-100 btn-action-lg"
+                style={{ height: '48px', fontSize: '1rem' }}
               >
                 {game.players.find((p) => winnerPositions.includes(p.position))?.showCards
                   ? '🙈 Hide Cards'
@@ -136,7 +115,9 @@ export default function PlayerShowdown({
 
         <button
           onClick={onNextHand}
-          className={`btn btn-lg w-100 mt-4 ${amWinner ? 'btn-warning text-dark fw-bold' : 'btn-success fw-bold'}`}
+          className={`btn-poker w-100 btn-action-lg ${
+            amWinner ? 'btn-poker-secondary' : 'btn-poker-primary'
+          }`}
         >
           {amWinner ? '🏆 Next Hand' : 'Start Next Hand'}
         </button>

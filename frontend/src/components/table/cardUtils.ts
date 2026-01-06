@@ -13,13 +13,13 @@ export const formatCard = (card: Card) => {
 export const getSuitColor = (suit: string) => {
   switch (suit.toLowerCase()) {
     case 'hearts':
-      return '#e00'
+      return '#e00' // Red
     case 'diamonds':
-      return '#26f'
+      return '#26f' // Blue
     case 'clubs':
-      return '#080'
+      return '#080' // Green
     case 'spades':
-      return '#000'
+      return '#000' // Black
     default:
       return '#000'
   }

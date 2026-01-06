@@ -11,7 +11,7 @@ type Props = {
   children?: ReactNode
 }
 
-function computeSeatStyle(index: number, count: number): CSSProperties {
+function computeSeatStyle(index: number, count: number): { style: CSSProperties; angle: number } {
   const angleOffset = -Math.PI / 2
   const angle = angleOffset + (index / Math.max(count, 1)) * Math.PI * 2
 
@@ -22,15 +22,18 @@ function computeSeatStyle(index: number, count: number): CSSProperties {
   const top = 50 + radius * Math.sin(angle)
 
   return {
-    left: `${left}%`,
-    top: `${top}%`,
+    style: {
+      left: `${left}%`,
+      top: `${top}%`,
+    },
+    angle,
   }
 }
 
 export default function PokerTableScene({ game, wsConnected, children }: Props) {
   const activePlayers = game.players.filter((p) => p.status !== 'out')
 
-  const seatStyles = useMemo(() => {
+  const seatData = useMemo(() => {
     return game.players.map((_, idx) => computeSeatStyle(idx, game.players.length))
   }, [game.players])
 
@@ -65,15 +68,38 @@ export default function PokerTableScene({ game, wsConnected, children }: Props) 
             <div className="poker-table-inner">
               <CommunityCenter game={game} />
 
-              {game.players.map((player, idx) => (
-                <PlayerSeat
-                  key={player.id}
-                  game={game}
-                  player={player}
-                  index={idx}
-                  style={seatStyles[idx]}
-                />
-              ))}
+              {game.players.map((player, idx) => {
+                const { style, angle } = seatData[idx]
+                // Calculate chip position: push towards center
+                // Center is at 50,50. Seat is at left,top.
+                // We want chips to be placed *in front* of seat.
+                // Vector to center is (-cos(angle), -sin(angle))
+
+                // Determine orientation based on 45-degree sectors
+
+                // sin dominates -> Vertical (Top/Bottom)
+                // cos dominates -> Horizontal (Left/Right)
+                const sin = Math.sin(angle)
+                const cos = Math.cos(angle)
+                let orientation: 'top' | 'bottom' | 'left' | 'right' = 'bottom'
+
+                if (Math.abs(sin) > Math.abs(cos)) {
+                  orientation = sin < 0 ? 'top' : 'bottom'
+                } else {
+                  orientation = cos > 0 ? 'right' : 'left'
+                }
+
+                return (
+                  <PlayerSeat
+                    key={player.id}
+                    game={game}
+                    player={player}
+                    index={idx}
+                    style={style}
+                    orientation={orientation}
+                  />
+                )
+              })}
             </div>
           </div>
         </div>

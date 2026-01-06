@@ -1,7 +1,8 @@
 import type { GameState } from '~/components/table/types'
-import { formatCard, getSuitColor } from '~/components/table/cardUtils'
 import { getDisplayPot } from '~/utils/potUtils'
 import CountUp from '~/components/CountUp'
+import PokerCard from './PokerCard'
+import ChipStack from './ChipStack'
 
 type Props = {
   game: GameState
@@ -21,25 +22,33 @@ export default function CommunityCenter({ game }: Props) {
 
           if (card) {
             return (
-              <div
+              <PokerCard
                 key={idx}
-                className="community-card deal-animation"
+                card={card}
+                className="deal-animation large"
                 style={{
-                  color: getSuitColor(card.suit),
                   animationDelay: `${idx * 0.08}s`,
                 }}
-                aria-label={`Community card ${idx + 1}: ${formatCard(card)}`}
-              >
-                {formatCard(card)}
-              </div>
+              />
             )
           }
 
           return (
-            <div
+            <PokerCard
               key={idx}
-              className="community-card back"
-              aria-label={`Community card ${idx + 1}: face down`}
+              hidden
+              className="large"
+              style={{ opacity: 0.1 }} // subtle ghost placeholder or keep it clear?
+              // Actually, previous code used "back" class but maybe we just want empty slots or backs?
+              // The previous code rendered "back" for empty slots?
+              // Let's re-read the original code.
+              // Original code: if (card) { ... } else { className="community-card back" }
+              // So it showed backs for future cards? Or placeholders?
+              // Usually in poker apps you see empty placeholders or nothing.
+              // But if the design expects 5 slots, let's keep it consistent.
+              // Wait, standard holdem doesn't show backs for future community cards usually,
+              // but maybe the "back" class was just a placeholder.
+              // Let's use hidden=true for now, effectively showing a card back.
             />
           )
         })}
@@ -79,8 +88,11 @@ export default function CommunityCenter({ game }: Props) {
         ) : (
           <div className="pot-display">
             <div className="pot-label">Pot</div>
-            <div className="pot-amount">
-              <CountUp key={potAnimationKey} end={displayPot} duration={400} prefix="$" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <ChipStack amount={displayPot} showAmount={false} />
+              <div className="pot-amount">
+                <CountUp key={potAnimationKey} end={displayPot} duration={400} prefix="$" />
+              </div>
             </div>
           </div>
         )}

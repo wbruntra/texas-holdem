@@ -25,13 +25,10 @@ export default function PlayerJoinGame({
   return (
     <div className="container d-flex flex-column justify-content-center align-items-center min-vh-100">
       <div
-        className="card p-4 text-white"
+        className="glass-panel p-4 text-white"
         style={{
           maxWidth: '420px',
           width: '100%',
-          background: 'linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-deep) 100%)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
         }}
       >
         <h1 className="text-center mb-2">Join Game</h1>

@@ -5,15 +5,49 @@
 }
 
 .poker-table-surface {
-  background:
-    radial-gradient(circle at center, rgba(26, 71, 42, 0.6) 0%, rgba(15, 50, 30, 0.8) 100%),
-    linear-gradient(135deg, #1a472a 0%, #0f321e 100%);
-  border: 2px solid var(--border-gold);
+  /* Bootstrap's .ratio > * sets position: absolute, top/left/width/height: 100% */
+  /* We must NOT override position to relative, or it collapses in the ratio container */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  background-color: #1a472a;
+  background-image:
+    /* Vignette */
+    radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.6) 100%),
+    /* Felt Noise */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E");
+
+  border: 4px solid #3e2723; /* Dark Wood Rim */
+
   box-shadow:
-    inset 0 2px 20px rgba(0, 0, 0, 0.5),
-    0 0 40px rgba(212, 175, 55, 0.1);
+    0 0 0 2px rgba(212, 175, 55, 0.5),
+    /* Gold trim inside wood */ inset 0 0 40px rgba(0, 0, 0, 0.8),
+    0 20px 50px rgba(0, 0, 0, 0.5);
   border-radius: 999px;
   overflow: hidden;
+}
+
+/* Dealer Button (The Puck) */
+.dealer-button {
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(circle at 30% 30%, #fff, #e0e0e0);
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  color: #000;
+  font-size: 14px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 15;
+  user-select: none;
 }
 
 .poker-table-inner {
@@ -51,6 +85,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 8px; /* Spacing between cards and pill */
   transition:
     opacity 0.3s ease,
     filter 0.3s ease,
@@ -59,8 +94,42 @@
   cursor: pointer;
 }
 
+/* 
+  Layout Logic: [Outer, Middle, Inner] -> [Cards, Pill, Chips]
+  Top: Column. Cards(Top) -> Pill -> Chips(Bottom/Center).
+  Bottom: Column-Reverse. Chips(Top/Center) -> Pill -> Cards(Bottom).
+  Left: Row. Cards(Left) -> Pill -> Chips(Right/Center).
+  Right: Row-Reverse. Chips(Left/Center) -> Pill -> Cards(Right).
+*/
+
+.poker-seat.orient-top {
+  flex-direction: column;
+}
+
+.poker-seat.orient-bottom {
+  flex-direction: column-reverse;
+}
+
+.poker-seat.orient-left {
+  flex-direction: row;
+}
+
+.poker-seat.orient-right {
+  flex-direction: row-reverse;
+}
+
+/* Ensure chips container has size even if empty to prevent jitter? 
+   Actually better to hide if empty to keep layout tight.
+*/
+.seat-chips {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .poker-seat:hover {
   transform: translate(-50%, -50%) scale(1.05);
+  z-index: 20; /* Ensure hover is above others */
 }
 
 .poker-seat.inactive {
@@ -235,12 +304,8 @@
 .hand-container {
   display: flex;
   justify-content: center;
-  position: absolute;
-  top: 92%; /* Overlap bottom edge only */
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5; /* Behind pill? No, usually in front or partially behind. Prompt says "Overlap the bottom edge". If z-index is lower than pill, it's behind. If higher, on top. Usually cards are held in front or behind. Let's try *on top* of the bottom edge. */
   z-index: 15;
+  /* Removed absolute positioning to allow flexbox flow */
 }
 
 .poker-card-small {

@@ -1,0 +1,101 @@
+/* Base Card Structure */
+.poker-card {
+  width: 50px;
+  height: 70px;
+  background-color: #fff;
+  border-radius: 6px;
+  position: relative;
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  font-family: 'Arial', sans-serif; /* Clean sans-serif for max readability */
+}
+
+/* Colors - 4 Color Deck */
+.poker-card.text-red {
+  color: #d00;
+}
+.poker-card.text-black {
+  color: #000;
+}
+.poker-card.text-blue {
+  color: #0066cc;
+}
+.poker-card.text-green {
+  color: #008000;
+}
+
+/* Main Content */
+.card-text {
+  font-size: 34px;
+  font-weight: bold;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Card Back */
+.poker-card.card-back {
+  background: #2c3e50;
+  border: 2px solid #fff;
+  opacity: 1 !important; /* Force opacity to 1 to override legacy styles */
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.05) 0px,
+    rgba(255, 255, 255, 0.05) 2px,
+    transparent 2px,
+    transparent 10px
+  );
+}
+
+/* Hover effects */
+.poker-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Animations */
+@keyframes dealHandCard {
+  from {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dealCommunityCard {
+  from {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.poker-card.deal-animation {
+  animation: dealHandCard 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+}
+
+.poker-card.large.deal-animation {
+  animation: dealCommunityCard 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+}
+
+/* Large / Community Cards - Max Visibility */
+.poker-card.large {
+  width: clamp(60px, 8vw, 100px);
+  height: clamp(84px, 11vw, 140px);
+}
+
+.poker-card.large .card-text {
+  font-size: clamp(36px, 4.6vw, 72px);
+}

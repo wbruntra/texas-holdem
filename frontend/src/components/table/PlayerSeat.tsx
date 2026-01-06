@@ -1,15 +1,17 @@
 import type { CSSProperties } from 'react'
 import type { GameState, Player } from './types'
-import { formatCard, getSuitColor } from './cardUtils'
+import PokerCard from './PokerCard'
+import ChipStack from './ChipStack'
 
 type Props = {
   game: GameState
   player: Player
   index: number
   style: CSSProperties
+  orientation?: 'top' | 'bottom' | 'left' | 'right'
 }
 
-export default function PlayerSeat({ game, player, index, style }: Props) {
+export default function PlayerSeat({ game, player, index, style, orientation = 'bottom' }: Props) {
   const isFolded = player.status === 'folded'
   const isAllIn = player.status === 'all_in'
   // Active means involved in hand (not folded), OR it's their turn
@@ -32,13 +34,60 @@ export default function PlayerSeat({ game, player, index, style }: Props) {
 
   return (
     <div
-      className={`poker-seat ${isActive || isCurrentTurn ? 'active' : 'inactive'} ${isFolded ? 'is-folded' : ''}`}
+      className={`poker-seat orient-${orientation} ${isActive || isCurrentTurn ? 'active' : 'inactive'} ${isFolded ? 'is-folded' : ''}`}
       style={style}
     >
-      {/* Bet Bubble - Absolute positioned above/outside */}
-      {player.currentBet > 0 && <div className="bet-bubble">${player.currentBet}</div>}
+      {/* Cards Display - Outer Element */}
+      {/* Only show cards if not folded */}
+      {!isFolded && (isActive || isAllIn || isShowdown) && (
+        <div className="hand-container">
+          {/* Security principle: Backend controls what we receive.
+              If we have hole cards, show them face-up.
+              If not, show card backs.
+              The backend will only send cards when they should be visible. */}
+          {player.holeCards && player.holeCards.length > 0 ? (
+            player.holeCards.slice(0, 2).map((card, i) => (
+              <div
+                key={i}
+                style={{
+                  transform:
+                    i === 0 ? 'rotate(-8deg) translateX(-8px)' : 'rotate(8deg) translateX(8px)',
+                  zIndex: i === 0 ? 1 : 2,
+                  marginTop: i === 1 ? '4px' : '0',
+                  display: 'flex', // Ensure wrapper behaves correctly
+                }}
+              >
+                <PokerCard card={card} className="small deal-animation" />
+              </div>
+            ))
+          ) : (
+            <>
+              {/* Card Backs - shown when backend doesn't send cards */}
+              <div
+                style={{
+                  transform: 'rotate(-8deg) translateX(-8px)',
+                  zIndex: 1,
+                  display: 'flex',
+                }}
+              >
+                <PokerCard hidden className="small" />
+              </div>
+              <div
+                style={{
+                  transform: 'rotate(8deg) translateX(8px)',
+                  zIndex: 2,
+                  marginTop: '4px',
+                  display: 'flex',
+                }}
+              >
+                <PokerCard hidden className="small" />
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
-      {/* Main Pill Container */}
+      {/* Main Pill Container - Middle Element */}
       <div
         className={`seat-pill ${isCurrentTurn ? 'active-turn' : ''} ${isWinner ? 'is-winner' : ''} ${isAllIn ? 'all-in' : ''}`}
       >
@@ -46,25 +95,19 @@ export default function PlayerSeat({ game, player, index, style }: Props) {
         <div className="seat-avatar">
           {getInitials(player.name)}
 
-          {/* Dealer Button Overlay */}
+          {/* Dealer Button Overlay - Inside avatar again */}
           {isDealer && (
             <div
+              className="dealer-button"
               style={{
                 position: 'absolute',
-                bottom: -4,
-                right: -4,
-                backgroundColor: '#ffc107',
-                color: '#000',
-                width: '16px',
-                height: '16px',
-                borderRadius: '50%',
-                fontSize: '10px',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                bottom: -6,
+                right: -6,
+                width: '18px',
+                height: '18px',
+                fontSize: '11px',
+                zIndex: 20,
                 border: '1px solid #fff',
-                zIndex: 5,
               }}
               title="Dealer"
             >
@@ -85,45 +128,10 @@ export default function PlayerSeat({ game, player, index, style }: Props) {
         </div>
       </div>
 
-      {/* Cards Display */}
-      {/* Only show cards if not folded */}
-      {!isFolded && (isActive || isAllIn || isShowdown) && (
-        <div className="hand-container">
-          {/* Security principle: Backend controls what we receive.
-              If we have hole cards, show them face-up.
-              If not, show card backs.
-              The backend will only send cards when they should be visible. */}
-          {player.holeCards && player.holeCards.length > 0 ? (
-            player.holeCards.slice(0, 2).map((card, i) => (
-              <div
-                key={i}
-                className="poker-card-small"
-                style={{
-                  color: getSuitColor(card.suit),
-                  transform:
-                    i === 0 ? 'rotate(-6deg) translateX(4px)' : 'rotate(6deg) translateX(-4px)',
-                  zIndex: i === 0 ? 1 : 2,
-                  marginTop: i === 1 ? '4px' : '0',
-                }}
-              >
-                {formatCard(card)}
-              </div>
-            ))
-          ) : (
-            <>
-              {/* Card Backs - shown when backend doesn't send cards */}
-              <div
-                className="poker-card-small poker-card-back"
-                style={{ transform: 'rotate(-6deg) translateX(4px)', zIndex: 1 }}
-              />
-              <div
-                className="poker-card-small poker-card-back"
-                style={{ transform: 'rotate(6deg) translateX(-4px)', zIndex: 2 }}
-              />
-            </>
-          )}
-        </div>
-      )}
+      {/* Bet Chips - Inner Element */}
+      <div className="seat-chips" style={{ minWidth: '24px', minHeight: '24px' }}>
+        {player.currentBet > 0 && <ChipStack amount={player.currentBet} />}
+      </div>
     </div>
   )
 }

@@ -2,9 +2,22 @@ import { useParams } from 'react-router-dom'
 import HorizontalSlider from '~/components/HorizontalSlider'
 import PlayerJoinGame from '~/components/PlayerJoinGame'
 import PlayerShowdown from '~/components/PlayerShowdown'
+import PokerCard from '~/components/table/PokerCard'
 import { usePlayerGame } from '~/hooks/usePlayerGame'
 import { getDisplayPot } from '~/utils/potUtils'
-import type { Player, Pot, Card } from '~/components/table/types'
+import type { Player, Card } from '~/components/table/types'
+
+// Import sound assets
+import checkSoundUrl from '~/assets/check.mp3'
+import betSoundUrl from '~/assets/bet.wav'
+import foldSoundUrl from '~/assets/card_flip.mp3'
+
+// Preload sounds
+const audioMap = {
+  check: new Audio(checkSoundUrl),
+  bet: new Audio(betSoundUrl),
+  fold: new Audio(foldSoundUrl),
+}
 
 export default function PlayerView() {
   const { roomCode } = useParams<{ roomCode: string }>()
@@ -24,31 +37,28 @@ export default function PlayerView() {
     startGame,
     performAction,
     nextHand,
-    revealCard,
-    advanceRound,
     toggleShowCards,
     setBetAmount,
     setRaiseAmount,
   } = usePlayerGame(roomCode)
 
+  const playSound = (type: 'check' | 'bet' | 'fold') => {
+    const audio = audioMap[type]
+    if (audio) {
+      audio.currentTime = 0
+      audio.play().catch((e) => console.log('Audio play failed', e))
+    }
+  }
+
   const handleAction = async (action: string, amount?: number) => {
+    // Play sound immediately on interaction
+    if (action === 'check') playSound('check')
+    else if (action === 'fold') playSound('fold')
+    else if (['bet', 'raise', 'call'].includes(action)) playSound('bet')
+
     await performAction(action, amount)
     setBetAmount(0)
     setRaiseAmount(0)
-  }
-
-  const formatCard = (card: { rank: string; suit: string }) => {
-    const suitSymbols: Record<string, string> = {
-      hearts: '♥',
-      diamonds: '♦',
-      clubs: '♣',
-      spades: '♠',
-    }
-    return `${card.rank}${suitSymbols[card.suit] || card.suit}`
-  }
-
-  const getSuitClass = (suit: string) => {
-    return suit === 'hearts' || suit === 'diamonds' ? 'card-red' : 'card-black'
   }
 
   if (checkingAuth) {
@@ -97,327 +107,209 @@ export default function PlayerView() {
   const displayPot = getDisplayPot(game.players, game.pots)
 
   return (
-    <div className="container py-2" style={{ maxWidth: '480px' }}>
-      <div className="card bg-dark text-white border-secondary p-3 pt-1 mb-3 shadow-sm">
-        <div className="card-body p-2">
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <div className="fw-bold text-truncate" style={{ maxWidth: '60%' }}>
-              {playerName}
+    <div
+      className="container-fluid d-flex flex-column min-vh-100 p-3"
+      style={{ maxWidth: '600px', margin: '0 auto' }}
+    >
+      <div
+        className={`glass-panel p-3 mb-3 d-flex flex-column gap-3 ${isMyTurn ? 'turn-active' : ''}`}
+      >
+        <div className="d-flex justify-content-between align-items-center">
+          <div className="d-flex flex-column">
+            <div className="text-secondary small text-uppercase" style={{ letterSpacing: '1px' }}>
+              Player
             </div>
-            <div className="badge bg-success bg-opacity-25 text-success fs-6">
-              ${myPlayer?.chips || 0}
-            </div>
+            <div className="fw-bold h4 mb-0">{playerName}</div>
           </div>
-
-          <div className="text-center bg-black bg-opacity-25 rounded p-2 mb-2 border border-secondary border-opacity-25">
-            <div
-              className="small text-secondary text-uppercase"
-              style={{ fontSize: '0.7rem', letterSpacing: '1px' }}
-            >
-              Total Pot
+          <div className="d-flex flex-column align-items-end">
+            <div className="text-secondary small text-uppercase" style={{ letterSpacing: '1px' }}>
+              Stack
             </div>
-            <div className="h2 text-warning mb-0 fw-bold">${displayPot}</div>
-
-            {game.pots && game.pots.length > 1 && (
-              <div className="d-flex justify-content-center gap-2 mt-1">
-                {game.pots.map((pot: Pot, idx: number) => (
-                  <span
-                    key={idx}
-                    className="badge bg-secondary bg-opacity-50 text-light"
-                    style={{ fontSize: '0.6rem' }}
-                  >
-                    {idx === 0 ? 'Main' : `Side ${idx}`}: ${pot.amount}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {(game.currentBet > 0 || (myPlayer && myPlayer.currentBet > 0)) && (
-              <div className="d-flex justify-content-center gap-3 mt-2 pt-2 border-top border-secondary border-opacity-25">
-                {game.currentBet > 0 && (
-                  <div className="small text-info fw-bold">To Call: ${game.currentBet}</div>
-                )}
-                {myPlayer && myPlayer.currentBet > 0 && (
-                  <div className="small text-warning">Your Bet: ${myPlayer.currentBet}</div>
-                )}
-              </div>
-            )}
+            <div className="fw-bold h4 mb-0 text-success">${myPlayer?.chips || 0}</div>
           </div>
+        </div>
 
-          <div
-            className="d-flex justify-content-between align-items-center text-secondary px-1"
-            style={{ fontSize: '0.75rem' }}
-          >
-            <div>
-              Room: <span className="text-light">{game.roomCode}</span>
-            </div>
-            <div className="text-capitalize">{game.currentRound}</div>
-            <div className={wsConnected ? 'text-success' : 'text-warning'}>
-              {wsConnected ? '⚡ Connected' : '🔄 Polling'}
-            </div>
+        <div className="d-flex justify-content-between align-items-center border-top border-secondary border-opacity-25 pt-2">
+          <div className="small">
+            <span className="text-secondary">Room:</span>{' '}
+            <span className="text-white fw-bold">{game.roomCode}</span>
+          </div>
+          <div className={`small fw-bold ${wsConnected ? 'text-success' : 'text-warning'}`}>
+            {wsConnected ? '● LIVE' : '○ POLL'}
           </div>
         </div>
       </div>
 
-      {game.status === 'active' && isMyTurn && validActions?.canAct && validActions.canFold && (
-        <div className="mb-3 px-2">
-          <button
-            onClick={() => handleAction('fold')}
-            className="btn-poker btn-poker-danger btn-poker-lg w-100"
-          >
-            Fold
-          </button>
+      {isShowdown ? (
+        <div className="glass-panel flex-grow-1 p-3">
+          <PlayerShowdown
+            game={game}
+            winnerPositions={winnerPositions}
+            amWinner={amWinner}
+            onNextHand={nextHand}
+            onToggleShowCards={toggleShowCards}
+          />
         </div>
-      )}
+      ) : (
+        <>
+          {/* Moved Fold Button to the top for safety */}
+          {game.status === 'active' &&
+            isMyTurn &&
+            validActions?.canAct &&
+            validActions.canFold && (
+              <div className="mb-3">
+                <button
+                  onClick={() => handleAction('fold')}
+                  className="btn-poker btn-poker-danger btn-action-lg w-100"
+                >
+                  <span>Fold</span>
+                  <span>✕</span>
+                </button>
+              </div>
+            )}
 
-      {myPlayer?.holeCards && myPlayer.holeCards.length > 0 && (
-        <div className="d-flex gap-2 justify-content-center mb-4">
-          {myPlayer.holeCards.map((card: Card, idx: number) => (
-            <div key={idx} className={`card-display ${getSuitClass(card.suit)}`}>
-              {formatCard(card)}
+          <div className="glass-panel flex-grow-1 p-3 d-flex flex-column justify-content-center align-items-center mb-3 text-center">
+            <div className="mb-4 w-100">
+              <div
+                className="text-secondary text-uppercase small mb-1"
+                style={{ letterSpacing: '2px' }}
+              >
+                Pot
+              </div>
+              <div
+                className="display-3 fw-bold text-warning"
+                style={{ textShadow: '0 2px 10px rgba(212, 175, 55, 0.3)' }}
+              >
+                ${displayPot}
+              </div>
+              {game.currentBet > 0 && (
+                <div className="mt-2 text-info fw-bold">To Call: ${game.currentBet}</div>
+              )}
             </div>
-          ))}
-        </div>
-      )}
 
-      {isShowdown && (
-        <PlayerShowdown
-          game={game}
-          winnerPositions={winnerPositions}
-          amWinner={amWinner}
-          onNextHand={nextHand}
-          onToggleShowCards={toggleShowCards}
-        />
-      )}
+            {myPlayer?.holeCards && myPlayer.holeCards.length > 0 && (
+              <div className="d-flex gap-3 justify-content-center mb-4">
+                {myPlayer.holeCards.map((card: Card, idx: number) => (
+                  <PokerCard key={idx} card={card} className="large" />
+                ))}
+              </div>
+            )}
+          </div>
 
-      <div className="px-1">
-        {game.status === 'waiting' && (
-          <button onClick={startGame} className="btn-poker btn-poker-primary btn-poker-lg w-100">
-            🎮 Start Game
-          </button>
-        )}
-
-        {game.status === 'active' && (
-          <div>
-            {isMyTurn && validActions?.canAct ? (
+          {game.status === 'active' && isMyTurn && validActions?.canAct ? (
+            <div className="glass-panel p-3">
               <div className="d-grid gap-3">
+                {/* Fold moved to top */}
+
                 {validActions.canCheck && (
                   <button
                     onClick={() => handleAction('check')}
-                    className="btn-poker btn-poker-primary btn-poker-lg w-100"
+                    className="btn-poker btn-poker-primary btn-action-lg w-100"
                   >
-                    ✓ Check
+                    <span>Check</span>
+                    <span>✓</span>
                   </button>
-                )}
-
-                {validActions.canBet && validActions.minBet !== undefined && (
-                  <div className="card bg-dark bg-opacity-50 border-secondary p-2 text-center shadow-sm">
-                    <div className="mb-3 bg-dark rounded px-2 py-3 shadow-inner">
-                      <HorizontalSlider
-                        value={Math.max(betAmount, validActions.minBet)}
-                        min={validActions.minBet}
-                        max={derivedMaxBet}
-                        step={1}
-                        onChange={(value) => setBetAmount(value)}
-                        thumbColor="#0dcaf0"
-                        trackColor="#2c3e50"
-                      />
-                    </div>
-
-                    <div className="d-flex gap-2 justify-content-center align-items-center mb-2">
-                      <button
-                        onClick={() =>
-                          setBetAmount(
-                            Math.max(betAmount - (game.bigBlind || 10), validActions.minBet!),
-                          )
-                        }
-                        className="btn btn-outline-info rounded-circle p-0 d-flex align-items-center justify-content-center"
-                        style={{ width: '40px', height: '40px', fontSize: '18px' }}
-                      >
-                        −
-                      </button>
-                      <div className="text-info fw-bold small" style={{ minWidth: '60px' }}>
-                        ±${game.bigBlind || 10}
-                      </div>
-                      <button
-                        onClick={() =>
-                          setBetAmount(Math.min(betAmount + (game.bigBlind || 10), derivedMaxBet))
-                        }
-                        className="btn btn-outline-info rounded-circle p-0 d-flex align-items-center justify-content-center"
-                        style={{ width: '40px', height: '40px', fontSize: '18px' }}
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <button
-                      onClick={() =>
-                        handleAction('bet', Math.max(betAmount, validActions.minBet!))
-                      }
-                      className="btn-poker btn-poker-info w-100"
-                    >
-                      💰 Bet ${Math.max(betAmount, validActions.minBet)}
-                    </button>
-                  </div>
                 )}
 
                 {validActions.canCall && validActions.callAmount !== undefined && (
                   <button
                     onClick={() => handleAction('call')}
-                    className="btn-poker btn-poker-primary btn-poker-lg w-100"
+                    className="btn-poker btn-poker-primary btn-action-lg w-100"
                   >
-                    Call ${validActions.callAmount}
+                    <span>Call ${validActions.callAmount}</span>
                   </button>
                 )}
 
-                {validActions.canRaise &&
-                  validActions.minRaise !== undefined &&
-                  validActions.maxRaise !== undefined && (
-                    <div className="card bg-dark bg-opacity-50 border-secondary p-2 text-center shadow-sm">
+                {(validActions.canBet || validActions.canRaise) && (
+                  <div className="d-flex flex-column gap-3">
+                    <div className="bg-black bg-opacity-25 rounded-3 p-3 border border-white border-opacity-10">
                       {(() => {
-                        const minInc = validActions.minRaise!
-                        const maxInc = validActions.maxRaise!
-                        const inc = Math.min(Math.max(raiseAmount, minInc), maxInc)
+                        const isRaise = validActions.canRaise
+                        const minVal = isRaise ? validActions.minRaise! : validActions.minBet!
+                        const maxVal = isRaise ? validActions.maxRaise! : derivedMaxBet
+                        const currentVal = isRaise
+                          ? Math.min(Math.max(raiseAmount, minVal), maxVal)
+                          : Math.max(betAmount, minVal)
+                        const setVal = isRaise ? setRaiseAmount : setBetAmount
+                        const totalBet = isRaise ? game.currentBet + currentVal : currentVal
 
                         return (
                           <>
-                            <div className="mb-3 bg-dark rounded px-2 py-3 shadow-inner">
-                              <HorizontalSlider
-                                value={inc}
-                                min={validActions.minRaise}
-                                max={validActions.maxRaise}
-                                step={1}
-                                onChange={(value) => setRaiseAmount(value)}
-                                thumbColor="#ffc107"
-                                trackColor="#2c3e50"
-                              />
-                            </div>
-
-                            <div className="d-flex gap-2 justify-content-center align-items-center mb-2">
+                            <div className="d-flex align-items-center gap-3 mb-3">
                               <button
+                                className="btn-chip chip-minus"
                                 onClick={() =>
-                                  setRaiseAmount(
-                                    Math.max(raiseAmount - (game.bigBlind || 10), minInc),
-                                  )
+                                  setVal(Math.max(currentVal - (game.bigBlind || 10), minVal))
                                 }
-                                className="btn btn-outline-warning rounded-circle p-0 d-flex align-items-center justify-content-center"
-                                style={{ width: '40px', height: '40px', fontSize: '18px' }}
                               >
                                 −
                               </button>
-                              <div
-                                className="text-warning fw-bold small"
-                                style={{ minWidth: '60px' }}
-                              >
-                                ±${game.bigBlind || 10}
+                              <div className="flex-grow-1">
+                                <HorizontalSlider
+                                  value={currentVal}
+                                  min={minVal}
+                                  max={maxVal}
+                                  step={1}
+                                  onChange={setVal}
+                                  thumbColor={isRaise ? '#ffc107' : '#0dcaf0'}
+                                  trackColor="rgba(255,255,255,0.1)"
+                                />
                               </div>
                               <button
+                                className="btn-chip chip-plus"
                                 onClick={() =>
-                                  setRaiseAmount(
-                                    Math.min(raiseAmount + (game.bigBlind || 10), maxInc),
-                                  )
+                                  setVal(Math.min(currentVal + (game.bigBlind || 10), maxVal))
                                 }
-                                className="btn btn-outline-warning rounded-circle p-0 d-flex align-items-center justify-content-center"
-                                style={{ width: '40px', height: '40px', fontSize: '18px' }}
                               >
                                 +
                               </button>
                             </div>
-
                             <button
-                              onClick={() => {
-                                const minInc = validActions.minRaise!
-                                const maxInc = validActions.maxRaise!
-                                const inc = Math.min(Math.max(raiseAmount, minInc), maxInc)
-                                handleAction('raise', inc)
-                              }}
-                              className="btn-poker btn-poker-secondary w-100"
+                              onClick={() => handleAction(isRaise ? 'raise' : 'bet', currentVal)}
+                              className={`btn-poker ${isRaise ? 'btn-poker-secondary' : 'btn-poker-info'} btn-action-lg w-100`}
                             >
-                              Raise to ${game.currentBet + inc}
+                              <span>
+                                {isRaise ? 'Raise To' : 'Bet'} ${totalBet}
+                              </span>
+                              <span>{isRaise ? '' : '💰'}</span>
                             </button>
                           </>
                         )
                       })()}
                     </div>
-                  )}
-              </div>
-            ) : (
-              <div className="text-center">
-                {validActions?.canReveal ? (
-                  <button
-                    onClick={revealCard}
-                    className="btn-poker btn-poker-info btn-poker-lg w-100 mb-3"
-                  >
-                    {game.currentRound === 'river' ? '🏆 Go to Showdown' : '🃏 Reveal Next Card'}
-                  </button>
-                ) : null}
-
-                {!validActions?.canReveal &&
-                validActions?.canAdvance &&
-                myPlayer &&
-                myPlayer.status !== 'folded' &&
-                myPlayer.status !== 'out' &&
-                game.currentRound !== 'showdown' ? (
-                  <>
-                    {validActions?.advanceReason === 'all_in_situation' && (
-                      <div className="alert alert-warning py-2 mb-3">
-                        All-in situation detected. Deal the next card to continue.
-                      </div>
-                    )}
-                    <button
-                      onClick={advanceRound}
-                      className={`btn-poker btn-poker-lg w-100 mb-3 ${
-                        validActions?.advanceReason === 'all_in_situation'
-                          ? 'btn-poker-secondary'
-                          : 'btn-poker-primary'
-                      }`}
-                    >
-                      {(() => {
-                        const activeCount = game.players.filter(
-                          (p: Player) => p.status === 'active',
-                        ).length
-                        const allInCount = game.players.filter(
-                          (p: Player) => p.status === 'all_in',
-                        ).length
-                        if (activeCount <= 1 && allInCount === 0) return '🏆 Claim Pot'
-
-                        return game.currentRound === 'preflop'
-                          ? '🎲 Deal Flop'
-                          : game.currentRound === 'flop'
-                            ? '🎲 Deal Turn'
-                            : game.currentRound === 'turn'
-                              ? '🎲 Deal River'
-                              : '👁️ Go to Showdown'
-                      })()}
-                    </button>
-                  </>
-                ) : (
-                  <div className="alert alert-secondary py-3">
-                    {myPlayer?.status === 'folded' ? 'You folded' : 'Waiting for other players...'}
                   </div>
                 )}
               </div>
-            )}
-          </div>
-        )}
-
-        {game.status === 'completed' && (
-          <div className="alert alert-info text-center py-4 shadow">
-            <h4 className="alert-heading mb-3">🎉 Game Over!</h4>
-            <div className="mb-2 h5">
-              {myPlayer && myPlayer.chips > 0
-                ? `You won with $${myPlayer.chips}!`
-                : 'Better luck next time!'}
             </div>
-            <hr />
-            <div className="small text-muted border-0">
-              The game has ended. One player has all the chips.
-            </div>
-          </div>
-        )}
+          ) : (
+            game.status === 'active' &&
+            !isShowdown && (
+              <div className="glass-panel p-3 text-center text-secondary">
+                {myPlayer?.status === 'folded' ? (
+                  <div>
+                    <div className="h4 text-danger mb-1">Folded</div>
+                    <div className="small">Waiting for next hand</div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="spinner-border spinner-border-sm text-secondary mb-2"></div>
+                    <div>Waiting for action...</div>
+                  </div>
+                )}
+              </div>
+            )
+          )}
+        </>
+      )}
 
-        {error && <div className="alert alert-danger text-center mt-3">{error}</div>}
-      </div>
+      {game.status === 'waiting' && (
+        <button
+          onClick={startGame}
+          className="btn-poker btn-poker-primary btn-action-lg w-100 mt-auto"
+        >
+          Start Game
+        </button>
+      )}
     </div>
   )
 }

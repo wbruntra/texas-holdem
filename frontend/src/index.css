@@ -61,6 +61,93 @@ body::before {
   z-index: 1;
 }
 
+/* Glass Panel */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Turn Glow Animation */
+@keyframes pulse-gold {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(212, 175, 55, 0.4),
+      inset 0 0 20px rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.8);
+  }
+  50% {
+    box-shadow:
+      0 0 0 8px rgba(212, 175, 55, 0),
+      inset 0 0 40px rgba(212, 175, 55, 0.2);
+    border-color: rgba(212, 175, 55, 0.3);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(212, 175, 55, 0.4),
+      inset 0 0 20px rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.8);
+  }
+}
+
+.turn-active {
+  animation: pulse-gold 2s infinite;
+  border: 1px solid #d4af37 !important;
+}
+
+/* Big Action Buttons */
+.btn-action-lg {
+  height: 64px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 24px;
+  border-radius: 12px;
+}
+
+/* Chip Buttons (Presets) */
+.btn-chip {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  transition:
+    transform 0.1s,
+    box-shadow 0.1s;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+}
+.btn-chip:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+}
+.btn-chip.chip-minus {
+  border-color: #e57373;
+  color: #e57373;
+}
+.btn-chip.chip-plus {
+  border-color: #81c784;
+  color: #81c784;
+}
+
 /* Card Styling - Not in Bootstrap */
 .card-display {
   background-color: #fff;
