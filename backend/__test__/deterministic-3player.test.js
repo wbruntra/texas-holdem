@@ -34,8 +34,7 @@ describe('Deterministic 3-Player Game', () => {
 
       expect(response.status).toBe(201)
       expect(response.body).toHaveProperty('id')
-      expect(response.body).toHaveProperty('seed')
-      expect(response.body.seed).toBe(SEED)
+      expect(response.body).not.toHaveProperty('seed') // Seed should not be exposed
 
       game = response.body
     })
@@ -134,17 +133,43 @@ describe('Deterministic 3-Player Game', () => {
     })
 
     it('should produce consistent community cards with same seed', async () => {
-      // Advance to flop and check community cards
-      const response = await request(app)
-        .post(`/api/games/${game.id}/advance`)
+      // Play preflop to allow advancing: Alice Call, Bob Call, Charlie Check
+      // Assuming Dealer=0 starts (UTG)
+      const action1 = await request(app)
+        .post(`/api/games/${game.id}/actions`)
         .set('Authorization', `Bearer ${playerTokens[0]}`)
+        .send({ action: 'call' })
+      expect(action1.status).toBe(200)
 
-      expect(response.status).toBe(200)
-      expect(response.body.currentRound).toBe('flop')
-      expect(response.body.communityCards).toHaveLength(3)
+      const action2 = await request(app)
+        .post(`/api/games/${game.id}/actions`)
+        .set('Authorization', `Bearer ${playerTokens[1]}`)
+        .send({ action: 'call' })
+      expect(action2.status).toBe(200)
+
+      const action3 = await request(app)
+        .post(`/api/games/${game.id}/actions`)
+        .set('Authorization', `Bearer ${playerTokens[2]}`)
+        .send({ action: 'check' })
+      expect(action3.status).toBe(200)
+
+      // If auto-advance is enabled, we might be at flop already
+      let flopState = action3.body
+
+      // If not at flop, try to advance manually
+      if (flopState.currentRound !== 'flop') {
+        const response = await request(app)
+          .post(`/api/games/${game.id}/advance`)
+          .set('Authorization', `Bearer ${playerTokens[0]}`)
+        expect(response.status).toBe(200)
+        flopState = response.body
+      }
+
+      expect(flopState.currentRound).toBe('flop')
+      expect(flopState.communityCards).toHaveLength(3)
 
       // Store community cards for comparison
-      const flopCards = response.body.communityCards
+      const flopCards = flopState.communityCards
 
       // Create third game with same seed to test community cards consistency
       const gameData = {
@@ -175,12 +200,33 @@ describe('Deterministic 3-Player Game', () => {
         .post(`/api/games/${newGameId}/start`)
         .set('Authorization', `Bearer ${newTokens[0]}`)
 
-      const advanceResponse = await request(app)
-        .post(`/api/games/${newGameId}/advance`)
+      // Play preflop for new game too
+      await request(app)
+        .post(`/api/games/${newGameId}/actions`)
         .set('Authorization', `Bearer ${newTokens[0]}`)
+        .send({ action: 'call' })
+
+      await request(app)
+        .post(`/api/games/${newGameId}/actions`)
+        .set('Authorization', `Bearer ${newTokens[1]}`)
+        .send({ action: 'call' })
+
+      const newAction3 = await request(app)
+        .post(`/api/games/${newGameId}/actions`)
+        .set('Authorization', `Bearer ${newTokens[2]}`)
+        .send({ action: 'check' })
+
+      let newFlopState = newAction3.body
+
+      if (newFlopState.currentRound !== 'flop') {
+        const advanceResponse = await request(app)
+          .post(`/api/games/${newGameId}/advance`)
+          .set('Authorization', `Bearer ${newTokens[0]}`)
+        newFlopState = advanceResponse.body
+      }
 
       // Community cards should be identical
-      expect(advanceResponse.body.communityCards).toEqual(flopCards)
+      expect(newFlopState.communityCards).toEqual(flopCards)
     })
   })
 

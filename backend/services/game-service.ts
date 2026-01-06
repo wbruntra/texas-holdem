@@ -72,6 +72,8 @@ export async function createGame(config: GameConfig = {}): Promise<Game> {
     throw new Error('Failed to generate unique room code')
   }
 
+  const finalSeed = seed ? String(seed) : crypto.randomUUID()
+
   const [gameId] = await db('games').insert({
     room_code: roomCode,
     status: GAME_STATUS.WAITING,
@@ -83,7 +85,7 @@ export async function createGame(config: GameConfig = {}): Promise<Game> {
     current_bet: 0,
     hand_number: 0,
     last_raise: 0,
-    seed: seed ? String(seed) : crypto.randomUUID(),
+    seed: finalSeed,
   })
 
   eventLogger.logEvent(

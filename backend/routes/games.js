@@ -198,6 +198,7 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
     const revealCards = shouldRevealAllCards(game)
     const gameState = {
       ...game,
+      seed: undefined, // Ensure seed is never sent to client
       pots: pots,
       deck: undefined,
       communityCards: visibleCommunityCards,
