@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { Offcanvas, Button } from 'react-bootstrap'
 import HorizontalSlider from '~/components/HorizontalSlider'
 import PlayerJoinGame from '~/components/PlayerJoinGame'
 import PlayerShowdown from '~/components/PlayerShowdown'
@@ -21,6 +23,7 @@ const audioMap = {
 
 export default function PlayerView() {
   const { roomCode } = useParams<{ roomCode: string }>()
+  const [showCommunityCards, setShowCommunityCards] = useState(false)
 
   const {
     game,
@@ -106,11 +109,52 @@ export default function PlayerView() {
 
   const displayPot = getDisplayPot(game.players, game.pots)
 
+  // Determine if we should show the FAB
+  const shouldShowFab = game.status === 'active' && !isShowdown
+
   return (
     <div
       className="container-fluid d-flex flex-column min-vh-100 p-3"
-      style={{ maxWidth: '600px', margin: '0 auto' }}
+      style={{ maxWidth: '600px', margin: '0 auto', position: 'relative' }}
     >
+      {/* Slide-out Sheet for Community Cards */}
+      <Offcanvas
+        show={showCommunityCards}
+        onHide={() => setShowCommunityCards(false)}
+        placement="bottom"
+        className="text-bg-dark border-top border-secondary"
+        style={{ height: 'auto', minHeight: '40vh', maxHeight: '60vh' }}
+      >
+        <Offcanvas.Header closeButton closeVariant="white">
+          <Offcanvas.Title>Community Cards</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body className="d-flex flex-column align-items-center">
+          <div className="d-flex gap-2 justify-content-center flex-wrap mb-4">
+            {game.communityCards && game.communityCards.length > 0 ? (
+              game.communityCards.map((card: Card, idx: number) => (
+                <PokerCard key={idx} card={card} className="medium" />
+              ))
+            ) : (
+              <div className="text-secondary fst-italic">No community cards dealt yet</div>
+            )}
+          </div>
+          <div className="mt-auto w-100">
+            <div
+              className="text-secondary text-uppercase small mb-1 text-center"
+              style={{ letterSpacing: '2px' }}
+            >
+              {game.currentBet > 0 ? 'Current Bet' : 'Pot'}
+            </div>
+            <div
+              className={`display-6 fw-bold text-center ${game.currentBet > 0 ? 'text-info' : 'text-warning'}`}
+              style={{ textShadow: '0 2px 5px rgba(0,0,0, 0.3)' }}
+            >
+              ${game.currentBet > 0 ? game.currentBet : displayPot}
+            </div>
+          </div>
+        </Offcanvas.Body>
+      </Offcanvas>
+
       <div
         className={`glass-panel p-3 mb-3 d-flex flex-column gap-3 ${isMyTurn ? 'turn-active' : ''}`}
       >
@@ -168,7 +212,25 @@ export default function PlayerView() {
               </div>
             )}
 
-          <div className="glass-panel flex-grow-1 p-3 d-flex flex-column justify-content-center align-items-center mb-3 text-center">
+          <div className="glass-panel flex-grow-1 p-3 d-flex flex-column justify-content-center align-items-center mb-3 text-center position-relative">
+            {shouldShowFab && (
+              <Button
+                variant="light"
+                className="position-absolute shadow-sm rounded-circle d-flex align-items-center justify-content-center"
+                style={{
+                  top: '10px',
+                  right: '10px',
+                  width: '40px',
+                  height: '40px',
+                  zIndex: 10,
+                  opacity: 0.8,
+                }}
+                onClick={() => setShowCommunityCards(!showCommunityCards)}
+              >
+                <span style={{ fontSize: '18px' }}>🃏</span>
+              </Button>
+            )}
+
             <div className="mb-4 w-100">
               <div
                 className="text-secondary text-uppercase small mb-1"

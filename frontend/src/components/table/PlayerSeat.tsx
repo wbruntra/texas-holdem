@@ -51,7 +51,7 @@ export default function PlayerSeat({ game, player, index, style, orientation = '
                 key={i}
                 style={{
                   transform:
-                    i === 0 ? 'rotate(-8deg) translateX(-8px)' : 'rotate(8deg) translateX(8px)',
+                    i === 0 ? 'rotate(-8deg) translateX(2px)' : 'rotate(8deg) translateX(8px)',
                   zIndex: i === 0 ? 1 : 2,
                   marginTop: i === 1 ? '4px' : '0',
                   display: 'flex', // Ensure wrapper behaves correctly
@@ -65,7 +65,7 @@ export default function PlayerSeat({ game, player, index, style, orientation = '
               {/* Card Backs - shown when backend doesn't send cards */}
               <div
                 style={{
-                  transform: 'rotate(-8deg) translateX(-8px)',
+                  transform: 'rotate(-8deg) translateX(14px)',
                   zIndex: 1,
                   display: 'flex',
                 }}
