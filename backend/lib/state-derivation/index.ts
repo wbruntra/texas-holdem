@@ -17,7 +17,14 @@ export function deriveGameState(
     state = applyEvent(state, event)
   }
 
-  return state
+  // Compute isGameOver: true if only 1 or 0 players have chips
+  const playersWithChips = state.players.filter((p) => p.chips > 0)
+  const isGameOver = state.players.length >= 2 && playersWithChips.length <= 1
+
+  return {
+    ...state,
+    isGameOver,
+  }
 }
 
 export function deriveFromSnapshot(

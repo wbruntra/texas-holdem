@@ -70,10 +70,12 @@ export default function TableView() {
   }, [game, playCardFlipSound])
 
   useEffect(() => {
-    if (game?.status === 'completed') {
-      setShowGameOverModal(true)
+    if (game?.status === 'completed' || game?.isGameOver) {
+      // Delay showing the game over modal so users can see the final showdown
+      const timer = setTimeout(() => setShowGameOverModal(true), 3000)
+      return () => clearTimeout(timer)
     }
-  }, [game?.status])
+  }, [game?.status, game?.isGameOver])
 
   useEffect(() => {
     if (!roomCode) return
@@ -209,11 +211,21 @@ export default function TableView() {
             </div>
           </div>
         )}
+        {/* Reopen Game Over Modal Button */}
+        {(game.status === 'completed' || !!game.isGameOver) && !showGameOverModal && (
+          <button
+            className="btn btn-warning position-absolute top-0 end-0 m-4 shadow-lg fw-bold"
+            style={{ zIndex: 1050 }}
+            onClick={() => setShowGameOverModal(true)}
+          >
+            🏆 View Results & Reset
+          </button>
+        )}
       </PokerTableScene>
 
       <GameOverModal
         game={game}
-        isOpen={game.status === 'completed' && showGameOverModal}
+        isOpen={(game.status === 'completed' || !!game.isGameOver) && showGameOverModal}
         onClose={() => setShowGameOverModal(false)}
         onResetGame={handleNewGame}
         isResetting={isResetting}

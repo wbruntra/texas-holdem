@@ -29,7 +29,7 @@ export default function GameOverModal({
         >
           <button
             onClick={onClose}
-            className="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+            className="btn-close btn-close-white position-absolute top-0 end-0 m-3 p-3"
             aria-label="Close"
           ></button>
 
@@ -76,7 +76,7 @@ export default function GameOverModal({
                       Resetting...
                     </>
                   ) : (
-                    <>🔄 Reset Game</>
+                    <>🔄 Start New Game</>
                   )}
                 </button>
               )}

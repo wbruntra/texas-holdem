@@ -113,14 +113,22 @@ export default function PlayerShowdown({
             </div>
           )}
 
-        <button
-          onClick={onNextHand}
-          className={`btn-poker w-100 btn-action-lg ${
-            amWinner ? 'btn-poker-secondary' : 'btn-poker-primary'
-          }`}
-        >
-          {amWinner ? '🏆 Next Hand' : 'Start Next Hand'}
-        </button>
+        {game.isGameOver ? (
+          <div className="alert alert-warning text-center fw-bold border-2 border-warning mb-0">
+            <div className="display-6 mb-2">🏆</div>
+            <div>GAME OVER</div>
+            <div className="small fw-normal mt-1">Check the main screen for results</div>
+          </div>
+        ) : (
+          <button
+            onClick={onNextHand}
+            className={`btn-poker w-100 btn-action-lg ${
+              amWinner ? 'btn-poker-secondary' : 'btn-poker-primary'
+            }`}
+          >
+            {amWinner ? '🏆 Next Hand' : 'Start Next Hand'}
+          </button>
+        )}
       </div>
     </div>
   )

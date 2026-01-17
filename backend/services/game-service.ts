@@ -911,22 +911,9 @@ export async function startNewGame(roomId: number) {
     let position = 0 // Needs logic
 
     if (oldPlayerParams) {
-      chips = oldPlayerParams.chips
+      // User requested a full reset for new games
+      chips = room.starting_chips
       position = oldPlayerParams.position
-
-      // If chips are 0, maybe give them starting chips if they want to rejoin?
-      // Or keep them at 0 and 'out'?
-      // For now, if chips 0, they are out.
-      if (chips <= 0) {
-        // Option: give them starting chips for new game (Rebuy)
-        // Or keep them out.
-        // Let's reset to starting chips if they are out, so they can play the new game?
-        // "Reset button" usually implies starting fresh related to game flow,
-        // but user specifically said "reset chip counts? no".
-        // Use case: separate games in a tournament or cash game session.
-        // In cash game, if you bust, you rebuy.
-        // Let's KEEP chips. If 0, they are out.
-      }
     } else {
       // New player, find empty position
       // Simple logic: max position + 1

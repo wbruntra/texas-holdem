@@ -60,6 +60,7 @@ export interface GameState {
   action_finished?: boolean
   seed?: string
   winners?: number[]
+  isGameOver?: boolean
 }
 
 // API-specific interfaces (frontend/terminal)
@@ -92,6 +93,7 @@ export interface ApiGameState {
   winners?: number[] | null
   bigBlind?: number
   handNumber?: number
+  isGameOver?: boolean
 }
 
 // Additional shared interfaces

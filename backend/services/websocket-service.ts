@@ -381,6 +381,9 @@ class WebSocketService {
         lastAction: p.lastAction || null,
         connected: p.connected,
       })),
+      // Compute isGameOver: only 1 player has chips
+      isGameOver:
+        game.players.length >= 2 && game.players.filter((p: any) => p.chips > 0).length <= 1,
     }
   }
 
@@ -435,6 +438,9 @@ class WebSocketService {
         isSmallBlind: p.isSmallBlind,
         isBigBlind: p.isBigBlind,
       })),
+      // Compute isGameOver: only 1 player has chips
+      isGameOver:
+        game.players.length >= 2 && game.players.filter((p: any) => p.chips > 0).length <= 1,
     }
   }
 
