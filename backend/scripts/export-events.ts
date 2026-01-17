@@ -1,3 +1,4 @@
+// @ts-ignore
 import db from '../../database/db.js'
 import fs from 'fs'
 import path from 'path'
@@ -9,11 +10,21 @@ if (!roomCode) {
 }
 
 async function exportEvents() {
-  console.log(`Looking up game with room code: ${roomCode}...`)
-  const game = await db('games').where({ room_code: roomCode }).first()
+  console.log(`Looking up room with code: ${roomCode}...`)
+  const room = await db('rooms').where({ room_code: roomCode }).first()
+
+  if (!room) {
+    console.error('Room not found')
+    process.exit(1)
+  }
+
+  console.log(`Found Room ID: ${room.id}`)
+
+  // Find most recent game
+  const game = await db('games').where({ room_id: room.id }).orderBy('created_at', 'desc').first()
 
   if (!game) {
-    console.error('Game not found')
+    console.error('No games found for this room')
     process.exit(1)
   }
 
