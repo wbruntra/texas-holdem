@@ -3,6 +3,7 @@ import type { GameEvent } from '@/services/event-store'
 import { EVENT_TYPES } from '@holdem/shared'
 import { createInitialState, type GameConfig, type PlayerConfig } from './initial-state'
 import * as handlers from './event-handlers'
+import { calculateIsGameOver } from '../game-state-machine'
 
 export type { GameConfig, PlayerConfig }
 
@@ -17,9 +18,8 @@ export function deriveGameState(
     state = applyEvent(state, event)
   }
 
-  // Compute isGameOver: true if only 1 or 0 players have chips
-  const playersWithChips = state.players.filter((p) => p.chips > 0)
-  const isGameOver = state.players.length >= 2 && playersWithChips.length <= 1
+  // Compute isGameOver using shared helper
+  const isGameOver = calculateIsGameOver(state)
 
   return {
     ...state,

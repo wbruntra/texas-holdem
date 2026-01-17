@@ -501,3 +501,15 @@ export function revealNextCard(state: GameState): GameState {
     currentPlayerPosition: null,
   }
 }
+
+export function calculateIsGameOver(state: GameState): boolean {
+  // Compute isGameOver: true if only 1 or 0 players have chips
+  // BUT only after the hand is complete (showdown) - not during an active hand where someone went all-in
+  const playersWithChips = state.players.filter((p) => p.chips > 0)
+  const handIsComplete =
+    state.currentRound === ROUND.SHOWDOWN ||
+    state.status === GAME_STATUS.COMPLETED ||
+    state.status === GAME_STATUS.WAITING
+
+  return state.players.length >= 2 && playersWithChips.length <= 1 && handIsComplete
+}

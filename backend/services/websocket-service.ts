@@ -11,6 +11,7 @@ import * as actionService from '@/services/action-service'
 import gameEvents from '@/lib/game-events'
 import { calculatePots, distributePots } from '@/lib/pot-manager'
 import { evaluateHand } from '@/lib/poker-engine'
+import { calculateIsGameOver } from '@/lib/game-state-machine'
 // @ts-ignore
 import { verifyToken } from '@/middleware/auth'
 // @ts-ignore
@@ -339,9 +340,20 @@ class WebSocketService {
     const allInPlayers = game.players.filter((p: any) => p.status === 'all_in')
     const shouldRevealAllCards = isShowdown || game.action_finished === true
 
-    let pots = calculatePots(game.players)
+    // Check if this is an actual showdown (multiple eligible players) or a fold win (single player)
+    const eligiblePlayers = game.players.filter(
+      (p: any) => p.status === 'active' || p.status === 'all_in',
+    )
+    const isRealShowdown = isShowdown && eligiblePlayers.length > 1
 
-    if (isShowdown && pots.length > 0) {
+    // Use saved pots for fold wins (they have correct 'Won by fold' message), otherwise calculate
+    let pots =
+      game.pots && game.pots.length > 0 && !isRealShowdown
+        ? game.pots
+        : calculatePots(game.players)
+
+    // Only call distributePots for actual showdowns (multiple players remaining)
+    if (isRealShowdown && pots.length > 0) {
       pots = distributePots(pots, game.players, game.communityCards, evaluateHand)
     }
 
@@ -381,9 +393,8 @@ class WebSocketService {
         lastAction: p.lastAction || null,
         connected: p.connected,
       })),
-      // Compute isGameOver: only 1 player has chips
-      isGameOver:
-        game.players.length >= 2 && game.players.filter((p: any) => p.chips > 0).length <= 1,
+      // Compute isGameOver using shared helper
+      isGameOver: calculateIsGameOver(game),
     }
   }
 
@@ -393,9 +404,20 @@ class WebSocketService {
   sanitizePlayerState(game: any, playerId: number): any {
     const isShowdown = game.currentRound === SHOWDOWN_ROUND
 
-    let pots = calculatePots(game.players)
+    // Check if this is an actual showdown (multiple eligible players) or a fold win (single player)
+    const eligiblePlayers = game.players.filter(
+      (p: any) => p.status === 'active' || p.status === 'all_in',
+    )
+    const isRealShowdown = isShowdown && eligiblePlayers.length > 1
 
-    if (isShowdown && pots.length > 0) {
+    // Use saved pots for fold wins (they have correct 'Won by fold' message), otherwise calculate
+    let pots =
+      game.pots && game.pots.length > 0 && !isRealShowdown
+        ? game.pots
+        : calculatePots(game.players)
+
+    // Only call distributePots for actual showdowns (multiple players remaining)
+    if (isRealShowdown && pots.length > 0) {
       pots = distributePots(pots, game.players, game.communityCards, evaluateHand)
     }
 
@@ -438,9 +460,8 @@ class WebSocketService {
         isSmallBlind: p.isSmallBlind,
         isBigBlind: p.isBigBlind,
       })),
-      // Compute isGameOver: only 1 player has chips
-      isGameOver:
-        game.players.length >= 2 && game.players.filter((p: any) => p.chips > 0).length <= 1,
+      // Compute isGameOver using shared helper
+      isGameOver: calculateIsGameOver(game),
     }
   }
 
