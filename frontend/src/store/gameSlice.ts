@@ -33,17 +33,17 @@ export const fetchGameByRoom = createAsyncThunk(
   },
 )
 
-export const resetGame = createAsyncThunk(
-  'game/reset',
+export const newGame = createAsyncThunk(
+  'game/newGame',
   async (roomCode: string, { rejectWithValue }) => {
     try {
-      await axios.post(`/api/games/room/${roomCode}/reset`)
+      await axios.post(`/api/games/room/${roomCode}/new-game`)
       return true
     } catch (err: unknown) {
       if (!axios.isAxiosError(err)) {
-        return rejectWithValue('Failed to reset game')
+        return rejectWithValue('Failed to start new game')
       }
-      return rejectWithValue(err.response?.data?.error || 'Failed to reset game')
+      return rejectWithValue(err.response?.data?.error || 'Failed to start new game')
     }
   },
 )
@@ -83,10 +83,10 @@ const gameSlice = createSlice({
         state.loading = false
         state.error = action.payload as string
       })
-      .addCase(resetGame.fulfilled, (state) => {
+      .addCase(newGame.fulfilled, (state) => {
         state.error = ''
       })
-      .addCase(resetGame.rejected, (state, action) => {
+      .addCase(newGame.rejected, (state, action) => {
         state.error = action.payload as string
       })
   },

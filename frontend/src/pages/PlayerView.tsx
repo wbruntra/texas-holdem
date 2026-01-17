@@ -281,6 +281,23 @@ export default function PlayerView() {
                 )}
               </div>
             </div>
+          ) : validActions?.canAdvance ? (
+            <div className="glass-panel p-3">
+              <div className="d-grid gap-3">
+                <div className="text-center text-white mb-2">
+                  {validActions.advanceReason === 'all_in_situation'
+                    ? 'All players are All-In. Advance to next round?'
+                    : 'Ready to advance?'}
+                </div>
+                <button
+                  onClick={() => handleAction('advance_round')}
+                  className="btn-poker btn-poker-primary btn-action-lg w-100"
+                >
+                  <span>Advance Round</span>
+                  <span>⏩</span>
+                </button>
+              </div>
+            </div>
           ) : (
             game.status === 'active' &&
             !isShowdown && (

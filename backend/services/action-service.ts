@@ -8,6 +8,20 @@ import { getNextActingPosition } from '@/lib/game-state-machine'
 import eventLogger from '@/services/event-logger'
 import { EVENT_TYPE } from '@/lib/event-types'
 import { createShowdownHistory } from './showdown-service'
+import { appendEvent } from './event-store'
+import { EVENT_TYPES as EVENT_TYPES_V2 } from '@holdem/shared'
+import { validateGameState } from './state-validator'
+
+function calculatePayouts(beforeState: any, afterState: any) {
+  const payouts: { playerId: number; amount: number }[] = []
+  afterState.players.forEach((p: any) => {
+    const beforeP = beforeState.players.find((bp: any) => bp.id === p.id)
+    if (beforeP && p.chips > beforeP.chips) {
+      payouts.push({ playerId: p.id, amount: p.chips - beforeP.chips })
+    }
+  })
+  return payouts
+}
 
 interface ActionRecord {
   id: number
@@ -73,6 +87,18 @@ export async function submitAction(playerId: number, action: string, amount: num
     throw new Error('Player not in game')
   }
 
+  if (action === 'advance_round') {
+    // Check if advance is valid
+    const validActions = getValidActions(game, playerPosition)
+    if (!validActions.canAdvance) {
+      throw new Error('Cannot advance round')
+    }
+
+    // Use gameService to advance
+    await gameService.advanceOneRound(game.id)
+    return gameService.getGameById(game.id)
+  }
+
   const validation = validateAction(game, playerPosition, action, amount)
   if (!validation.valid) {
     throw new Error(validation.error)
@@ -111,6 +137,45 @@ export async function submitAction(playerId: number, action: string, amount: num
     game.id,
   )
 
+  // RECORD V2 EVENT (PLAYER ACTION)
+  const v2EventTypeMap: Record<string, any> = {
+    check: EVENT_TYPES_V2.CHECK,
+    bet: EVENT_TYPES_V2.BET,
+    call: EVENT_TYPES_V2.CALL,
+    raise: EVENT_TYPES_V2.RAISE,
+    fold: EVENT_TYPES_V2.FOLD,
+    all_in: EVENT_TYPES_V2.ALL_IN,
+  }
+
+  // @ts-ignore
+  const currentPlayerForEvent = newState.players[playerPosition]
+  const isAllIn = currentPlayerForEvent.status === 'all_in'
+  let v2EventType = v2EventTypeMap[action] || 'UNKNOWN_ACTION'
+  let payload: any = {
+    amount,
+    isAllIn,
+  }
+
+  // Handle derived ALL_IN (e.g. called but had insufficient chips)
+  if (isAllIn && action !== 'all_in' && action !== 'fold') {
+    v2EventType = EVENT_TYPES_V2.ALL_IN
+    payload = {
+      amount,
+      effectiveAction: action,
+      totalBetAfter: currentPlayerForEvent.currentBet,
+      chipsAfter: 0,
+    }
+  } else if (action === 'all_in') {
+    payload = {
+      amount,
+      effectiveAction: 'bet', // Default assumption if raw 'all_in' action used
+      totalBetAfter: currentPlayerForEvent.currentBet,
+      chipsAfter: 0,
+    }
+  }
+
+  await appendEvent(game.id, newState.handNumber, v2EventType, playerId, payload)
+
   if (game.currentRound) {
     await recordAction(game.id, playerId, action, amount, game.currentRound)
   }
@@ -127,11 +192,24 @@ export async function submitAction(playerId: number, action: string, amount: num
       newState.currentRound = ROUND.SHOWDOWN
     }
 
+    const gameStateBeforeShowdown = { ...newState }
     newState = processShowdown(newState)
 
     await gameService.saveGameState(game.id, newState)
 
     await gameService.completeHandRecord(game.id, newState)
+
+    // RECORD V2 EVENTS (FOLD WIN - no showdown, just pot award)
+    const payouts = calculatePayouts(gameStateBeforeShowdown, newState)
+    await appendEvent(game.id, newState.handNumber, EVENT_TYPES_V2.AWARD_POT, null, {
+      winReason: 'fold',
+      winners: newState.winners,
+      payouts,
+      potTotal: gameStateBeforeShowdown.pot,
+    })
+    await appendEvent(game.id, newState.handNumber, EVENT_TYPES_V2.HAND_COMPLETE, null, {
+      winners: newState.winners,
+    })
 
     // Create showdown history record
     // Get the most recent hand ID for this game
@@ -162,6 +240,9 @@ export async function submitAction(playerId: number, action: string, amount: num
   }
 
   const normalizedState = (await normalizeTurnIfNeeded(finalState.id)) || finalState
+
+  // Validate State (after everything, including potential normalization)
+  await validateGameState(game.id)
 
   return normalizedState
 }
@@ -311,6 +392,14 @@ export async function revealCard(playerId: number) {
     game.id,
   )
 
+  // RECORD V2 EVENT (ADVANCE_ROUND)
+  await appendEvent(game.id, newState.handNumber, EVENT_TYPES_V2.ADVANCE_ROUND, playerId, {
+    fromRound: game.currentRound,
+    toRound: newState.currentRound,
+    // @ts-ignore
+    newCommunityCards: newState.communityCards.slice(game.communityCards.length),
+  })
+
   await gameService.saveGameState(game.id, newState)
 
   if (newState.currentRound === 'showdown') {
@@ -328,6 +417,9 @@ export async function revealCard(playerId: number) {
       await createShowdownHistory(game.id, recentHand.id, newState)
     }
   }
+
+  // Validate State
+  await validateGameState(game.id)
 
   return gameService.getGameById(game.id)
 }

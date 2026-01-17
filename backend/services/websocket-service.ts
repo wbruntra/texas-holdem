@@ -13,6 +13,10 @@ import { calculatePots, distributePots } from '@/lib/pot-manager'
 import { evaluateHand } from '@/lib/poker-engine'
 // @ts-ignore
 import { verifyToken } from '@/middleware/auth'
+// @ts-ignore
+import roomService from '@/services/room-service'
+// @ts-ignore
+import db from '@holdem/database/db'
 
 const SHOWDOWN_ROUND = 'showdown'
 
@@ -149,17 +153,22 @@ class WebSocketService {
 
       if (stream === 'player') {
         if (token) {
-          const decoded = verifyToken(token)
-          if (decoded && decoded.playerId) {
-            const player = await playerService.getPlayerById(decoded.playerId)
-            if (player && player.gameId === game.id) {
-              authenticatedPlayerId = player.id
-              console.log('[WS] Player authenticated via JWT:', authenticatedPlayerId)
+          // Verify Room Session Token
+          const roomPlayer = await roomService.getRoomPlayerByToken(token)
+          if (roomPlayer) {
+            // Find Game Player for this Room Player in this Game
+            const gamePlayer = await db('game_players')
+              .where({ game_id: game.id, room_player_id: roomPlayer.id })
+              .first()
+
+            if (gamePlayer) {
+              authenticatedPlayerId = gamePlayer.id
+              console.log('[WS] Player authenticated via Room Token:', authenticatedPlayerId)
             } else {
-              console.warn('[WS] JWT player not found or wrong game:', decoded.playerId)
+              console.warn('[WS] Room player found but not in this game:', roomPlayer.id)
             }
           } else {
-            console.warn('[WS] Invalid JWT token provided')
+            console.warn('[WS] Invalid Room Token provided')
           }
         }
 
@@ -435,7 +444,7 @@ class WebSocketService {
   parseSession(req: any): { playerId: number } | null {
     try {
       const cookies = this.parseCookies(req.headers.cookie || '')
-      console.log('[WS] Parsed cookies:', Object.keys(cookies))
+      // console.log('[WS] Parsed cookies:', Object.keys(cookies))
 
       const sessionCookie = cookies['holdem']
       const signatureCookie = cookies['holdem.sig']
@@ -450,8 +459,8 @@ class WebSocketService {
         return null
       }
 
-      console.log('[WS] Session cookie length:', sessionCookie.length)
-      console.log('[WS] Signature cookie length:', signatureCookie.length)
+      // console.log('[WS] Session cookie length:', sessionCookie.length)
+      // console.log('[WS] Signature cookie length:', signatureCookie.length)
 
       const decodedValue = decodeURIComponent(sessionCookie)
       const decodedSignature = decodeURIComponent(signatureCookie)

@@ -7,7 +7,9 @@ import { isBettingRoundComplete, shouldAutoAdvance } from '@/lib/game-state-mach
 import { calculatePots, distributePots } from '@/lib/pot-manager'
 import { evaluateHand } from '@/lib/poker-engine'
 import * as eventLogger from '@/services/event-logger'
-import { getPlayerIdFromRequest, generateToken, requireAuth } from '@/middleware/auth'
+import { requireAuth } from '@/middleware/auth'
+import { appendEvent } from '@/services/event-store'
+import { EVENT_TYPES as EVENT_TYPES_V2 } from '@holdem/shared'
 
 const router = express.Router()
 
@@ -26,61 +28,45 @@ function shouldRevealAllCards(game) {
   return playersWithChips.length === 1 && allInPlayers.length > 0
 }
 
+// Middleware to load game-specific player context
 async function loadPlayer(req, res, next) {
   try {
-    const playerId = await getPlayerIdFromRequest(req)
-    if (!playerId) {
+    // req.roomPlayer is set by requireAuth
+    if (!req.roomPlayer) {
       return res.status(401).json({ error: 'Not authenticated' })
     }
 
-    const player = await playerService.getPlayerById(playerId)
-    if (!player) {
-      if (req.session) req.session = null
-      return res.status(401).json({ error: 'Player not found' })
+    const gameId = parseInt(req.params.gameId, 10)
+    if (isNaN(gameId)) {
+      // If route doesn't have gameId, skip (or error if strictly for game specific routes)
+      return next()
     }
-    req.player = player
+
+    const player = await gameService.getGamePlayer(gameId, req.roomPlayer.id)
+    if (!player) {
+      return res.status(403).json({ error: 'Not joined this game' })
+    }
+
+    // Enrich player with room player name for convenience if needed,
+    // but playerService.getPlayerById does that.
+    // Let's get full player object.
+    const fullPlayer = await playerService.getPlayerById(player.id)
+
+    req.player = fullPlayer
     next()
   } catch (error) {
     next(error)
   }
 }
 
-router.post('/', async (req, res, next) => {
-  try {
-    const { smallBlind, bigBlind, startingChips, seed } = req.body
-
-    // Basic validation
-    if (smallBlind !== undefined && (!Number.isInteger(smallBlind) || smallBlind <= 0)) {
-      return res.status(400).json({ error: 'smallBlind must be a positive integer' })
-    }
-    if (bigBlind !== undefined && (!Number.isInteger(bigBlind) || bigBlind <= 0)) {
-      return res.status(400).json({ error: 'bigBlind must be a positive integer' })
-    }
-    if (startingChips !== undefined && (!Number.isInteger(startingChips) || startingChips <= 0)) {
-      return res.status(400).json({ error: 'startingChips must be a positive integer' })
-    }
-    if (smallBlind !== undefined && bigBlind !== undefined && smallBlind >= bigBlind) {
-      return res.status(400).json({ error: 'smallBlind must be less than bigBlind' })
-    }
-
-    const game = await gameService.createGame({
-      smallBlind,
-      bigBlind,
-      startingChips,
-      seed,
-    })
-
-    res.status(201).json(game)
-  } catch (error) {
-    next(error)
-  }
-})
+// No create game route here, handled by Rooms
 
 router.get('/room/:roomCode', async (req, res, next) => {
   try {
     const game = await gameService.getGameByRoomCode(req.params.roomCode)
 
     if (!game) {
+      // It's possible room exists but no game? Room service creates one.
       return res.status(404).json({ error: 'Game not found' })
     }
 
@@ -105,6 +91,7 @@ router.get('/room/:roomCode', async (req, res, next) => {
   }
 })
 
+// Get active game state for room
 router.get('/room/:roomCode/state', async (req, res, next) => {
   try {
     let game = await gameService.getGameByRoomCode(req.params.roomCode)
@@ -142,7 +129,7 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
       winners: game.winners || undefined,
       players: game.players.map((p) => ({
         id: p.id,
-        name: p.name,
+        name: p.name, // Derived from room_players
         position: p.position,
         chips: p.chips,
         currentBet: p.currentBet,
@@ -160,6 +147,7 @@ router.get('/room/:roomCode/state', async (req, res, next) => {
   }
 })
 
+// Get specific game state (authenticated)
 router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
@@ -214,28 +202,19 @@ router.get('/:gameId', requireAuth, loadPlayer, async (req, res, next) => {
   }
 })
 
-router.post('/:gameId/join', async (req, res, next) => {
+// Join game (Sit at table)
+router.post('/:gameId/join', requireAuth, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    const { name, password } = req.body
+    // req.roomPlayer is set by requireAuth
 
-    if (!name || !password) {
-      return res.status(400).json({ error: 'Name and password required' })
-    }
-
-    const player = await playerService.joinGame(gameId, name, password)
-
-    if (req.session) {
-      req.session.playerId = player.id
-    }
-
-    const token = generateToken(player.id, gameId)
+    // Call playerService using roomPlayer.id
+    const result = await playerService.joinGame(gameId, req.roomPlayer.id)
 
     gameEvents.emitGameUpdate(gameId, 'join')
 
     res.status(201).json({
-      player,
-      token,
+      player: result,
       message: 'Joined game successfully',
     })
   } catch (error) {
@@ -243,42 +222,12 @@ router.post('/:gameId/join', async (req, res, next) => {
   }
 })
 
-router.post('/:gameId/auth', async (req, res, next) => {
-  try {
-    const gameId = parseInt(req.params.gameId, 10)
-    const { name, password } = req.body
-
-    if (!name || !password) {
-      return res.status(400).json({ error: 'Name and password required' })
-    }
-
-    const player = await playerService.authenticatePlayer(gameId, name, password)
-
-    if (req.session) {
-      req.session.playerId = player.id
-    }
-
-    const token = generateToken(player.id, gameId)
-
-    res.json({
-      player,
-      token,
-      message: 'Authenticated successfully',
-    })
-  } catch (error) {
-    if (error.message === 'Invalid credentials') {
-      return res.status(401).json({ error: error.message })
-    }
-    next(error)
-  }
-})
+// Remove auth route, handled by Rooms
 
 router.post('/:gameId/start', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    if (req.player.gameId !== gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' })
-    }
+    // Only verify authorization via loadPlayer
 
     const game = await gameService.startGame(gameId)
 
@@ -290,23 +239,45 @@ router.post('/:gameId/start', requireAuth, loadPlayer, async (req, res, next) =>
   }
 })
 
-router.post('/room/:roomCode/reset', async (req, res, next) => {
+// Start NEW game (Reset replacement)
+router.post('/room/:roomCode/new-game', async (req, res, next) => {
   try {
     const game = await gameService.getGameByRoomCode(req.params.roomCode)
 
     if (!game) {
-      return res.status(404).json({ error: 'Game not found' })
+      return res.status(404).json({ error: 'Active game not found (needed for room lookup)' })
+      // Or use roomService.getRoomByCode to get ID.
     }
 
-    if (game.status !== 'completed') {
-      return res.status(400).json({ error: 'Can only reset completed games' })
-    }
+    // We need roomId. Game object has it.
+    const roomId = game.roomId
 
-    const resetGame = await gameService.resetGame(game.id)
+    // We can call startNewGame
+    // Logic: check if current game is completed? Or force it?
+    // User wants "Reset Game" -> "New Game".
+    // If game is in progress, it should probably be stopped?
+    // startNewGame logic in game-service marks old game completed.
 
+    const newGame = await gameService.startNewGame(roomId)
+
+    // Emit update for old game to tell clients to reload/switch?
+    gameEvents.emitGameUpdate(game.id, 'reset') // Keep 'reset' event for frontend compatibility or change to 'new_game'
+
+    res.json(newGame)
+  } catch (error) {
+    next(error)
+  }
+})
+
+// Keep legacy reset route for now, maps to new game
+router.post('/room/:roomCode/reset', async (req, res, next) => {
+  try {
+    const game = await gameService.getGameByRoomCode(req.params.roomCode)
+    if (!game) return res.status(404).json({ error: 'Game not found' })
+
+    const newGame = await gameService.startNewGame(game.roomId)
     gameEvents.emitGameUpdate(game.id, 'reset')
-
-    res.json(resetGame)
+    res.json(newGame)
   } catch (error) {
     next(error)
   }
@@ -319,10 +290,6 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
 
     if (!action) {
       return res.status(400).json({ error: 'Action required' })
-    }
-
-    if (req.player.gameId !== gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' })
     }
 
     const gameState = await actionService.submitAction(req.player.id, action, amount || 0)
@@ -354,9 +321,6 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
 
     res.json(sanitizedState)
   } catch (error) {
-    // if (error instanceof Error) {
-    //   return res.status(400).json({ error: error.message || 'Invalid action' })
-    // }
     next(error)
   }
 })
@@ -364,10 +328,6 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
 router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    if (req.player.gameId !== gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' })
-    }
-
     const gameState = await actionService.revealCard(req.player.id)
 
     const revealCards = shouldRevealAllCards(gameState)
@@ -407,9 +367,6 @@ router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, ne
 router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    if (req.player.gameId !== gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' })
-    }
 
     const game = await gameService.getGameById(gameId)
     if (!game) {
@@ -448,6 +405,21 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
     const reason = nextState.action_finished ? 'advance_all_in' : 'advance'
     gameEvents.emitGameUpdate(gameId, reason)
 
+    // RECORD V2 EVENT (MANUAL ADVANCE)
+    if (reason === 'advance_all_in') {
+      await appendEvent(
+        gameId,
+        nextState.handNumber,
+        EVENT_TYPES_V2.ADVANCE_ROUND,
+        req.player.id,
+        {
+          fromRound: game.currentRound,
+          toRound: nextState.currentRound,
+          newCommunityCards: nextState.communityCards.slice(game.communityCards.length),
+        },
+      )
+    }
+
     res.json(sanitizedState)
   } catch (error) {
     if (error instanceof Error) {
@@ -459,13 +431,7 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
 
 router.get('/:gameId/actions/valid', requireAuth, loadPlayer, async (req, res, next) => {
   try {
-    const gameId = parseInt(req.params.gameId, 10)
-    if (req.player.gameId !== gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' })
-    }
-
     const actions = await actionService.getPlayerValidActions(req.player.id)
-
     res.json(actions)
   } catch (error) {
     next(error)
@@ -475,10 +441,6 @@ router.get('/:gameId/actions/valid', requireAuth, loadPlayer, async (req, res, n
 router.post('/:gameId/next-hand', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    if (req.player.gameId !== gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' })
-    }
-
     const game = await gameService.getGameById(gameId)
     if (!game) {
       return res.status(404).json({ error: 'Game not found' })
@@ -525,17 +487,9 @@ router.post('/:gameId/show-cards', requireAuth, loadPlayer, async (req, res, nex
     const { showCards } = req.body
 
     const game = await gameService.getGameById(gameId)
-    if (!game) {
-      return res.status(404).json({ error: 'Game not found' })
-    }
-
-    if (game.currentRound !== SHOWDOWN_ROUND) {
+    if (!game) return res.status(404).json({ error: 'Game not found' })
+    if (game.currentRound !== SHOWDOWN_ROUND)
       return res.status(400).json({ error: 'Not in showdown' })
-    }
-
-    if (req.player.gameId !== gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' })
-    }
 
     await playerService.setShowCards(req.player.id, showCards)
 
@@ -550,15 +504,11 @@ router.post('/:gameId/show-cards', requireAuth, loadPlayer, async (req, res, nex
 router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    if (req.player.gameId !== gameId) {
-      return res.status(403).json({ error: 'Not authorized for this game' })
-    }
-
     const playerGameId = req.player.gameId
 
     await playerService.leaveGame(req.player.id)
 
-    req.session = null
+    // Note: Session management is different now, handled by client token
 
     gameEvents.emitGameUpdate(playerGameId, 'leave')
 
@@ -572,7 +522,6 @@ router.get('/:gameId/players', async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
     const players = await playerService.getAllPlayersInGame(gameId)
-
     res.json(players)
   } catch (error) {
     next(error)

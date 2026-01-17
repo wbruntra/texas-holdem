@@ -1,5 +1,7 @@
 // @ts-ignore
 import db from '@holdem/database/db'
+// @ts-ignore
+import { Model } from 'objection'
 import crypto from 'crypto'
 import {
   createGameState,
@@ -9,24 +11,43 @@ import {
   isBettingRoundComplete,
   shouldAutoAdvance,
   shouldContinueToNextRound,
-} from '@/lib/game-state-machine'
-import { GAME_STATUS, ROUND } from '@/lib/game-constants'
-import eventLogger from '@/services/event-logger'
+} from '../lib/game-state-machine'
+import { ROUND, GAME_STATUS } from '../lib/game-constants'
+// @ts-ignore
+import { Card, Player, EVENT_TYPES as EVENT_TYPES_V2 } from '@holdem/shared'
+import eventLogger from './event-logger'
 import { EVENT_TYPE } from '@/lib/event-types'
-import { createShowdownHistory } from './showdown-service'
-import type { Card } from '@/lib/poker-engine'
-import type { Player, GameState } from '@holdem/shared/game-types'
+import { appendEvents, appendEvent } from './event-store'
+import { validateGameState } from './state-validator'
+import { saveSnapshot } from './snapshot-store'
+import { getEvents } from './event-store'
+import { deriveGameStateForGame } from '@/lib/state-derivation'
 
-interface GameConfig {
+function calculatePayouts(beforeState: any, afterState: any) {
+  const payouts: any[] = []
+  afterState.players.forEach((p: any) => {
+    const beforeStats = beforeState.players.find((bp: any) => bp.id === p.id)
+    if (beforeStats && p.chips > beforeStats.chips) {
+      payouts.push({
+        playerId: p.id,
+        amount: p.chips - beforeStats.chips,
+      })
+    }
+  })
+  return payouts
+}
+
+export interface GameConfig {
   smallBlind?: number
   bigBlind?: number
   startingChips?: number
   seed?: string | number
 }
 
-interface Game {
+export interface Game {
   id: number
-  roomCode: string
+  roomId: number
+  roomCode?: string
   status: string
   smallBlind: number
   bigBlind: number
@@ -34,16 +55,14 @@ interface Game {
   seed?: string
 }
 
-interface PlayerStackInfo {
+export interface PlayerStackInfo {
   player_id: number
   position: number
   name: string
   chips: number
 }
 
-/**
- * Generate unique 6-character room code
- */
+// Generate unique 6-character room code (moved to room-service, kept here if needed but likely unused)
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   let code = ''
@@ -54,28 +73,26 @@ function generateRoomCode(): string {
 }
 
 /**
- * Create new poker game with unique room code
+ * Create new poker game in a room
  */
-export async function createGame(config: GameConfig = {}): Promise<Game> {
-  const { smallBlind = 5, bigBlind = 10, startingChips = 1000, seed } = config
+export async function createGameInRoom(roomId: number, config: GameConfig = {}): Promise<Game> {
+  const room = await db('rooms').where({ id: roomId }).first()
+  if (!room) throw new Error('Room not found')
 
-  let roomCode: string
-  let attempts = 0
-  do {
-    roomCode = generateRoomCode()
-    const existing = await db('games').where({ room_code: roomCode }).first()
-    if (!existing) break
-    attempts++
-  } while (attempts < 10)
+  const lastGame = await db('games')
+    .where({ room_id: roomId })
+    .orderBy('game_number', 'desc')
+    .first()
+  const gameNumber = lastGame ? lastGame.game_number + 1 : 1
 
-  if (attempts >= 10) {
-    throw new Error('Failed to generate unique room code')
-  }
+  const smallBlind = config.smallBlind || room.small_blind
+  const bigBlind = config.bigBlind || room.big_blind
+  const startingChips = config.startingChips || room.starting_chips
 
-  const finalSeed = seed ? String(seed) : crypto.randomUUID()
-
-  const [gameId] = await db('games').insert({
-    room_code: roomCode,
+  const [id] = await db('games').insert({
+    room_id: roomId,
+    game_number: gameNumber,
+    room_code: room.room_code, // Optional, for easy lookup
     status: GAME_STATUS.WAITING,
     small_blind: smallBlind,
     big_blind: bigBlind,
@@ -85,87 +102,106 @@ export async function createGame(config: GameConfig = {}): Promise<Game> {
     current_bet: 0,
     hand_number: 0,
     last_raise: 0,
-    seed: finalSeed,
+    seed: config.seed || crypto.randomUUID(),
   })
 
-  eventLogger.logEvent(
-    EVENT_TYPE.GAME_CREATED,
-    {
-      roomCode,
-      smallBlind,
-      bigBlind,
-      startingChips,
-    },
-    gameId,
-  )
+  // Update room's current game
+  await db('rooms').where({ id: roomId }).update({ current_game_id: id })
+
+  return getGameById(id)
+}
+
+/**
+ * Get static game metadata (config, room code, seed) without state
+ * This is used by the derivation engine to avoid circular deps
+ */
+export async function getGameMetadata(gameId: number) {
+  const game = await db('games').where({ id: gameId }).first()
+  if (!game) return null
 
   return {
-    id: gameId,
-    roomCode,
-    status: GAME_STATUS.WAITING,
-    smallBlind,
-    bigBlind,
-    startingChips,
+    id: game.id,
+    roomId: game.room_id,
+    roomCode: game.room_code,
+    smallBlind: game.small_blind,
+    bigBlind: game.big_blind,
+    startingChips: game.starting_chips,
+    seed: game.seed,
   }
 }
 
 /**
- * Get game by ID with full state
+ * Get full game state by deriving from events
+ * This is the main API for getting game state
  */
 export async function getGameById(gameId: number) {
-  const game = await db('games').where({ id: gameId }).first()
-  if (!game) return null
+  const metadata = await getGameMetadata(gameId)
+  if (!metadata) return null
 
-  const players = await db('players').where({ game_id: gameId }).orderBy('position')
+  // Import dynamically to avoid circular dependency at module load
+  const { deriveGameState } = await import('@/lib/state-derivation')
+  const { getEvents } = await import('./event-store')
 
-  return {
-    id: game.id,
-    roomCode: game.room_code,
-    status: game.status,
-    smallBlind: game.small_blind,
-    bigBlind: game.big_blind,
-    startingChips: game.starting_chips,
-    dealerPosition: game.dealer_position,
-    currentRound: game.current_round,
-    pot: game.pot,
-    communityCards: game.community_cards ? JSON.parse(game.community_cards) : [],
-    deck: game.deck ? JSON.parse(game.deck) : [],
-    winners: game.winners ? JSON.parse(game.winners) : undefined,
-    seed: game.seed,
-    currentBet: game.current_bet,
-    currentPlayerPosition: game.current_player_position,
-    handNumber: game.hand_number,
-    lastRaise: game.last_raise,
-    showdownProcessed: game.showdown_processed === 1 || game.showdown_processed === true,
-    action_finished: game.action_finished === 1 || game.action_finished === true,
-    players: players.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      position: p.position,
-      chips: p.chips,
-      currentBet: p.current_bet,
-      totalBet: p.total_bet || 0,
-      holeCards: p.hole_cards ? JSON.parse(p.hole_cards) : [],
-      status: p.status,
-      isDealer: p.is_dealer === 1,
-      isSmallBlind: p.is_small_blind === 1,
-      isBigBlind: p.is_big_blind === 1,
-      lastAction: p.last_action,
-      connected: p.connected === 1,
-      showCards: p.show_cards === 1,
-    })),
-    pots: [],
+  const events = await getEvents(gameId)
+
+  const gameConfig = {
+    smallBlind: metadata.smallBlind,
+    bigBlind: metadata.bigBlind,
+    startingChips: metadata.startingChips,
   }
+
+  // Players are added via PLAYER_JOINED events
+  const derivedState = deriveGameState(gameConfig, [], events)
+
+  // We need to enrich players with names from room_players if they are in derived state?
+  // Actually derived state "players" comes from events.
+  // The PLAYER_JOINED event should contain the name.
+  // So validation should ensure name is correct.
+
+  // Merge metadata with derived state
+  return {
+    ...derivedState,
+    id: metadata.id,
+    roomId: metadata.roomId,
+    roomCode: metadata.roomCode,
+    seed: metadata.seed,
+    startingChips: metadata.startingChips,
+    pots: [], // Frontend expects this
+    // We might want to attach "connected" status from game_players/room_players
+    // derivedState.players only has info from events.
+    // Let's fetch current connection status:
+    players: await Promise.all(
+      derivedState.players.map(async (p: any) => {
+        // Find game_player to get room_player link
+        // Wait, derivedState p.id IS game_player.id (likely)
+        const gp = await db('game_players').where({ id: p.id }).first()
+        let connected = false
+        if (gp) {
+          const rp = await db('room_players').where({ id: gp.room_player_id }).first()
+          if (rp) connected = rp.connected === 1
+        }
+        return { ...p, connected }
+      }),
+    ),
+  }
+}
+
+/**
+ * Get game player record provided gameId and roomPlayerId
+ */
+export async function getGamePlayer(gameId: number, roomPlayerId: number) {
+  return db('game_players').where({ game_id: gameId, room_player_id: roomPlayerId }).first()
 }
 
 /**
  * Get game by room code
  */
 export async function getGameByRoomCode(roomCode: string) {
-  const game = await db('games').where({ room_code: roomCode }).first()
-  if (!game) return null
+  const room = await db('rooms').where({ room_code: roomCode }).first()
+  if (!room) return null
+  if (!room.current_game_id) return null // No active game in this room
 
-  return getGameById(game.id)
+  return getGameById(room.current_game_id)
 }
 
 /**
@@ -236,6 +272,82 @@ export async function startGame(gameId: number) {
     console.error('Failed to record blind posts:', error)
   }
 
+  // RECORD V2 EVENTS
+  try {
+    const holeCards: Record<number, [Card, Card]> = {}
+    newState.players.forEach((p: Player) => {
+      // @ts-ignore
+      if (p.holeCards && p.holeCards.length === 2) {
+        // @ts-ignore
+        holeCards[p.id] = p.holeCards
+      }
+    })
+
+    const events = []
+    let seq = 0
+
+    events.push({
+      gameId,
+      handNumber: newState.handNumber,
+      sequenceNumber: seq++,
+      eventType: EVENT_TYPES_V2.HAND_START,
+      playerId: null,
+      payload: {
+        handNumber: newState.handNumber,
+        dealerPosition: newState.dealerPosition,
+        // @ts-ignore
+        smallBlindPosition: newState.players.findIndex((p) => p.isSmallBlind),
+        // @ts-ignore
+        bigBlindPosition: newState.players.findIndex((p) => p.isBigBlind),
+        deck: newState.deck,
+        holeCards,
+      },
+    })
+
+    // Record blinds
+    // @ts-ignore
+    const sbPlayer = newState.players.find((p) => p.isSmallBlind)
+    // @ts-ignore
+    const bbPlayer = newState.players.find((p) => p.isBigBlind)
+
+    if (sbPlayer && sbPlayer.currentBet > 0) {
+      events.push({
+        gameId,
+        handNumber: newState.handNumber,
+        sequenceNumber: seq++,
+        eventType: EVENT_TYPES_V2.POST_BLIND,
+        playerId: sbPlayer.id,
+        payload: {
+          blindType: 'small',
+          amount: sbPlayer.currentBet,
+          // @ts-ignore
+          isAllIn: sbPlayer.status === 'all_in',
+        },
+      })
+    }
+
+    if (bbPlayer && bbPlayer.currentBet > 0) {
+      events.push({
+        gameId,
+        handNumber: newState.handNumber,
+        sequenceNumber: seq++,
+        eventType: EVENT_TYPES_V2.POST_BLIND,
+        playerId: bbPlayer.id,
+        payload: {
+          blindType: 'big',
+          amount: bbPlayer.currentBet,
+          // @ts-ignore
+          isAllIn: bbPlayer.status === 'all_in',
+        },
+      })
+    }
+
+    // @ts-ignore
+    await appendEvents(events)
+  } catch (err) {
+    console.error('Failed to record V2 events:', err)
+  }
+
   return getGameById(gameId)
 }
 
@@ -268,7 +380,7 @@ export async function saveGameState(gameId: number, state: any): Promise<void> {
       })
 
     for (const player of state.players) {
-      await trx('players')
+      await trx('game_players')
         .where({ id: player.id })
         .update({
           chips: player.chips,
@@ -301,7 +413,8 @@ export async function advanceOneRound(gameId: number) {
   if (
     !isBettingRoundComplete(gameState) &&
     !shouldAutoAdvance(gameState) &&
-    !gameState.action_finished
+    !gameState.action_finished &&
+    gameState.currentPlayerPosition !== null // Allow advance if position is explicitly null (skipped round)
   ) {
     return gameState
   }
@@ -315,6 +428,15 @@ export async function advanceOneRound(gameId: number) {
   if (shouldContinueToNextRound(gameState)) {
     gameState = advanceRound(gameState)
     await saveGameState(gameId, gameState)
+
+    // RECORD V2 EVENTS (ROUND STARTED)
+    await appendEvent(gameId, gameState.handNumber, EVENT_TYPES_V2.DEAL_COMMUNITY, null, {
+      round: gameState.currentRound,
+      communityCards: gameState.communityCards,
+    })
+
+    // Validate State
+    await validateGameState(gameId)
   } else {
     // Check if we're advancing from river to showdown
     const isAdvancingFromRiver = gameState.currentRound === ROUND.RIVER
@@ -331,6 +453,7 @@ export async function advanceOneRound(gameId: number) {
         },
         gameId,
       )
+      const gameStateBeforeShowdown = { ...gameState }
       gameState = processShowdown(gameState)
       await saveGameState(gameId, gameState)
 
@@ -344,9 +467,42 @@ export async function advanceOneRound(gameId: number) {
         },
         gameId,
       )
+
+      const payouts = calculatePayouts(gameStateBeforeShowdown, gameState)
+
+      // RECORD V2 EVENTS (SHOWDOWN - informational only)
+      await appendEvent(gameId, gameState.handNumber, EVENT_TYPES_V2.SHOWDOWN, null, {
+        communityCards: gameState.communityCards,
+        // Card rankings could go here in future
+      })
+
+      // RECORD V2 EVENTS (AWARD_POT - chip distribution)
+      await appendEvent(gameId, gameState.handNumber, EVENT_TYPES_V2.AWARD_POT, null, {
+        winReason: 'showdown',
+        winners: gameState.winners,
+        payouts,
+        potTotal: gameStateBeforeShowdown.pot,
+      })
+
+      // Also record simple HAND_COMPLETE for now to close the loop
+      await appendEvent(gameId, gameState.handNumber, EVENT_TYPES_V2.HAND_COMPLETE, null, {
+        winners: gameState.winners,
+      })
+
+      // Validate State
+      await validateGameState(gameId)
+
+      // CREATE SNAPSHOT
+      const derivedState = await deriveGameStateForGame(gameId)
+      const events = await getEvents(gameId)
+      const lastSeq = events.length > 0 ? events[events.length - 1].sequenceNumber : 0
+
+      await saveSnapshot(gameId, gameState.handNumber, lastSeq, derivedState)
     } else {
       // Not advancing from river, just save the state
       await saveGameState(gameId, gameState)
+      // Validate State
+      await validateGameState(gameId)
     }
   }
 
@@ -410,6 +566,12 @@ export async function advanceRoundIfReady(gameId: number) {
 
       await saveGameState(gameId, gameState)
 
+      // RECORD V2 EVENTS (ROUND STARTED)
+      await appendEvent(gameId, gameState.handNumber, EVENT_TYPES_V2.DEAL_COMMUNITY, null, {
+        round: gameState.currentRound,
+        communityCards: gameState.communityCards,
+      })
+
       if (shouldAutoAdvanceNow && shouldAutoAdvance(gameState)) {
         await new Promise((resolve) => setTimeout(resolve, 2000))
       }
@@ -423,6 +585,7 @@ export async function advanceRoundIfReady(gameId: number) {
         },
         gameId,
       )
+      const gameStateBeforeShowdown = { ...gameState }
       gameState = processShowdown(gameState)
       await saveGameState(gameId, gameState)
 
@@ -436,6 +599,35 @@ export async function advanceRoundIfReady(gameId: number) {
         },
         gameId,
       )
+
+      // RECORD V2 EVENTS (SHOWDOWN - informational only)
+      const payouts = calculatePayouts(gameStateBeforeShowdown, gameState)
+      await appendEvent(gameId, gameState.handNumber, EVENT_TYPES_V2.SHOWDOWN, null, {
+        communityCards: gameState.communityCards,
+      })
+
+      // RECORD V2 EVENTS (AWARD_POT - chip distribution)
+      await appendEvent(gameId, gameState.handNumber, EVENT_TYPES_V2.AWARD_POT, null, {
+        winReason: 'showdown',
+        winners: gameState.winners,
+        payouts,
+        potTotal: gameStateBeforeShowdown.pot,
+      })
+
+      await appendEvent(gameId, gameState.handNumber, EVENT_TYPES_V2.HAND_COMPLETE, null, {
+        winners: gameState.winners,
+      })
+
+      // Validate State
+      await validateGameState(gameId)
+
+      // CREATE SNAPSHOT
+      const derivedState = await deriveGameStateForGame(gameId)
+      const events = await getEvents(gameId)
+      const lastSeq = events.length > 0 ? events[events.length - 1].sequenceNumber : 0
+
+      await saveSnapshot(gameId, gameState.handNumber, lastSeq, derivedState)
+
       break
     }
   }
@@ -500,6 +692,82 @@ export async function startNextHand(gameId: number) {
     console.error('Failed to record blind posts:', error)
   }
 
+  // RECORD V2 EVENTS
+  try {
+    const holeCards: Record<number, [Card, Card]> = {}
+    newState.players.forEach((p: any) => {
+      // @ts-ignore
+      if (p.holeCards && p.holeCards.length === 2) {
+        // @ts-ignore
+        holeCards[p.id] = p.holeCards
+      }
+    })
+
+    const events = []
+    let seq = 0
+
+    events.push({
+      gameId,
+      handNumber: newState.handNumber,
+      sequenceNumber: seq++,
+      eventType: EVENT_TYPES_V2.HAND_START,
+      playerId: null,
+      payload: {
+        handNumber: newState.handNumber,
+        dealerPosition: newState.dealerPosition,
+        // @ts-ignore
+        smallBlindPosition: newState.players.findIndex((p) => p.isSmallBlind),
+        // @ts-ignore
+        bigBlindPosition: newState.players.findIndex((p) => p.isBigBlind),
+        deck: newState.deck,
+        holeCards,
+      },
+    })
+
+    // Record blinds
+    // @ts-ignore
+    const sbPlayer = newState.players.find((p) => p.isSmallBlind)
+    // @ts-ignore
+    const bbPlayer = newState.players.find((p) => p.isBigBlind)
+
+    if (sbPlayer && sbPlayer.currentBet > 0) {
+      events.push({
+        gameId,
+        handNumber: newState.handNumber,
+        sequenceNumber: seq++,
+        eventType: EVENT_TYPES_V2.POST_BLIND,
+        playerId: sbPlayer.id,
+        payload: {
+          blindType: 'small',
+          amount: sbPlayer.currentBet,
+          // @ts-ignore
+          isAllIn: sbPlayer.status === 'all_in',
+        },
+      })
+    }
+
+    if (bbPlayer && bbPlayer.currentBet > 0) {
+      events.push({
+        gameId,
+        handNumber: newState.handNumber,
+        sequenceNumber: seq++,
+        eventType: EVENT_TYPES_V2.POST_BLIND,
+        playerId: bbPlayer.id,
+        payload: {
+          blindType: 'big',
+          amount: bbPlayer.currentBet,
+          // @ts-ignore
+          isAllIn: bbPlayer.status === 'all_in',
+        },
+      })
+    }
+
+    // @ts-ignore
+    await appendEvents(events)
+  } catch (err) {
+    console.error('Failed to record V2 events:', err)
+  }
+
   return getGameById(gameId)
 }
 
@@ -522,6 +790,7 @@ export async function createHandRecord(gameId: number, gameState: any): Promise<
     }
   })
 
+  // @ts-ignore
   const [handId] = await db('hands').insert({
     game_id: gameId,
     hand_number: gameState.handNumber,
@@ -567,6 +836,7 @@ export async function completeHandRecord(gameId: number, gameState: any): Promis
 
   // Create showdown history record after hand completion
   if (gameState.currentRound === 'showdown' || gameState.showdownProcessed) {
+    const { createShowdownHistory } = await import('./showdown-service')
     await createShowdownHistory(gameId, hand.id, gameState)
   }
 }
@@ -582,6 +852,7 @@ export async function recordHandHistory(gameId: number, gameState: any): Promise
   if (existingHand) {
     await completeHandRecord(gameId, gameState)
   } else {
+    // @ts-ignore
     await db('hands').insert({
       game_id: gameId,
       hand_number: gameState.handNumber,
@@ -595,66 +866,104 @@ export async function recordHandHistory(gameId: number, gameState: any): Promise
 }
 
 /**
- * Reset game to waiting state
+ * Start new game in the same room, carrying over players and chips
  */
-export async function resetGame(gameId: number) {
-  const game = await db('games').where({ id: gameId }).first()
-  if (!game) {
-    throw new Error('Game not found')
+export async function startNewGame(roomId: number) {
+  const room = await db('rooms').where({ id: roomId }).first()
+  if (!room) throw new Error('Room not found')
+
+  const oldGameId = room.current_game_id
+  let oldPlayers: any[] = []
+
+  // Close old game if active
+  if (oldGameId) {
+    const oldGame = await db('games').where({ id: oldGameId }).first()
+    if (oldGame && oldGame.status !== GAME_STATUS.COMPLETED) {
+      await db('games')
+        .where({ id: oldGameId })
+        .update({ status: GAME_STATUS.COMPLETED, updated_at: new Date() })
+    }
+
+    // Get players from old game to carry over chips
+    oldPlayers = await db('game_players').where({ game_id: oldGameId })
   }
 
-  const players = await db('players').where({ game_id: gameId }).orderBy('position')
+  // Create new game
+  const newGame = await createGameInRoom(roomId)
 
-  if (players.length === 0) {
-    throw new Error('No players in game')
+  // Carry over players
+  // Strategy:
+  // 1. If player was in old game and not "out" (0 chips), carry them over with their chips.
+  // 2. If player was "out", do we rebuy them? Or keep them out?
+  //    Usually, if "New Game" is pressed, maybe we allow rebuys or just reset active players?
+  //    User said: "reset chip counts? no." -> implied carry over.
+  //    If chips are 0, they are out. Unless they want to rebuy.
+  //    Let's assume "New Game" carries over active players.
+  //    BUT, what about players who just joined the room?
+  //    Let's add ALL connected room_players.
+
+  const connectedRoomPlayers = await db('room_players').where({ room_id: roomId, connected: true })
+
+  for (const roomPlayer of connectedRoomPlayers) {
+    const oldPlayerParams = oldPlayers.find((op) => op.room_player_id === roomPlayer.id)
+
+    let chips = room.starting_chips
+    let position = 0 // Needs logic
+
+    if (oldPlayerParams) {
+      chips = oldPlayerParams.chips
+      position = oldPlayerParams.position
+
+      // If chips are 0, maybe give them starting chips if they want to rejoin?
+      // Or keep them at 0 and 'out'?
+      // For now, if chips 0, they are out.
+      if (chips <= 0) {
+        // Option: give them starting chips for new game (Rebuy)
+        // Or keep them out.
+        // Let's reset to starting chips if they are out, so they can play the new game?
+        // "Reset button" usually implies starting fresh related to game flow,
+        // but user specifically said "reset chip counts? no".
+        // Use case: separate games in a tournament or cash game session.
+        // In cash game, if you bust, you rebuy.
+        // Let's KEEP chips. If 0, they are out.
+      }
+    } else {
+      // New player, find empty position
+      // Simple logic: max position + 1
+      const currentPlayers = await db('game_players').where({ game_id: newGame.id })
+      const positions = currentPlayers.map((p: any) => p.position)
+      let pos = 0
+      while (positions.includes(pos)) pos++
+      position = pos
+    }
+
+    // Create game_player
+    // @ts-ignore
+    const [gpId] = await db('game_players').insert({
+      game_id: newGame.id,
+      room_player_id: roomPlayer.id,
+      position,
+      chips,
+      current_bet: 0,
+      total_bet: 0,
+      status: chips > 0 ? 'active' : 'out',
+      is_dealer: false,
+      is_small_blind: false,
+      is_big_blind: false,
+      show_cards: false,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+
+    // Log join event
+    await appendEvent(newGame.id, 0, EVENT_TYPES_V2.PLAYER_JOINED, gpId, {
+      name: roomPlayer.name,
+      position,
+      startingChips: chips,
+    })
   }
 
-  await db('games').where({ id: gameId }).update({
-    status: GAME_STATUS.WAITING,
-    dealer_position: 0,
-    current_round: null,
-    pot: 0,
-    community_cards: null,
-    current_bet: 0,
-    current_player_position: null,
-    hand_number: 0,
-    last_raise: 0,
-    deck: null,
-    winners: null,
-    seed: crypto.randomUUID(),
-    updated_at: new Date(),
-  })
-
-  await db('players').where({ game_id: gameId }).update({
-    chips: game.starting_chips,
-    current_bet: 0,
-    hole_cards: null,
-    status: 'active',
-    is_dealer: false,
-    is_small_blind: false,
-    is_big_blind: false,
-    last_action: null,
-    total_bet: 0,
-    updated_at: new Date(),
-  })
-
-  await db('actions')
-    .whereIn(
-      'player_id',
-      players.map((p: any) => p.id),
-    )
-    .delete()
-  await db('hands').where({ game_id: gameId }).delete()
-
-  eventLogger.logEvent(
-    EVENT_TYPE.GAME_RESET,
-    {
-      playerCount: players.length,
-    },
-    gameId,
-  )
-
-  return getGameById(gameId)
+  return getGameById(newGame.id)
 }
 
 /**
@@ -665,8 +974,9 @@ export async function deleteGame(gameId: number): Promise<void> {
 }
 
 export default {
-  createGame,
+  createGameInRoom,
   getGameById,
+  getGamePlayer,
   getGameByRoomCode,
   startGame,
   saveGameState,
@@ -676,6 +986,6 @@ export default {
   createHandRecord,
   completeHandRecord,
   recordHandHistory,
-  resetGame,
+  startNewGame,
   deleteGame,
 }

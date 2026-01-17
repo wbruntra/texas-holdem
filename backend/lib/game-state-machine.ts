@@ -449,7 +449,10 @@ export function shouldContinueToNextRound(state: GameState): boolean {
     return false
   }
 
-  if (isBettingRoundComplete(state) && state.currentRound !== ROUND.RIVER) {
+  if (
+    (isBettingRoundComplete(state) || state.currentPlayerPosition === null) &&
+    state.currentRound !== ROUND.RIVER
+  ) {
     return true
   }
 

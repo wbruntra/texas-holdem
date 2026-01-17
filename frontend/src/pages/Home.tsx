@@ -19,22 +19,33 @@ export default function Home() {
     return fallback
   }
 
-  const handleCreateGame = async () => {
+  const handleCreateRoom = async () => {
     setCreating(true)
     setError('')
 
     try {
       const smallBlind = Math.floor(bigBlind / 2)
-      const response = await axios.post('/api/games', {
+      // Call create room endpoint
+      const response = await axios.post('/api/rooms', {
         smallBlind,
         bigBlind,
         startingChips,
       })
 
-      const roomCode = response.data.roomCode
+      const roomCode = response.data.room_code // Note: casing might change in new API response
+      // My room-service/router returns the room object.
+      // Room object has `room_code`.
+      // Previous API returned `roomCode`.
+      // I should check `rooms.js` response.
+      // `rooms.js` does `res.json(room)`.
+      // `room-service.ts` createRoom returns `getRoomById`.
+      // `getRoomById` returns db row + players + currentGame.
+      // DB row uses snake_case `room_code`.
+      // So response.data.room_code is correct.
+
       navigate(`/table/${roomCode}`)
     } catch (err: unknown) {
-      setError(getErrorMessage(err, 'Failed to create game'))
+      setError(getErrorMessage(err, 'Failed to create room'))
     } finally {
       setCreating(false)
       setShowGameSettings(false)
@@ -52,7 +63,7 @@ export default function Home() {
     setStartingChips(1000)
   }
 
-  const handleJoinGame = () => {
+  const handleJoinRoom = () => {
     if (roomCode.trim()) {
       navigate(`/player/${roomCode}`)
     }
@@ -70,9 +81,9 @@ export default function Home() {
 
       <div className="card bg-dark text-white border-secondary mb-4 shadow">
         <div className="card-body p-4">
-          <h2 className="h4 mb-3">Create New Game</h2>
+          <h2 className="h4 mb-3">Create New Room</h2>
           <p className="text-secondary mb-4">
-            Start a new game and show the table on this screen.
+            Start a new poker room and show the table on this screen.
           </p>
           <button
             onClick={handleShowSettings}
@@ -89,7 +100,7 @@ export default function Home() {
                 Creating...
               </>
             ) : (
-              'Create Game'
+              'Create Room'
             )}
           </button>
         </div>
@@ -97,9 +108,9 @@ export default function Home() {
 
       <div className="card bg-dark text-white border-secondary shadow">
         <div className="card-body p-4 text-center">
-          <h2 className="h4 mb-3 text-start">Join Existing Game</h2>
+          <h2 className="h4 mb-3 text-start">Join Room</h2>
           <p className="text-secondary mb-4 text-start">
-            Enter room code to join as a player on your device.
+            Enter room code to join the table on your device.
           </p>
           <div className="input-group input-group-lg">
             <input
@@ -107,12 +118,12 @@ export default function Home() {
               placeholder="Room Code"
               value={roomCode}
               onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-              onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
+              onKeyPress={(e) => e.key === 'Enter' && handleJoinRoom()}
               className="form-control text-center bg-dark text-white border-secondary fw-bold"
               style={{ letterSpacing: '4px' }}
             />
             <button
-              onClick={handleJoinGame}
+              onClick={handleJoinRoom}
               disabled={!roomCode.trim()}
               className="btn-poker btn-poker-primary px-4"
             >
@@ -133,7 +144,7 @@ export default function Home() {
           <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content bg-dark text-white border-secondary shadow-lg">
               <div className="modal-header border-secondary">
-                <h5 className="modal-title fw-bold">Game Settings</h5>
+                <h5 className="modal-title fw-bold">Room Settings</h5>
                 <button
                   type="button"
                   className="btn-close btn-close-white"
@@ -221,11 +232,11 @@ export default function Home() {
                   Cancel
                 </button>
                 <button
-                  onClick={handleCreateGame}
+                  onClick={handleCreateRoom}
                   disabled={creating || bigBlind < 2 || startingChips < 100}
                   className="btn-poker btn-poker-primary px-4"
                 >
-                  {creating ? 'Creating...' : 'Create Game'}
+                  {creating ? 'Creating...' : 'Create Room'}
                 </button>
               </div>
             </div>

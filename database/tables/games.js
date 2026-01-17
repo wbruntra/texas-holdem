@@ -22,6 +22,7 @@ CREATE TABLE games (
     winners TEXT,
     showdown_processed boolean NOT NULL DEFAULT '0',
     action_finished boolean NOT NULL DEFAULT '0',
+    seed TEXT,
     PRIMARY KEY (id),
     CONSTRAINT games_room_code_unique UNIQUE (room_code)
 );
@@ -30,6 +31,8 @@ CREATE TABLE games (
 -- * hands.game_id (fk_hands_game_id_games_id)
 -- * players.game_id (fk_players_game_id_games_id)
 -- * showdown_history.game_id (fk_showdown_history_game_id_games_id)
+-- * game_events.game_id (fk_game_events_game_id_games_id)
+-- * game_snapshots.game_id (fk_game_snapshots_game_id_games_id)
  * END_DDL
  */
 const { Model } = require('objection')
@@ -49,7 +52,8 @@ class Games extends Model {
     return {
       type: 'object',
       required: [
-        'room_code',
+        'room_id',
+        'game_number',
         'status',
         'small_blind',
         'big_blind',
@@ -60,7 +64,9 @@ class Games extends Model {
       ],
       properties: {
         id: { type: 'integer' },
-        room_code: { type: 'string', maxLength: 6 },
+        room_id: { type: 'integer' },
+        game_number: { type: 'integer' },
+        room_code: { type: ['string', 'null'] }, // Optional now
         status: { type: 'string' },
         small_blind: { type: 'integer' },
         big_blind: { type: 'integer' },
@@ -89,16 +95,17 @@ class Games extends Model {
   }
 
   static get relationMappings() {
-    const Players = require('./players')
+    const GamePlayers = require('./game_players')
     const Hands = require('./hands')
+    const Rooms = require('./rooms')
 
     return {
       players: {
         relation: Model.HasManyRelation,
-        modelClass: Players,
+        modelClass: GamePlayers,
         join: {
           from: 'games.id',
-          to: 'players.game_id',
+          to: 'game_players.game_id',
         },
       },
       hands: {
@@ -107,6 +114,14 @@ class Games extends Model {
         join: {
           from: 'games.id',
           to: 'hands.game_id',
+        },
+      },
+      room: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Rooms,
+        join: {
+          from: 'games.room_id',
+          to: 'rooms.id',
         },
       },
     }

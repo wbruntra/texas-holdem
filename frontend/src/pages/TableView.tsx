@@ -114,15 +114,15 @@ export default function TableView() {
     }
   }, [wsManagerRef.current, dispatch])
 
-  const handleResetGame = async () => {
+  const handleNewGame = async () => {
     if (!roomCode) return
 
     setIsResetting(true)
     try {
-      await axios.post(`/api/games/room/${roomCode}/reset`)
+      await axios.post(`/api/games/room/${roomCode}/new-game`)
       setShowGameOverModal(false)
     } catch (err: unknown) {
-      const errorMsg = getApiErrorMessage(err, 'Failed to reset game')
+      const errorMsg = getApiErrorMessage(err, 'Failed to start new game')
       dispatch(setError(errorMsg))
       alert(errorMsg)
     } finally {
@@ -215,7 +215,7 @@ export default function TableView() {
         game={game}
         isOpen={game.status === 'completed' && showGameOverModal}
         onClose={() => setShowGameOverModal(false)}
-        onResetGame={handleResetGame}
+        onResetGame={handleNewGame}
         isResetting={isResetting}
       />
     </>

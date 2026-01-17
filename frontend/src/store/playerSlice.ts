@@ -13,6 +13,7 @@ interface PlayerState {
   betAmount: number
   raiseAmount: number
   error: string
+  token: string | null
 }
 
 const initialState: PlayerState = {
@@ -25,6 +26,7 @@ const initialState: PlayerState = {
   betAmount: 0,
   raiseAmount: 0,
   error: '',
+  token: null,
 }
 
 const getApiErrorMessage = (err: unknown, fallback: string): string => {
@@ -33,7 +35,7 @@ const getApiErrorMessage = (err: unknown, fallback: string): string => {
   const error = data?.error || fallback
 
   if (error === 'Invalid password') {
-    return 'Incorrect password for this player and game'
+    return 'Incorrect password for this room'
   }
   if (error === 'Game already started') {
     return 'Cannot join: game has already started'
@@ -47,6 +49,10 @@ const getApiErrorMessage = (err: unknown, fallback: string): string => {
   return error
 }
 
+const getAuthHeader = (token: string | null) => {
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 export const checkAuth = createAsyncThunk(
   'player/checkAuth',
   async (
@@ -54,22 +60,35 @@ export const checkAuth = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
+      // 1. Check for stored token
+      const storedTokenKey = `holdem:${roomCode}:token`
+      const token = localStorage.getItem(storedTokenKey)
+
+      if (!token) {
+        throw new Error('No token found')
+      }
+
+      // 2. Get active game (public info)
       const gameResponse = await axios.get(`/api/games/room/${roomCode}`)
       const gameId = gameResponse.data.id
 
-      const stateResponse = await axios.get(`/api/games/${gameId}`, { withCredentials: true })
+      // 3. Get game state WITH stored token to verify it works
+      const stateResponse = await axios.get(`/api/games/${gameId}`, {
+        headers: getAuthHeader(token),
+      })
 
-      const authenticatedPlayer = stateResponse.data.players.find(
-        (p: { holeCards: unknown[] }) => p.holeCards && p.holeCards.length > 0,
-      )
+      // Try to confirm player identity from game state if possible, otherwise rely on local storage name
+      // const authenticatedPlayer = stateResponse.data.players.find(...)
 
-      if (authenticatedPlayer && playerNameStorageKey) {
-        localStorage.setItem(`${playerNameStorageKey}:playerId`, authenticatedPlayer.id)
+      let myName = ''
+      if (playerNameStorageKey) {
+        myName = localStorage.getItem(playerNameStorageKey) || ''
       }
 
       return {
         game: stateResponse.data,
-        playerName: authenticatedPlayer?.name || '',
+        playerName: myName,
+        token,
       }
     } catch {
       return rejectWithValue('Not authenticated')
@@ -84,27 +103,44 @@ export const joinGame = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
+      // 1. Join Room (Auth)
+      // Note: Backend expects raw password now (I updated room-service)
+      const roomResponse = await axios.post(`/api/rooms/${roomCode}/join`, {
+        name: playerName,
+        password: password,
+      })
+
+      const { player: roomPlayer, token } = roomResponse.data
+
+      // Store token
+      const storedTokenKey = `holdem:${roomCode}:token`
+      localStorage.setItem(storedTokenKey, token)
+
+      if (roomPlayer && roomPlayer.name) {
+        localStorage.setItem(`holdem:${roomCode}:playerName`, roomPlayer.name)
+      }
+
+      // 2. Get active game
       const gameResponse = await axios.get(`/api/games/room/${roomCode}`)
       const gameId = gameResponse.data.id
 
+      // 3. Join Game (Sit at table)
+      // This creates a game_player entry if not exists
       await axios.post(
         `/api/games/${gameId}/join`,
-        { name: playerName.trim(), password },
-        { withCredentials: true },
+        {}, // Body is empty now as we auth via token
+        { headers: getAuthHeader(token) },
       )
 
-      const stateResponse = await axios.get(`/api/games/${gameId}`, { withCredentials: true })
-
-      const authenticatedPlayer = stateResponse.data.players.find(
-        (p: { holeCards: unknown[] }) => p.holeCards && p.holeCards.length > 0,
-      )
-      if (authenticatedPlayer) {
-        localStorage.setItem(`holdem:${roomCode}:playerId`, authenticatedPlayer.id)
-      }
+      // 4. Get full game state
+      const stateResponse = await axios.get(`/api/games/${gameId}`, {
+        headers: getAuthHeader(token),
+      })
 
       return {
         game: stateResponse.data,
-        playerName: playerName.trim(),
+        playerName: roomPlayer.name,
+        token,
       }
     } catch (err: unknown) {
       return rejectWithValue(getApiErrorMessage(err, 'Failed to join game'))
@@ -114,9 +150,14 @@ export const joinGame = createAsyncThunk(
 
 export const startGame = createAsyncThunk(
   'player/startGame',
-  async (gameId: string, { rejectWithValue }) => {
+  async (gameId: string, { rejectWithValue, getState }) => {
     try {
-      await axios.post(`/api/games/${gameId}/start`, {}, { withCredentials: true })
+      const state = getState() as { player: PlayerState }
+      await axios.post(
+        `/api/games/${gameId}/start`,
+        {},
+        { headers: getAuthHeader(state.player.token) },
+      )
       return ''
     } catch (err: unknown) {
       return rejectWithValue(getApiErrorMessage(err, 'Failed to start game'))
@@ -128,13 +169,14 @@ export const performAction = createAsyncThunk(
   'player/performAction',
   async (
     { gameId, action, amount }: { gameId: string; action: string; amount?: number },
-    { rejectWithValue },
+    { rejectWithValue, getState },
   ) => {
     try {
+      const state = getState() as { player: PlayerState }
       await axios.post(
         `/api/games/${gameId}/actions`,
         { action, amount },
-        { withCredentials: true },
+        { headers: getAuthHeader(state.player.token) },
       )
       return ''
     } catch (err: unknown) {
@@ -145,9 +187,14 @@ export const performAction = createAsyncThunk(
 
 export const nextHand = createAsyncThunk(
   'player/nextHand',
-  async (gameId: string, { rejectWithValue }) => {
+  async (gameId: string, { rejectWithValue, getState }) => {
     try {
-      const res = await axios.post(`/api/games/${gameId}/next-hand`, {}, { withCredentials: true })
+      const state = getState() as { player: PlayerState }
+      const res = await axios.post(
+        `/api/games/${gameId}/next-hand`,
+        {},
+        { headers: getAuthHeader(state.player.token) },
+      )
       return res.data as GameState
     } catch (err: unknown) {
       return rejectWithValue(getApiErrorMessage(err, 'Failed to start next hand'))
@@ -157,12 +204,13 @@ export const nextHand = createAsyncThunk(
 
 export const revealCard = createAsyncThunk(
   'player/revealCard',
-  async (gameId: string, { rejectWithValue }) => {
+  async (gameId: string, { rejectWithValue, getState }) => {
     try {
+      const state = getState() as { player: PlayerState }
       const res = await axios.post(
         `/api/games/${gameId}/reveal-card`,
         {},
-        { withCredentials: true },
+        { headers: getAuthHeader(state.player.token) },
       )
       return res.data as GameState
     } catch (err: unknown) {
@@ -173,9 +221,14 @@ export const revealCard = createAsyncThunk(
 
 export const advanceRound = createAsyncThunk(
   'player/advanceRound',
-  async (gameId: string, { rejectWithValue }) => {
+  async (gameId: string, { rejectWithValue, getState }) => {
     try {
-      const res = await axios.post(`/api/games/${gameId}/advance`, {}, { withCredentials: true })
+      const state = getState() as { player: PlayerState }
+      const res = await axios.post(
+        `/api/games/${gameId}/advance`,
+        {},
+        { headers: getAuthHeader(state.player.token) },
+      )
       return res.data as GameState
     } catch (err: unknown) {
       return rejectWithValue(getApiErrorMessage(err, 'Failed to advance round'))
@@ -185,9 +238,17 @@ export const advanceRound = createAsyncThunk(
 
 export const toggleShowCards = createAsyncThunk(
   'player/toggleShowCards',
-  async ({ gameId, showCards }: { gameId: string; showCards: boolean }, { rejectWithValue }) => {
+  async (
+    { gameId, showCards }: { gameId: string; showCards: boolean },
+    { rejectWithValue, getState },
+  ) => {
     try {
-      await axios.post(`/api/games/${gameId}/show-cards`, { showCards }, { withCredentials: true })
+      const state = getState() as { player: PlayerState }
+      await axios.post(
+        `/api/games/${gameId}/show-cards`,
+        { showCards },
+        { headers: getAuthHeader(state.player.token) },
+      )
       return ''
     } catch (err: unknown) {
       return rejectWithValue(getApiErrorMessage(err, 'Failed to toggle card reveal'))
@@ -197,10 +258,11 @@ export const toggleShowCards = createAsyncThunk(
 
 export const fetchValidActions = createAsyncThunk(
   'player/fetchValidActions',
-  async (gameId: string, { rejectWithValue }) => {
+  async (gameId: string, { rejectWithValue, getState }) => {
     try {
+      const state = getState() as { player: PlayerState }
       const response = await axios.get(`/api/games/${gameId}/actions/valid`, {
-        withCredentials: true,
+        headers: getAuthHeader(state.player.token),
       })
       return response.data as ValidActions
     } catch (err: unknown) {
@@ -256,6 +318,7 @@ const playerSlice = createSlice({
       .addCase(checkAuth.fulfilled, (state, action) => {
         state.checkingAuth = false
         state.joined = true
+        state.token = action.payload.token || null
         if (action.payload.playerName) {
           state.playerName = action.payload.playerName
         }
@@ -263,6 +326,7 @@ const playerSlice = createSlice({
       .addCase(checkAuth.rejected, (state) => {
         state.checkingAuth = false
         state.joined = false
+        state.token = null
       })
       .addCase(joinGame.pending, (state) => {
         state.error = ''
@@ -270,6 +334,7 @@ const playerSlice = createSlice({
       .addCase(joinGame.fulfilled, (state, action) => {
         state.joined = true
         state.playerName = action.payload.playerName
+        state.token = action.payload.token
         state.error = ''
       })
       .addCase(joinGame.rejected, (state, action) => {

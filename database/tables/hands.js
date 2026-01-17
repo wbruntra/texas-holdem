@@ -19,6 +19,7 @@ CREATE TABLE hands (
     pots TEXT,
     small_blind INTEGER,
     big_blind INTEGER,
+    seed TEXT,
     PRIMARY KEY (id),
     CONSTRAINT fk_hands_game_id_games_id FOREIGN KEY (game_id) REFERENCES games(id)
 );

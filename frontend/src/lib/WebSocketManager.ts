@@ -22,6 +22,7 @@ export class WebSocketManager {
     stream: 'table' | 'player'
     gameId?: string
     playerId?: string
+    token?: string
   } | null = null
   private shouldReconnect = true
 
@@ -29,10 +30,16 @@ export class WebSocketManager {
     this.handlers = handlers
   }
 
-  connect(roomCode: string, stream: 'table' | 'player', gameId?: string, playerId?: string): void {
+  connect(
+    roomCode: string,
+    stream: 'table' | 'player',
+    gameId?: string,
+    playerId?: string,
+    token?: string,
+  ): void {
     console.log('[WebSocketManager] Connect called:', { roomCode, stream, gameId, playerId })
 
-    this.currentConfig = { roomCode, stream, gameId, playerId }
+    this.currentConfig = { roomCode, stream, gameId, playerId, token }
     this.shouldReconnect = true
 
     this.connectWebSocket()
@@ -72,6 +79,7 @@ export class WebSocketManager {
               stream: config.stream,
               gameId: config.gameId,
               playerId: config.playerId,
+              token: config.token,
             },
           }),
         )

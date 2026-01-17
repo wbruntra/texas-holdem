@@ -95,6 +95,9 @@ export function usePlayerGame(roomCode: string | undefined) {
       ? localStorage.getItem(`${playerNameStorageKey}:playerId`)
       : undefined
 
+    const token =
+      typeof window !== 'undefined' ? localStorage.getItem(`holdem:${roomCode}:token`) : null
+
     wsManagerRef.current = new WebSocketManager({
       onHello: (payload) => {
         console.log('[usePlayerGame] Server hello:', payload)
@@ -115,7 +118,13 @@ export function usePlayerGame(roomCode: string | undefined) {
       },
     })
 
-    wsManagerRef.current.connect(roomCode, 'player', game.id, storedPlayerId ?? undefined)
+    wsManagerRef.current.connect(
+      roomCode,
+      'player',
+      String(game.id),
+      storedPlayerId ?? undefined,
+      token ?? undefined,
+    )
 
     return () => {
       wsManagerRef.current?.disconnect()
