@@ -1,0 +1,602 @@
+[
+  {
+    "id": 1,
+    "gameId": 1,
+    "eventType": "PLAYER_JOINED",
+    "payload": "{\"name\":\"bill\",\"position\":0,\"startingChips\":200}",
+    "playerId": 1,
+    "sequenceNumber": 0,
+    "handNumber": 0,
+    "timestamp": "2026-01-17 12:13:10"
+  },
+  {
+    "id": 2,
+    "gameId": 1,
+    "eventType": "PLAYER_JOINED",
+    "payload": "{\"name\":\"james\",\"position\":1,\"startingChips\":200}",
+    "playerId": 2,
+    "sequenceNumber": 1,
+    "handNumber": 0,
+    "timestamp": "2026-01-17 12:13:21"
+  },
+  {
+    "id": 3,
+    "gameId": 1,
+    "eventType": "HAND_START",
+    "payload": "{\"handNumber\":1,\"dealerPosition\":0,\"smallBlindPosition\":0,\"bigBlindPosition\":1,\"deck\":[{\"rank\":\"8\",\"suit\":\"spades\",\"value\":8},{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3},{\"rank\":\"J\",\"suit\":\"clubs\",\"value\":11},{\"rank\":\"8\",\"suit\":\"diamonds\",\"value\":8},{\"rank\":\"2\",\"suit\":\"diamonds\",\"value\":2},{\"rank\":\"4\",\"suit\":\"clubs\",\"value\":4},{\"rank\":\"K\",\"suit\":\"diamonds\",\"value\":13},{\"rank\":\"J\",\"suit\":\"spades\",\"value\":11},{\"rank\":\"3\",\"suit\":\"clubs\",\"value\":3},{\"rank\":\"4\",\"suit\":\"diamonds\",\"value\":4},{\"rank\":\"9\",\"suit\":\"spades\",\"value\":9},{\"rank\":\"5\",\"suit\":\"hearts\",\"value\":5},{\"rank\":\"K\",\"suit\":\"clubs\",\"value\":13},{\"rank\":\"Q\",\"suit\":\"diamonds\",\"value\":12},{\"rank\":\"K\",\"suit\":\"hearts\",\"value\":13},{\"rank\":\"10\",\"suit\":\"spades\",\"value\":10},{\"rank\":\"6\",\"suit\":\"clubs\",\"value\":6},{\"rank\":\"10\",\"suit\":\"diamonds\",\"value\":10},{\"rank\":\"7\",\"suit\":\"clubs\",\"value\":7},{\"rank\":\"Q\",\"suit\":\"hearts\",\"value\":12},{\"rank\":\"Q\",\"suit\":\"spades\",\"value\":12},{\"rank\":\"3\",\"suit\":\"hearts\",\"value\":3},{\"rank\":\"A\",\"suit\":\"diamonds\",\"value\":14},{\"rank\":\"J\",\"suit\":\"hearts\",\"value\":11},{\"rank\":\"8\",\"suit\":\"hearts\",\"value\":8},{\"rank\":\"A\",\"suit\":\"clubs\",\"value\":14},{\"rank\":\"5\",\"suit\":\"spades\",\"value\":5},{\"rank\":\"2\",\"suit\":\"spades\",\"value\":2},{\"rank\":\"6\",\"suit\":\"diamonds\",\"value\":6},{\"rank\":\"5\",\"suit\":\"clubs\",\"value\":5},{\"rank\":\"2\",\"suit\":\"clubs\",\"value\":2},{\"rank\":\"5\",\"suit\":\"diamonds\",\"value\":5},{\"rank\":\"9\",\"suit\":\"clubs\",\"value\":9},{\"rank\":\"10\",\"suit\":\"hearts\",\"value\":10},{\"rank\":\"10\",\"suit\":\"clubs\",\"value\":10},{\"rank\":\"9\",\"suit\":\"hearts\",\"value\":9},{\"rank\":\"9\",\"suit\":\"diamonds\",\"value\":9},{\"rank\":\"6\",\"suit\":\"hearts\",\"value\":6},{\"rank\":\"K\",\"suit\":\"spades\",\"value\":13},{\"rank\":\"2\",\"suit\":\"hearts\",\"value\":2},{\"rank\":\"3\",\"suit\":\"diamonds\",\"value\":3},{\"rank\":\"7\",\"suit\":\"spades\",\"value\":7},{\"rank\":\"4\",\"suit\":\"spades\",\"value\":4},{\"rank\":\"8\",\"suit\":\"clubs\",\"value\":8},{\"rank\":\"7\",\"suit\":\"hearts\",\"value\":7},{\"rank\":\"6\",\"suit\":\"spades\",\"value\":6},{\"rank\":\"J\",\"suit\":\"diamonds\",\"value\":11},{\"rank\":\"A\",\"suit\":\"hearts\",\"value\":14}],\"holeCards\":{\"1\":[{\"rank\":\"Q\",\"suit\":\"clubs\",\"value\":12},{\"rank\":\"7\",\"suit\":\"diamonds\",\"value\":7}],\"2\":[{\"rank\":\"4\",\"suit\":\"hearts\",\"value\":4},{\"rank\":\"A\",\"suit\":\"spades\",\"value\":14}]}}",
+    "playerId": null,
+    "sequenceNumber": 0,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:23"
+  },
+  {
+    "id": 4,
+    "gameId": 1,
+    "eventType": "POST_BLIND",
+    "payload": "{\"blindType\":\"small\",\"amount\":5,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 1,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:23"
+  },
+  {
+    "id": 5,
+    "gameId": 1,
+    "eventType": "POST_BLIND",
+    "payload": "{\"blindType\":\"big\",\"amount\":10,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 2,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:23"
+  },
+  {
+    "id": 6,
+    "gameId": 1,
+    "eventType": "CALL",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 3,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:31"
+  },
+  {
+    "id": 7,
+    "gameId": 1,
+    "eventType": "CHECK",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 4,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:35"
+  },
+  {
+    "id": 8,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"flop\",\"communityCards\":[{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3},{\"rank\":\"J\",\"suit\":\"clubs\",\"value\":11},{\"rank\":\"8\",\"suit\":\"diamonds\",\"value\":8}]}",
+    "playerId": null,
+    "sequenceNumber": 5,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:35"
+  },
+  {
+    "id": 9,
+    "gameId": 1,
+    "eventType": "BET",
+    "payload": "{\"amount\":20,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 6,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:41"
+  },
+  {
+    "id": 10,
+    "gameId": 1,
+    "eventType": "CALL",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 7,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:44"
+  },
+  {
+    "id": 11,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"turn\",\"communityCards\":[{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3},{\"rank\":\"J\",\"suit\":\"clubs\",\"value\":11},{\"rank\":\"8\",\"suit\":\"diamonds\",\"value\":8},{\"rank\":\"K\",\"suit\":\"diamonds\",\"value\":13}]}",
+    "playerId": null,
+    "sequenceNumber": 8,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:44"
+  },
+  {
+    "id": 12,
+    "gameId": 1,
+    "eventType": "CHECK",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 9,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:48"
+  },
+  {
+    "id": 13,
+    "gameId": 1,
+    "eventType": "CHECK",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 10,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:50"
+  },
+  {
+    "id": 14,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"river\",\"communityCards\":[{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3},{\"rank\":\"J\",\"suit\":\"clubs\",\"value\":11},{\"rank\":\"8\",\"suit\":\"diamonds\",\"value\":8},{\"rank\":\"K\",\"suit\":\"diamonds\",\"value\":13},{\"rank\":\"4\",\"suit\":\"diamonds\",\"value\":4}]}",
+    "playerId": null,
+    "sequenceNumber": 11,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:50"
+  },
+  {
+    "id": 15,
+    "gameId": 1,
+    "eventType": "BET",
+    "payload": "{\"amount\":20,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 12,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:57"
+  },
+  {
+    "id": 16,
+    "gameId": 1,
+    "eventType": "CALL",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 13,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:59"
+  },
+  {
+    "id": 17,
+    "gameId": 1,
+    "eventType": "SHOWDOWN",
+    "payload": "{\"communityCards\":[{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3},{\"rank\":\"J\",\"suit\":\"clubs\",\"value\":11},{\"rank\":\"8\",\"suit\":\"diamonds\",\"value\":8},{\"rank\":\"K\",\"suit\":\"diamonds\",\"value\":13},{\"rank\":\"4\",\"suit\":\"diamonds\",\"value\":4}]}",
+    "playerId": null,
+    "sequenceNumber": 14,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:59"
+  },
+  {
+    "id": 18,
+    "gameId": 1,
+    "eventType": "AWARD_POT",
+    "payload": "{\"winReason\":\"showdown\",\"winners\":[1],\"payouts\":[{\"playerId\":2,\"amount\":100}],\"potTotal\":100}",
+    "playerId": null,
+    "sequenceNumber": 15,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:59"
+  },
+  {
+    "id": 19,
+    "gameId": 1,
+    "eventType": "HAND_COMPLETE",
+    "payload": "{\"winners\":[1]}",
+    "playerId": null,
+    "sequenceNumber": 16,
+    "handNumber": 1,
+    "timestamp": "2026-01-17 12:13:59"
+  },
+  {
+    "id": 20,
+    "gameId": 1,
+    "eventType": "HAND_START",
+    "payload": "{\"handNumber\":2,\"dealerPosition\":1,\"smallBlindPosition\":1,\"bigBlindPosition\":0,\"deck\":[{\"rank\":\"9\",\"suit\":\"spades\",\"value\":9},{\"rank\":\"8\",\"suit\":\"diamonds\",\"value\":8},{\"rank\":\"J\",\"suit\":\"hearts\",\"value\":11},{\"rank\":\"9\",\"suit\":\"hearts\",\"value\":9},{\"rank\":\"5\",\"suit\":\"spades\",\"value\":5},{\"rank\":\"J\",\"suit\":\"diamonds\",\"value\":11},{\"rank\":\"A\",\"suit\":\"clubs\",\"value\":14},{\"rank\":\"6\",\"suit\":\"spades\",\"value\":6},{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3},{\"rank\":\"A\",\"suit\":\"diamonds\",\"value\":14},{\"rank\":\"A\",\"suit\":\"spades\",\"value\":14},{\"rank\":\"6\",\"suit\":\"diamonds\",\"value\":6},{\"rank\":\"7\",\"suit\":\"hearts\",\"value\":7},{\"rank\":\"7\",\"suit\":\"spades\",\"value\":7},{\"rank\":\"5\",\"suit\":\"hearts\",\"value\":5},{\"rank\":\"6\",\"suit\":\"hearts\",\"value\":6},{\"rank\":\"4\",\"suit\":\"clubs\",\"value\":4},{\"rank\":\"6\",\"suit\":\"clubs\",\"value\":6},{\"rank\":\"K\",\"suit\":\"hearts\",\"value\":13},{\"rank\":\"2\",\"suit\":\"clubs\",\"value\":2},{\"rank\":\"3\",\"suit\":\"clubs\",\"value\":3},{\"rank\":\"4\",\"suit\":\"spades\",\"value\":4},{\"rank\":\"7\",\"suit\":\"clubs\",\"value\":7},{\"rank\":\"9\",\"suit\":\"diamonds\",\"value\":9},{\"rank\":\"10\",\"suit\":\"diamonds\",\"value\":10},{\"rank\":\"7\",\"suit\":\"diamonds\",\"value\":7},{\"rank\":\"3\",\"suit\":\"diamonds\",\"value\":3},{\"rank\":\"K\",\"suit\":\"clubs\",\"value\":13},{\"rank\":\"J\",\"suit\":\"spades\",\"value\":11},{\"rank\":\"K\",\"suit\":\"spades\",\"value\":13},{\"rank\":\"5\",\"suit\":\"diamonds\",\"value\":5},{\"rank\":\"10\",\"suit\":\"hearts\",\"value\":10},{\"rank\":\"3\",\"suit\":\"hearts\",\"value\":3},{\"rank\":\"5\",\"suit\":\"clubs\",\"value\":5},{\"rank\":\"4\",\"suit\":\"hearts\",\"value\":4},{\"rank\":\"Q\",\"suit\":\"hearts\",\"value\":12},{\"rank\":\"4\",\"suit\":\"diamonds\",\"value\":4},{\"rank\":\"J\",\"suit\":\"clubs\",\"value\":11},{\"rank\":\"2\",\"suit\":\"spades\",\"value\":2},{\"rank\":\"8\",\"suit\":\"spades\",\"value\":8},{\"rank\":\"Q\",\"suit\":\"clubs\",\"value\":12},{\"rank\":\"8\",\"suit\":\"hearts\",\"value\":8},{\"rank\":\"Q\",\"suit\":\"spades\",\"value\":12},{\"rank\":\"10\",\"suit\":\"clubs\",\"value\":10},{\"rank\":\"2\",\"suit\":\"hearts\",\"value\":2},{\"rank\":\"8\",\"suit\":\"clubs\",\"value\":8},{\"rank\":\"9\",\"suit\":\"clubs\",\"value\":9},{\"rank\":\"10\",\"suit\":\"spades\",\"value\":10}],\"holeCards\":{\"1\":[{\"rank\":\"Q\",\"suit\":\"diamonds\",\"value\":12},{\"rank\":\"K\",\"suit\":\"diamonds\",\"value\":13}],\"2\":[{\"rank\":\"A\",\"suit\":\"hearts\",\"value\":14},{\"rank\":\"2\",\"suit\":\"diamonds\",\"value\":2}]}}",
+    "playerId": null,
+    "sequenceNumber": 0,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:07"
+  },
+  {
+    "id": 21,
+    "gameId": 1,
+    "eventType": "POST_BLIND",
+    "payload": "{\"blindType\":\"small\",\"amount\":5,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 1,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:07"
+  },
+  {
+    "id": 22,
+    "gameId": 1,
+    "eventType": "POST_BLIND",
+    "payload": "{\"blindType\":\"big\",\"amount\":10,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 2,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:07"
+  },
+  {
+    "id": 23,
+    "gameId": 1,
+    "eventType": "RAISE",
+    "payload": "{\"amount\":10,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 3,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:10"
+  },
+  {
+    "id": 24,
+    "gameId": 1,
+    "eventType": "CALL",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 4,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:12"
+  },
+  {
+    "id": 25,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"flop\",\"communityCards\":[{\"rank\":\"8\",\"suit\":\"diamonds\",\"value\":8},{\"rank\":\"J\",\"suit\":\"hearts\",\"value\":11},{\"rank\":\"9\",\"suit\":\"hearts\",\"value\":9}]}",
+    "playerId": null,
+    "sequenceNumber": 5,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:12"
+  },
+  {
+    "id": 26,
+    "gameId": 1,
+    "eventType": "BET",
+    "payload": "{\"amount\":20,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 6,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:20"
+  },
+  {
+    "id": 27,
+    "gameId": 1,
+    "eventType": "CALL",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 7,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:21"
+  },
+  {
+    "id": 28,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"turn\",\"communityCards\":[{\"rank\":\"8\",\"suit\":\"diamonds\",\"value\":8},{\"rank\":\"J\",\"suit\":\"hearts\",\"value\":11},{\"rank\":\"9\",\"suit\":\"hearts\",\"value\":9},{\"rank\":\"A\",\"suit\":\"clubs\",\"value\":14}]}",
+    "playerId": null,
+    "sequenceNumber": 8,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:21"
+  },
+  {
+    "id": 29,
+    "gameId": 1,
+    "eventType": "BET",
+    "payload": "{\"amount\":20,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 9,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:28"
+  },
+  {
+    "id": 30,
+    "gameId": 1,
+    "eventType": "RAISE",
+    "payload": "{\"amount\":20,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 10,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:30"
+  },
+  {
+    "id": 31,
+    "gameId": 1,
+    "eventType": "CALL",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 11,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:31"
+  },
+  {
+    "id": 32,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"river\",\"communityCards\":[{\"rank\":\"8\",\"suit\":\"diamonds\",\"value\":8},{\"rank\":\"J\",\"suit\":\"hearts\",\"value\":11},{\"rank\":\"9\",\"suit\":\"hearts\",\"value\":9},{\"rank\":\"A\",\"suit\":\"clubs\",\"value\":14},{\"rank\":\"A\",\"suit\":\"diamonds\",\"value\":14}]}",
+    "playerId": null,
+    "sequenceNumber": 12,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:31"
+  },
+  {
+    "id": 33,
+    "gameId": 1,
+    "eventType": "CHECK",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 13,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:36"
+  },
+  {
+    "id": 34,
+    "gameId": 1,
+    "eventType": "BET",
+    "payload": "{\"amount\":40,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 14,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:40"
+  },
+  {
+    "id": 35,
+    "gameId": 1,
+    "eventType": "FOLD",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 15,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:42"
+  },
+  {
+    "id": 36,
+    "gameId": 1,
+    "eventType": "AWARD_POT",
+    "payload": "{\"winReason\":\"fold\",\"winners\":[1],\"payouts\":[{\"playerId\":2,\"amount\":200}],\"potTotal\":200}",
+    "playerId": null,
+    "sequenceNumber": 16,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:42"
+  },
+  {
+    "id": 37,
+    "gameId": 1,
+    "eventType": "HAND_COMPLETE",
+    "payload": "{\"winners\":[1]}",
+    "playerId": null,
+    "sequenceNumber": 17,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:42"
+  },
+  {
+    "id": 38,
+    "gameId": 1,
+    "eventType": "REVEAL_CARDS",
+    "payload": "{\"holeCards\":[{\"rank\":\"A\",\"suit\":\"hearts\",\"value\":14},{\"rank\":\"2\",\"suit\":\"diamonds\",\"value\":2}]}",
+    "playerId": 2,
+    "sequenceNumber": 18,
+    "handNumber": 2,
+    "timestamp": "2026-01-17 12:14:56"
+  },
+  {
+    "id": 39,
+    "gameId": 1,
+    "eventType": "HAND_START",
+    "payload": "{\"handNumber\":3,\"dealerPosition\":0,\"smallBlindPosition\":0,\"bigBlindPosition\":1,\"deck\":[{\"rank\":\"3\",\"suit\":\"diamonds\",\"value\":3},{\"rank\":\"8\",\"suit\":\"spades\",\"value\":8},{\"rank\":\"K\",\"suit\":\"hearts\",\"value\":13},{\"rank\":\"5\",\"suit\":\"clubs\",\"value\":5},{\"rank\":\"7\",\"suit\":\"clubs\",\"value\":7},{\"rank\":\"6\",\"suit\":\"clubs\",\"value\":6},{\"rank\":\"10\",\"suit\":\"spades\",\"value\":10},{\"rank\":\"2\",\"suit\":\"clubs\",\"value\":2},{\"rank\":\"4\",\"suit\":\"clubs\",\"value\":4},{\"rank\":\"K\",\"suit\":\"spades\",\"value\":13},{\"rank\":\"7\",\"suit\":\"spades\",\"value\":7},{\"rank\":\"K\",\"suit\":\"diamonds\",\"value\":13},{\"rank\":\"J\",\"suit\":\"clubs\",\"value\":11},{\"rank\":\"9\",\"suit\":\"spades\",\"value\":9},{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3},{\"rank\":\"4\",\"suit\":\"spades\",\"value\":4},{\"rank\":\"Q\",\"suit\":\"spades\",\"value\":12},{\"rank\":\"10\",\"suit\":\"clubs\",\"value\":10},{\"rank\":\"A\",\"suit\":\"hearts\",\"value\":14},{\"rank\":\"Q\",\"suit\":\"diamonds\",\"value\":12},{\"rank\":\"8\",\"suit\":\"clubs\",\"value\":8},{\"rank\":\"8\",\"suit\":\"hearts\",\"value\":8},{\"rank\":\"6\",\"suit\":\"hearts\",\"value\":6},{\"rank\":\"A\",\"suit\":\"clubs\",\"value\":14},{\"rank\":\"A\",\"suit\":\"diamonds\",\"value\":14},{\"rank\":\"3\",\"suit\":\"clubs\",\"value\":3},{\"rank\":\"2\",\"suit\":\"hearts\",\"value\":2},{\"rank\":\"J\",\"suit\":\"diamonds\",\"value\":11},{\"rank\":\"10\",\"suit\":\"diamonds\",\"value\":10},{\"rank\":\"10\",\"suit\":\"hearts\",\"value\":10},{\"rank\":\"7\",\"suit\":\"diamonds\",\"value\":7},{\"rank\":\"Q\",\"suit\":\"hearts\",\"value\":12},{\"rank\":\"8\",\"suit\":\"diamonds\",\"value\":8},{\"rank\":\"5\",\"suit\":\"spades\",\"value\":5},{\"rank\":\"K\",\"suit\":\"clubs\",\"value\":13},{\"rank\":\"9\",\"suit\":\"diamonds\",\"value\":9},{\"rank\":\"9\",\"suit\":\"clubs\",\"value\":9},{\"rank\":\"4\",\"suit\":\"diamonds\",\"value\":4},{\"rank\":\"3\",\"suit\":\"hearts\",\"value\":3},{\"rank\":\"2\",\"suit\":\"spades\",\"value\":2},{\"rank\":\"5\",\"suit\":\"hearts\",\"value\":5},{\"rank\":\"5\",\"suit\":\"diamonds\",\"value\":5},{\"rank\":\"A\",\"suit\":\"spades\",\"value\":14},{\"rank\":\"9\",\"suit\":\"hearts\",\"value\":9},{\"rank\":\"6\",\"suit\":\"spades\",\"value\":6},{\"rank\":\"Q\",\"suit\":\"clubs\",\"value\":12},{\"rank\":\"6\",\"suit\":\"diamonds\",\"value\":6},{\"rank\":\"J\",\"suit\":\"spades\",\"value\":11}],\"holeCards\":{\"1\":[{\"rank\":\"2\",\"suit\":\"diamonds\",\"value\":2},{\"rank\":\"J\",\"suit\":\"hearts\",\"value\":11}],\"2\":[{\"rank\":\"7\",\"suit\":\"hearts\",\"value\":7},{\"rank\":\"4\",\"suit\":\"hearts\",\"value\":4}]}}",
+    "playerId": null,
+    "sequenceNumber": 0,
+    "handNumber": 3,
+    "timestamp": "2026-01-17 12:14:58"
+  },
+  {
+    "id": 40,
+    "gameId": 1,
+    "eventType": "POST_BLIND",
+    "payload": "{\"blindType\":\"small\",\"amount\":5,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 1,
+    "handNumber": 3,
+    "timestamp": "2026-01-17 12:14:58"
+  },
+  {
+    "id": 41,
+    "gameId": 1,
+    "eventType": "POST_BLIND",
+    "payload": "{\"blindType\":\"big\",\"amount\":10,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 2,
+    "handNumber": 3,
+    "timestamp": "2026-01-17 12:14:58"
+  },
+  {
+    "id": 42,
+    "gameId": 1,
+    "eventType": "ALL_IN",
+    "payload": "{\"amount\":60,\"effectiveAction\":\"raise\",\"totalBetAfter\":70,\"chipsAfter\":0}",
+    "playerId": 1,
+    "sequenceNumber": 3,
+    "handNumber": 3,
+    "timestamp": "2026-01-17 12:15:11"
+  },
+  {
+    "id": 43,
+    "gameId": 1,
+    "eventType": "CALL",
+    "payload": "{\"amount\":0,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 4,
+    "handNumber": 3,
+    "timestamp": "2026-01-17 12:15:13"
+  },
+  {
+    "id": 44,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"flop\",\"communityCards\":[{\"rank\":\"8\",\"suit\":\"spades\",\"value\":8},{\"rank\":\"K\",\"suit\":\"hearts\",\"value\":13},{\"rank\":\"5\",\"suit\":\"clubs\",\"value\":5}]}",
+    "playerId": null,
+    "sequenceNumber": 5,
+    "handNumber": 3,
+    "timestamp": "2026-01-17 12:15:17"
+  },
+  {
+    "id": 45,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"turn\",\"communityCards\":[{\"rank\":\"8\",\"suit\":\"spades\",\"value\":8},{\"rank\":\"K\",\"suit\":\"hearts\",\"value\":13},{\"rank\":\"5\",\"suit\":\"clubs\",\"value\":5},{\"rank\":\"10\",\"suit\":\"spades\",\"value\":10}]}",
+    "playerId": null,
+    "sequenceNumber": 6,
+    "handNumber": 3,
+    "timestamp": "2026-01-17 12:15:21"
+  },
+  {
+    "id": 46,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"river\",\"communityCards\":[{\"rank\":\"8\",\"suit\":\"spades\",\"value\":8},{\"rank\":\"K\",\"suit\":\"hearts\",\"value\":13},{\"rank\":\"5\",\"suit\":\"clubs\",\"value\":5},{\"rank\":\"10\",\"suit\":\"spades\",\"value\":10},{\"rank\":\"K\",\"suit\":\"spades\",\"value\":13}]}",
+    "playerId": null,
+    "sequenceNumber": 7,
+    "handNumber": 3,
+    "timestamp": "2026-01-17 12:15:24"
+  },
+  {
+    "id": 47,
+    "gameId": 1,
+    "eventType": "SHOWDOWN",
+    "payload": "{\"communityCards\":[{\"rank\":\"8\",\"suit\":\"spades\",\"value\":8},{\"rank\":\"K\",\"suit\":\"hearts\",\"value\":13},{\"rank\":\"5\",\"suit\":\"clubs\",\"value\":5},{\"rank\":\"10\",\"suit\":\"spades\",\"value\":10},{\"rank\":\"K\",\"suit\":\"spades\",\"value\":13}]}",
+    "playerId": null,
+    "sequenceNumber": 8,
+    "handNumber": 3,
+    "timestamp": "2026-01-17 12:15:29"
+  },
+  {
+    "id": 48,
+    "gameId": 1,
+    "eventType": "AWARD_POT",
+    "payload": "{\"winReason\":\"showdown\",\"winners\":[0],\"payouts\":[{\"playerId\":1,\"amount\":140}],\"potTotal\":140}",
+    "playerId": null,
+    "sequenceNumber": 9,
+    "handNumber": 3,
+    "timestamp": "2026-01-17 12:15:29"
+  },
+  {
+    "id": 49,
+    "gameId": 1,
+    "eventType": "HAND_COMPLETE",
+    "payload": "{\"winners\":[0]}",
+    "playerId": null,
+    "sequenceNumber": 10,
+    "handNumber": 3,
+    "timestamp": "2026-01-17 12:15:29"
+  },
+  {
+    "id": 50,
+    "gameId": 1,
+    "eventType": "HAND_START",
+    "payload": "{\"handNumber\":4,\"dealerPosition\":1,\"smallBlindPosition\":1,\"bigBlindPosition\":0,\"deck\":[{\"rank\":\"3\",\"suit\":\"hearts\",\"value\":3},{\"rank\":\"A\",\"suit\":\"diamonds\",\"value\":14},{\"rank\":\"J\",\"suit\":\"hearts\",\"value\":11},{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3},{\"rank\":\"7\",\"suit\":\"hearts\",\"value\":7},{\"rank\":\"K\",\"suit\":\"clubs\",\"value\":13},{\"rank\":\"5\",\"suit\":\"hearts\",\"value\":5},{\"rank\":\"J\",\"suit\":\"diamonds\",\"value\":11},{\"rank\":\"Q\",\"suit\":\"clubs\",\"value\":12},{\"rank\":\"9\",\"suit\":\"diamonds\",\"value\":9},{\"rank\":\"A\",\"suit\":\"spades\",\"value\":14},{\"rank\":\"Q\",\"suit\":\"hearts\",\"value\":12},{\"rank\":\"2\",\"suit\":\"hearts\",\"value\":2},{\"rank\":\"J\",\"suit\":\"spades\",\"value\":11},{\"rank\":\"J\",\"suit\":\"clubs\",\"value\":11},{\"rank\":\"10\",\"suit\":\"hearts\",\"value\":10},{\"rank\":\"3\",\"suit\":\"diamonds\",\"value\":3},{\"rank\":\"5\",\"suit\":\"clubs\",\"value\":5},{\"rank\":\"8\",\"suit\":\"spades\",\"value\":8},{\"rank\":\"9\",\"suit\":\"clubs\",\"value\":9},{\"rank\":\"10\",\"suit\":\"clubs\",\"value\":10},{\"rank\":\"K\",\"suit\":\"spades\",\"value\":13},{\"rank\":\"4\",\"suit\":\"diamonds\",\"value\":4},{\"rank\":\"6\",\"suit\":\"hearts\",\"value\":6},{\"rank\":\"8\",\"suit\":\"diamonds\",\"value\":8},{\"rank\":\"6\",\"suit\":\"diamonds\",\"value\":6},{\"rank\":\"7\",\"suit\":\"spades\",\"value\":7},{\"rank\":\"2\",\"suit\":\"diamonds\",\"value\":2},{\"rank\":\"Q\",\"suit\":\"spades\",\"value\":12},{\"rank\":\"Q\",\"suit\":\"diamonds\",\"value\":12},{\"rank\":\"6\",\"suit\":\"clubs\",\"value\":6},{\"rank\":\"9\",\"suit\":\"hearts\",\"value\":9},{\"rank\":\"4\",\"suit\":\"spades\",\"value\":4},{\"rank\":\"4\",\"suit\":\"hearts\",\"value\":4},{\"rank\":\"K\",\"suit\":\"hearts\",\"value\":13},{\"rank\":\"5\",\"suit\":\"diamonds\",\"value\":5},{\"rank\":\"9\",\"suit\":\"spades\",\"value\":9},{\"rank\":\"8\",\"suit\":\"hearts\",\"value\":8},{\"rank\":\"2\",\"suit\":\"clubs\",\"value\":2},{\"rank\":\"A\",\"suit\":\"clubs\",\"value\":14},{\"rank\":\"4\",\"suit\":\"clubs\",\"value\":4},{\"rank\":\"2\",\"suit\":\"spades\",\"value\":2},{\"rank\":\"5\",\"suit\":\"spades\",\"value\":5},{\"rank\":\"7\",\"suit\":\"diamonds\",\"value\":7},{\"rank\":\"A\",\"suit\":\"hearts\",\"value\":14},{\"rank\":\"K\",\"suit\":\"diamonds\",\"value\":13},{\"rank\":\"3\",\"suit\":\"clubs\",\"value\":3},{\"rank\":\"10\",\"suit\":\"spades\",\"value\":10}],\"holeCards\":{\"1\":[{\"rank\":\"8\",\"suit\":\"clubs\",\"value\":8},{\"rank\":\"6\",\"suit\":\"spades\",\"value\":6}],\"2\":[{\"rank\":\"10\",\"suit\":\"diamonds\",\"value\":10},{\"rank\":\"7\",\"suit\":\"clubs\",\"value\":7}]}}",
+    "playerId": null,
+    "sequenceNumber": 0,
+    "handNumber": 4,
+    "timestamp": "2026-01-17 12:15:36"
+  },
+  {
+    "id": 51,
+    "gameId": 1,
+    "eventType": "POST_BLIND",
+    "payload": "{\"blindType\":\"small\",\"amount\":5,\"isAllIn\":false}",
+    "playerId": 2,
+    "sequenceNumber": 1,
+    "handNumber": 4,
+    "timestamp": "2026-01-17 12:15:36"
+  },
+  {
+    "id": 52,
+    "gameId": 1,
+    "eventType": "POST_BLIND",
+    "payload": "{\"blindType\":\"big\",\"amount\":10,\"isAllIn\":false}",
+    "playerId": 1,
+    "sequenceNumber": 2,
+    "handNumber": 4,
+    "timestamp": "2026-01-17 12:15:36"
+  },
+  {
+    "id": 53,
+    "gameId": 1,
+    "eventType": "ALL_IN",
+    "payload": "{\"amount\":250,\"effectiveAction\":\"raise\",\"totalBetAfter\":260,\"chipsAfter\":0}",
+    "playerId": 2,
+    "sequenceNumber": 3,
+    "handNumber": 4,
+    "timestamp": "2026-01-17 12:15:45"
+  },
+  {
+    "id": 54,
+    "gameId": 1,
+    "eventType": "ALL_IN",
+    "payload": "{\"amount\":0,\"effectiveAction\":\"call\",\"totalBetAfter\":140,\"chipsAfter\":0}",
+    "playerId": 1,
+    "sequenceNumber": 4,
+    "handNumber": 4,
+    "timestamp": "2026-01-17 12:15:50"
+  },
+  {
+    "id": 55,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"flop\",\"communityCards\":[{\"rank\":\"A\",\"suit\":\"diamonds\",\"value\":14},{\"rank\":\"J\",\"suit\":\"hearts\",\"value\":11},{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3}]}",
+    "playerId": null,
+    "sequenceNumber": 5,
+    "handNumber": 4,
+    "timestamp": "2026-01-17 12:15:53"
+  },
+  {
+    "id": 56,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"turn\",\"communityCards\":[{\"rank\":\"A\",\"suit\":\"diamonds\",\"value\":14},{\"rank\":\"J\",\"suit\":\"hearts\",\"value\":11},{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3},{\"rank\":\"5\",\"suit\":\"hearts\",\"value\":5}]}",
+    "playerId": null,
+    "sequenceNumber": 6,
+    "handNumber": 4,
+    "timestamp": "2026-01-17 12:15:57"
+  },
+  {
+    "id": 57,
+    "gameId": 1,
+    "eventType": "DEAL_COMMUNITY",
+    "payload": "{\"round\":\"river\",\"communityCards\":[{\"rank\":\"A\",\"suit\":\"diamonds\",\"value\":14},{\"rank\":\"J\",\"suit\":\"hearts\",\"value\":11},{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3},{\"rank\":\"5\",\"suit\":\"hearts\",\"value\":5},{\"rank\":\"9\",\"suit\":\"diamonds\",\"value\":9}]}",
+    "playerId": null,
+    "sequenceNumber": 7,
+    "handNumber": 4,
+    "timestamp": "2026-01-17 12:15:59"
+  },
+  {
+    "id": 58,
+    "gameId": 1,
+    "eventType": "SHOWDOWN",
+    "payload": "{\"communityCards\":[{\"rank\":\"A\",\"suit\":\"diamonds\",\"value\":14},{\"rank\":\"J\",\"suit\":\"hearts\",\"value\":11},{\"rank\":\"3\",\"suit\":\"spades\",\"value\":3},{\"rank\":\"5\",\"suit\":\"hearts\",\"value\":5},{\"rank\":\"9\",\"suit\":\"diamonds\",\"value\":9}]}",
+    "playerId": null,
+    "sequenceNumber": 8,
+    "handNumber": 4,
+    "timestamp": "2026-01-17 12:16:02"
+  },
+  {
+    "id": 59,
+    "gameId": 1,
+    "eventType": "AWARD_POT",
+    "payload": "{\"winReason\":\"showdown\",\"winners\":[1],\"payouts\":[{\"playerId\":2,\"amount\":400}],\"potTotal\":400}",
+    "playerId": null,
+    "sequenceNumber": 9,
+    "handNumber": 4,
+    "timestamp": "2026-01-17 12:16:02"
+  },
+  {
+    "id": 60,
+    "gameId": 1,
+    "eventType": "HAND_COMPLETE",
+    "payload": "{\"winners\":[1]}",
+    "playerId": null,
+    "sequenceNumber": 10,
+    "handNumber": 4,
+    "timestamp": "2026-01-17 12:16:02"
+  }
+]
