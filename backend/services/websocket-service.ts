@@ -100,6 +100,13 @@ class WebSocketService {
       await this.broadcastGameUpdate(parseInt(data.gameId, 10), data.reason)
     })
 
+    // Handle room-level updates (new game created, game ID changed)
+    gameEvents.onRoomUpdate(
+      async (data: { roomCode: string; newGameId: number; reason: string }) => {
+        await this.broadcastRoomUpdate(data.roomCode, data.newGameId, data.reason)
+      },
+    )
+
     console.log('[WS] WebSocket server initialized on /ws')
   }
 
@@ -325,6 +332,48 @@ class WebSocketService {
       console.log(`[WS] Broadcasted game update: ${game.roomCode} (${reason})`)
     } catch (error) {
       console.error('[WS] Broadcast error:', error)
+    }
+  }
+
+  /**
+   * Broadcast room update to all subscribers of a room (used when game ID changes, like new game)
+   */
+  async broadcastRoomUpdate(roomCode: string, newGameId: number, reason: string): Promise<void> {
+    try {
+      const game = await gameService.getGameById(newGameId)
+
+      if (!game) {
+        console.warn(`[WS] New game not found for room broadcast: ${newGameId}`)
+        return
+      }
+
+      const revision = game.handNumber ? String(game.handNumber) : '0'
+
+      for (const [ws, subscription] of this.subscriptions.entries()) {
+        if (subscription.roomCode === roomCode && ws.readyState === WebSocket.OPEN) {
+          // Update subscription to point to new game
+          subscription.gameId = newGameId
+
+          const sanitizedState =
+            subscription.stream === 'player' && subscription.playerId
+              ? this.sanitizePlayerState(game, subscription.playerId)
+              : this.sanitizeTableState(game)
+
+          this.sendMessage(ws, {
+            type: 'game_state',
+            payload: {
+              state: sanitizedState,
+              revision,
+              reason,
+              newGameId, // Include new game ID so frontend knows
+            },
+          })
+        }
+      }
+
+      console.log(`[WS] Broadcasted room update: ${roomCode} -> game ${newGameId} (${reason})`)
+    } catch (error) {
+      console.error('[WS] Room broadcast error:', error)
     }
   }
 

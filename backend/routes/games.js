@@ -260,8 +260,8 @@ router.post('/room/:roomCode/new-game', async (req, res, next) => {
 
     const newGame = await gameService.startNewGame(roomId)
 
-    // Emit update for old game to tell clients to reload/switch?
-    gameEvents.emitGameUpdate(game.id, 'reset') // Keep 'reset' event for frontend compatibility or change to 'new_game'
+    // Emit room update to notify all clients in the room about the new game
+    gameEvents.emitRoomUpdate(req.params.roomCode, newGame.id, 'new_game')
 
     res.json(newGame)
   } catch (error) {
@@ -276,7 +276,7 @@ router.post('/room/:roomCode/reset', async (req, res, next) => {
     if (!game) return res.status(404).json({ error: 'Game not found' })
 
     const newGame = await gameService.startNewGame(game.roomId)
-    gameEvents.emitGameUpdate(game.id, 'reset')
+    gameEvents.emitRoomUpdate(req.params.roomCode, newGame.id, 'new_game')
     res.json(newGame)
   } catch (error) {
     next(error)
