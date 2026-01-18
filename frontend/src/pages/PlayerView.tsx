@@ -118,6 +118,7 @@ export default function PlayerView() {
       style={{ maxWidth: '600px', margin: '0 auto', position: 'relative' }}
     >
       {/* Slide-out Sheet for Community Cards */}
+
       <Offcanvas
         show={showCommunityCards}
         onHide={() => setShowCommunityCards(false)}
@@ -229,6 +230,20 @@ export default function PlayerView() {
             </div>
             <div className="fw-bold h4 mb-0">{playerName}</div>
           </div>
+
+          {shouldShowFab && (
+            <Button
+              variant="dark"
+              size="sm"
+              className="d-flex align-items-center justify-content-center gap-1 px-3 border border-secondary border-opacity-50"
+              style={{ height: '32px' }}
+              onClick={() => setShowCommunityCards(!showCommunityCards)}
+            >
+              <span style={{ fontSize: '16px' }}>🃏</span>
+              <span className="small">Board</span>
+            </Button>
+          )}
+
           <div className="d-flex flex-column align-items-end">
             <div className="text-secondary small text-uppercase" style={{ letterSpacing: '1px' }}>
               Stack
@@ -277,24 +292,6 @@ export default function PlayerView() {
             )}
 
           <div className="glass-panel flex-grow-1 p-3 d-flex flex-column justify-content-center align-items-center mb-3 text-center position-relative">
-            {shouldShowFab && (
-              <Button
-                variant="light"
-                className="position-absolute shadow-sm rounded-circle d-flex align-items-center justify-content-center"
-                style={{
-                  top: '10px',
-                  right: '10px',
-                  width: '40px',
-                  height: '40px',
-                  zIndex: 10,
-                  opacity: 0.8,
-                }}
-                onClick={() => setShowCommunityCards(!showCommunityCards)}
-              >
-                <span style={{ fontSize: '18px' }}>🃏</span>
-              </Button>
-            )}
-
             <div className="mb-4 w-100">
               <div
                 className="text-secondary text-uppercase small mb-1"
