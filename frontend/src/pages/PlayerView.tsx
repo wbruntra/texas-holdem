@@ -139,17 +139,81 @@ export default function PlayerView() {
             )}
           </div>
           <div className="mt-auto w-100">
-            <div
-              className="text-secondary text-uppercase small mb-1 text-center"
-              style={{ letterSpacing: '2px' }}
-            >
-              {game.currentBet > 0 ? 'Current Bet' : 'Pot'}
-            </div>
-            <div
-              className={`display-6 fw-bold text-center ${game.currentBet > 0 ? 'text-info' : 'text-warning'}`}
-              style={{ textShadow: '0 2px 5px rgba(0,0,0, 0.3)' }}
-            >
-              ${game.currentBet > 0 ? game.currentBet : displayPot}
+            <h6 className="text-secondary text-uppercase small mb-2 border-bottom border-secondary pb-1 text-center">
+              Table Status
+            </h6>
+            <div className="d-flex flex-wrap gap-2 justify-content-center">
+              {game.players.map((p: Player) => {
+                const isMe = p.name === playerName
+                const isActive = p.position === game.currentPlayerPosition
+                const isDealer = p.position === game.dealerPosition
+                const isWinner = winnerPositions.includes(p.position)
+
+                return (
+                  <div
+                    key={p.id}
+                    className={`d-flex flex-column align-items-center p-2 rounded text-center ${
+                      isActive
+                        ? 'bg-primary bg-opacity-25 border border-primary border-opacity-50 shadow'
+                        : 'bg-black bg-opacity-25 border border-white border-opacity-10'
+                    }`}
+                    style={{ minWidth: '80px', flex: '1 1 auto' }}
+                  >
+                    <div className="d-flex align-items-center gap-1 mb-1">
+                      {isDealer && (
+                        <span
+                          className="badge bg-light text-dark rounded-circle d-flex align-items-center justify-content-center p-0"
+                          style={{ width: '16px', height: '16px', fontSize: '9px' }}
+                        >
+                          D
+                        </span>
+                      )}
+                      <div
+                        className={`fw-bold small text-truncate ${isMe ? 'text-info' : 'text-white'}`}
+                        style={{ maxWidth: '80px', fontSize: '0.8rem' }}
+                      >
+                        {p.name}
+                      </div>
+                    </div>
+
+                    <div className="lh-1">
+                      {p.status !== 'active' ? (
+                        <span
+                          className={`text-uppercase x-small fw-bold ${
+                            p.status === 'folded'
+                              ? 'text-secondary'
+                              : p.status === 'all_in'
+                                ? 'text-danger'
+                                : 'text-muted'
+                          }`}
+                          style={{ fontSize: '0.7rem' }}
+                        >
+                          {p.status === 'all_in' ? 'ALL-IN' : p.status}
+                        </span>
+                      ) : isWinner ? (
+                        <span className="text-warning small" style={{ fontSize: '0.7rem' }}>
+                          🏆 WIN
+                        </span>
+                      ) : (
+                        <div
+                          className="font-monospace text-success fw-bold"
+                          style={{ fontSize: '0.9rem' }}
+                        >
+                          ${p.chips}
+                        </div>
+                      )}
+                    </div>
+                    {(p.status !== 'active' || isWinner) && (
+                      <div
+                        className="font-monospace text-success fw-bold mt-1"
+                        style={{ fontSize: '0.75rem', opacity: 0.8 }}
+                      >
+                        ${p.chips}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         </Offcanvas.Body>
