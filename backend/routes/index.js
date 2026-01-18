@@ -1,5 +1,6 @@
 import express from 'express'
 import gamesRouter from './games'
+import adminRouter from './admin'
 // @ts-ignore
 const roomsRouter = require('./rooms')
 
@@ -11,5 +12,6 @@ router.get('/health', function (req, res, next) {
 
 router.use('/games', gamesRouter)
 router.use('/rooms', roomsRouter)
+router.use('/admin', adminRouter)
 
 export default router

@@ -69,3 +69,18 @@ export const COMMUNITY_ROUNDS = {
 } as const
 
 export type CommunityRound = (typeof COMMUNITY_ROUNDS)[keyof typeof COMMUNITY_ROUNDS]
+
+/**
+ * Game Event interface for state derivation
+ * A minimal representation of stored events for replay/derivation purposes
+ */
+export interface GameEvent {
+  id?: number
+  gameId: number
+  handNumber: number
+  sequenceNumber: number
+  eventType: EventType
+  playerId: number | null
+  payload: Record<string, any>
+  createdAt?: string
+}

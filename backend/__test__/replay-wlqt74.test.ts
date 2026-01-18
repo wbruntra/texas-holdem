@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { deriveGameState } from '../lib/state-derivation'
-import type { GameEvent } from '../services/event-store'
+import { deriveGameState } from '@holdem/shared/state-derivation'
+import type { GameEvent } from '@holdem/shared/event-types'
 import fs from 'fs'
 import path from 'path'
 
