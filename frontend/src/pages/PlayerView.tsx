@@ -24,6 +24,7 @@ const audioMap = {
 export default function PlayerView() {
   const { roomCode } = useParams<{ roomCode: string }>()
   const [showCommunityCards, setShowCommunityCards] = useState(false)
+  const [isActing, setIsActing] = useState(false)
 
   const {
     game,
@@ -54,14 +55,22 @@ export default function PlayerView() {
   }
 
   const handleAction = async (action: string, amount?: number) => {
-    // Play sound immediately on interaction
-    if (action === 'check') playSound('check')
-    else if (action === 'fold') playSound('fold')
-    else if (['bet', 'raise', 'call'].includes(action)) playSound('bet')
+    if (isActing) return
 
-    await performAction(action, amount)
-    setBetAmount(0)
-    setRaiseAmount(0)
+    setIsActing(true)
+    try {
+      // Play sound immediately on interaction
+      if (action === 'check') playSound('check')
+      else if (action === 'fold') playSound('fold')
+      else if (['bet', 'raise', 'call'].includes(action)) playSound('bet')
+
+      await performAction(action, amount)
+      // Removed manual reset of betAmount/raiseAmount to prevent flicker
+    } catch (e) {
+      console.error('Action failed', e)
+    } finally {
+      setIsActing(false)
+    }
   }
 
   if (checkingAuth) {
@@ -283,10 +292,11 @@ export default function PlayerView() {
               <div className="mb-3">
                 <button
                   onClick={() => handleAction('fold')}
+                  disabled={isActing}
                   className="btn-poker btn-poker-danger btn-action-lg w-100"
                 >
-                  <span>Fold</span>
-                  <span>✕</span>
+                  <span>{isActing ? 'Folding...' : 'Fold'}</span>
+                  <span>{isActing ? '⏳' : '✕'}</span>
                 </button>
               </div>
             )}
@@ -327,19 +337,21 @@ export default function PlayerView() {
                 {validActions.canCheck && (
                   <button
                     onClick={() => handleAction('check')}
+                    disabled={isActing}
                     className="btn-poker btn-poker-primary btn-action-lg w-100"
                   >
-                    <span>Check</span>
-                    <span>✓</span>
+                    <span>{isActing ? 'Checking...' : 'Check'}</span>
+                    <span>{isActing ? '⏳' : '✓'}</span>
                   </button>
                 )}
 
                 {validActions.canCall && validActions.callAmount !== undefined && (
                   <button
                     onClick={() => handleAction('call')}
+                    disabled={isActing}
                     className="btn-poker btn-poker-primary btn-action-lg w-100"
                   >
-                    <span>Call ${validActions.callAmount}</span>
+                    <span>{isActing ? 'Calling...' : `Call $${validActions.callAmount}`}</span>
                   </button>
                 )}
 
@@ -389,12 +401,15 @@ export default function PlayerView() {
                             </div>
                             <button
                               onClick={() => handleAction(isRaise ? 'raise' : 'bet', currentVal)}
+                              disabled={isActing}
                               className={`btn-poker ${isRaise ? 'btn-poker-secondary' : 'btn-poker-info'} btn-action-lg w-100`}
                             >
                               <span>
-                                {isRaise ? 'Raise To' : 'Bet'} ${totalBet}
+                                {isActing
+                                  ? 'Processing...'
+                                  : `${isRaise ? 'Raise To' : 'Bet'} $${totalBet}`}
                               </span>
-                              <span>{isRaise ? '' : '💰'}</span>
+                              <span>{isActing ? '⏳' : isRaise ? '' : '💰'}</span>
                             </button>
                           </>
                         )
@@ -414,10 +429,11 @@ export default function PlayerView() {
                 </div>
                 <button
                   onClick={() => handleAction('advance_round')}
+                  disabled={isActing}
                   className="btn-poker btn-poker-primary btn-action-lg w-100"
                 >
-                  <span>Advance Round</span>
-                  <span>⏩</span>
+                  <span>{isActing ? 'Advancing...' : 'Advance Round'}</span>
+                  <span>{isActing ? '⏳' : '⏩'}</span>
                 </button>
               </div>
             </div>

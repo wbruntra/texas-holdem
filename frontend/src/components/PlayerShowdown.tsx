@@ -5,8 +5,8 @@ interface PlayerShowdownProps {
   game: GameState
   winnerPositions: number[]
   amWinner: boolean
-  onNextHand: () => Promise<void>
-  onToggleShowCards: (show: boolean) => Promise<void>
+  onNextHand: () => Promise<any>
+  onToggleShowCards: (show: boolean) => Promise<any>
 }
 
 export default function PlayerShowdown({

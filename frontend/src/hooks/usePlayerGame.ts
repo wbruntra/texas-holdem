@@ -145,36 +145,37 @@ export function usePlayerGame(roomCode: string | undefined) {
     if (joinGameThunk.fulfilled.match(result)) {
       dispatch(setGame(result.payload.game))
     }
+    return result
   }
 
   const handleStartGame = async () => {
     if (!game?.id) return
-    dispatch(startGameThunk(game.id))
+    return dispatch(startGameThunk(game.id))
   }
 
   const handlePerformAction = async (action: string, amount?: number) => {
     if (!game?.id) return
-    dispatch(performActionThunk({ gameId: game.id, action, amount }))
+    return dispatch(performActionThunk({ gameId: game.id, action, amount }))
   }
 
   const handleNextHand = async () => {
     if (!game?.id) return
-    dispatch(nextHandThunk(game.id))
+    return dispatch(nextHandThunk(game.id))
   }
 
   const handleRevealCard = async () => {
     if (!game?.id) return
-    dispatch(revealCardThunk(game.id))
+    return dispatch(revealCardThunk(game.id))
   }
 
   const handleAdvanceRound = async () => {
     if (!game?.id) return
-    dispatch(advanceRoundThunk(game.id))
+    return dispatch(advanceRoundThunk(game.id))
   }
 
   const handleToggleShowCards = async (showCards: boolean) => {
     if (!game?.id) return
-    dispatch(toggleShowCardsThunk({ gameId: game.id, showCards }))
+    return dispatch(toggleShowCardsThunk({ gameId: game.id, showCards }))
   }
 
   const handleSetPlayerName = (name: string) => {

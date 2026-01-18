@@ -4,7 +4,7 @@ interface PlayerJoinGameProps {
   roomCode: string | undefined
   playerName: string
   setPlayerName: (name: string) => void
-  onJoin: (password: string) => Promise<void>
+  onJoin: (password: string) => Promise<any>
   error: string
 }
 

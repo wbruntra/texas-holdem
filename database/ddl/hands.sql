@@ -1,0 +1,21 @@
+CREATE TABLE `hands` (
+  `id` integer not null primary key autoincrement,
+  `game_id` integer not null,
+  `hand_number` integer not null,
+  `dealer_position` integer not null,
+  `winners` json null,
+  `pot_amount` integer null,
+  `community_cards` json null,
+  `completed_at` datetime null,
+  `created_at` datetime not null default CURRENT_TIMESTAMP,
+  `updated_at` datetime not null default CURRENT_TIMESTAMP,
+  `deck` text,
+  `player_hole_cards` text,
+  `player_stacks_start` text,
+  `player_stacks_end` text,
+  `pots` text,
+  `small_blind` integer,
+  `big_blind` integer,
+  `seed` text null,
+  foreign key(`game_id`) references `games`(`id`) on delete CASCADE
+)
