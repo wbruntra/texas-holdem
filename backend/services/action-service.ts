@@ -7,7 +7,6 @@ import { ACTION_TYPE, PLAYER_STATUS, ROUND } from '@/lib/game-constants'
 import { getNextActingPosition } from '@/lib/game-state-machine'
 import eventLogger from '@/services/event-logger'
 import { EVENT_TYPE } from '@/lib/event-types'
-import { createShowdownHistory } from './showdown-service'
 import { appendEvent } from './event-store'
 import { EVENT_TYPES as EVENT_TYPES_V2 } from '@holdem/shared'
 import { validateGameState } from './state-validator'
@@ -215,17 +214,6 @@ export async function submitAction(
     await appendEvent(game.id, newState.handNumber, EVENT_TYPES_V2.HAND_COMPLETE, null, {
       winners: newState.winners,
     })
-
-    // Create showdown history record
-    // Get the most recent hand ID for this game
-    const recentHand = await db('hands')
-      .where({ game_id: game.id })
-      .orderBy('hand_number', 'desc')
-      .first()
-
-    if (recentHand) {
-      await createShowdownHistory(game.id, recentHand.id, newState)
-    }
   }
 
   const { isBettingRoundComplete, shouldAutoAdvance } = await import('@/lib/game-state-machine')
@@ -413,16 +401,6 @@ export async function revealCard(roomPlayerId: number, gameId: number) {
     const { processShowdown } = await import('@/lib/game-state-machine')
     newState = processShowdown(newState)
     // await gameService.saveGameState(game.id, newState) - REMOVED
-
-    // Get the most recent hand ID for this game
-    const recentHand = await db('hands')
-      .where({ game_id: game.id })
-      .orderBy('hand_number', 'desc')
-      .first()
-
-    if (recentHand) {
-      await createShowdownHistory(game.id, recentHand.id, newState)
-    }
   }
 
   // Validate State

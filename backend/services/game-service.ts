@@ -792,12 +792,6 @@ export async function completeHandRecord(gameId: number, gameState: any): Promis
       completed_at: new Date(),
       updated_at: new Date(),
     })
-
-  // Create showdown history record after hand completion
-  if (gameState.currentRound === 'showdown' || gameState.showdownProcessed) {
-    const { createShowdownHistory } = await import('./showdown-service')
-    await createShowdownHistory(gameId, hand.id, gameState)
-  }
 }
 
 /**
