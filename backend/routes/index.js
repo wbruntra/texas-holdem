@@ -14,6 +14,7 @@ router.use('/games', gamesRouter)
 router.use('/rooms', roomsRouter)
 
 // only mount in dev
+console.log('NODE ENV', process.env.NODE_ENV)
 if (process.env.NODE_ENV === 'development') {
   router.use('/admin', adminRouter)
 }
