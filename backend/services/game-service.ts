@@ -360,7 +360,7 @@ export async function saveGameState(gameId: number, state: any): Promise<void> {
 
     for (const player of state.players) {
       await trx('game_players')
-        .where({ id: player.id })
+        .where({ room_player_id: player.id, game_id: gameId })
         .update({
           chips: player.chips,
           current_bet: player.currentBet,
@@ -908,19 +908,17 @@ export async function startNewGame(roomId: number) {
     return getGameById(newGame.id)
   }
 
-  const insertedIds = await db('game_players').insert(gamePlayerInserts)
-  const firstId = Array.isArray(insertedIds) ? insertedIds[0] : insertedIds
+  await db('game_players').insert(gamePlayerInserts)
 
   for (let i = 0; i < connectedRoomPlayers.length; i++) {
     const roomPlayer = connectedRoomPlayers[i]
-    const gpId = firstId + i
 
     joinEvents.push({
       gameId: newGame.id,
       handNumber: 0,
       sequenceNumber: i,
       eventType: EVENT_TYPES_V2.PLAYER_JOINED,
-      playerId: gpId,
+      playerId: roomPlayer.id,
       payload: {
         name: roomPlayer.name,
         position: gamePlayerInserts[i].position,

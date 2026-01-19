@@ -65,13 +65,18 @@ export async function normalizeTurnIfNeeded(gameId: number) {
 /**
  * Submit and process a player action (check, bet, call, raise, fold, all-in)
  */
-export async function submitAction(playerId: number, action: string, amount: number = 0) {
-  const player = await playerService.getPlayerById(playerId)
+export async function submitAction(
+  roomPlayerId: number,
+  gameId: number,
+  action: string,
+  amount: number = 0,
+) {
+  const player = await playerService.getPlayerById(roomPlayerId, gameId)
   if (!player) {
     throw new Error('Player not found')
   }
 
-  let game = await gameService.getGameById(player.gameId)
+  let game = await gameService.getGameById(gameId)
   if (!game) {
     throw new Error('Game not found')
   }
@@ -82,7 +87,7 @@ export async function submitAction(playerId: number, action: string, amount: num
     throw new Error('Game is not active')
   }
 
-  const playerPosition = game.players.findIndex((p: any) => p.id === playerId)
+  const playerPosition = game.players.findIndex((p: any) => p.id === roomPlayerId)
   if (playerPosition === -1) {
     throw new Error('Player not in game')
   }
@@ -126,7 +131,7 @@ export async function submitAction(playerId: number, action: string, amount: num
   eventLogger.logEvent(
     eventType as any,
     {
-      playerId,
+      playerId: roomPlayerId,
       playerName: player.name,
       playerPosition,
       action,
@@ -174,10 +179,10 @@ export async function submitAction(playerId: number, action: string, amount: num
     }
   }
 
-  await appendEvent(game.id, newState.handNumber, v2EventType, playerId, payload)
+  await appendEvent(game.id, newState.handNumber, v2EventType, roomPlayerId, payload)
 
   if (game.currentRound) {
-    await recordAction(game.id, playerId, action, amount, game.currentRound)
+    await recordAction(game.id, roomPlayerId, action, amount, game.currentRound)
   }
 
   const activePlayers = newState.players.filter((p: any) => p.status === PLAYER_STATUS.ACTIVE)
@@ -250,13 +255,13 @@ export async function submitAction(playerId: number, action: string, amount: num
 /**
  * Get valid actions for a player based on current game state
  */
-export async function getPlayerValidActions(playerId: number) {
-  const player = await playerService.getPlayerById(playerId)
+export async function getPlayerValidActions(roomPlayerId: number, gameId: number) {
+  const player = await playerService.getPlayerById(roomPlayerId, gameId)
   if (!player) {
     throw new Error('Player not found')
   }
 
-  let game = await gameService.getGameById(player.gameId)
+  let game = await gameService.getGameById(gameId)
   if (!game) {
     throw new Error('Game not found')
   }
@@ -267,7 +272,7 @@ export async function getPlayerValidActions(playerId: number) {
     return { canAct: false, reason: 'Game not active' }
   }
 
-  const playerPosition = game.players.findIndex((p: any) => p.id === playerId)
+  const playerPosition = game.players.findIndex((p: any) => p.id === roomPlayerId)
   if (playerPosition === -1) {
     return { canAct: false, reason: 'Player not in game' }
   }
@@ -353,13 +358,15 @@ export async function getHandActions(handId: number) {
 /**
  * Reveal next community card when all players are all-in
  */
-export async function revealCard(playerId: number) {
-  const player = await playerService.getPlayerById(playerId)
+export async function revealCard(roomPlayerId: number, gameId: number) {
+  const player = await playerService.getPlayerById(roomPlayerId, gameId)
   if (!player) {
     throw new Error('Player not found')
   }
 
-  let game = await gameService.getGameById(player.gameId)
+  await playerService.setShowCards(roomPlayerId, gameId, true)
+
+  let game = await gameService.getGameById(gameId)
   if (!game) {
     throw new Error('Game not found')
   }
@@ -368,7 +375,7 @@ export async function revealCard(playerId: number) {
     throw new Error('Game is not active')
   }
 
-  const playerPosition = game.players.findIndex((p: any) => p.id === playerId)
+  const playerPosition = game.players.findIndex((p: any) => p.id === roomPlayerId)
   if (playerPosition === -1) {
     throw new Error('Player not in game')
   }
@@ -385,7 +392,7 @@ export async function revealCard(playerId: number) {
   eventLogger.logEvent(
     EVENT_TYPE.CARD_REVEALED,
     {
-      playerId,
+      playerId: roomPlayerId,
       round: newState.currentRound,
       communityCards: newState.communityCards,
     },
@@ -393,7 +400,7 @@ export async function revealCard(playerId: number) {
   )
 
   // RECORD V2 EVENT (ADVANCE_ROUND)
-  await appendEvent(game.id, newState.handNumber, EVENT_TYPES_V2.ADVANCE_ROUND, playerId, {
+  await appendEvent(game.id, newState.handNumber, EVENT_TYPES_V2.ADVANCE_ROUND, roomPlayerId, {
     fromRound: game.currentRound,
     toRound: newState.currentRound,
     // @ts-ignore
