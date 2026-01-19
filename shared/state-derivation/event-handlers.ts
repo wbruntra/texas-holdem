@@ -1,6 +1,5 @@
-import type { GameState, Player, Card, Pot } from '../game-types'
+import type { GameState, Player } from '../game-types'
 import type { GameEvent } from '../event-types'
-import { EVENT_TYPES } from '../event-types'
 
 // Helper to update a specific player
 function updatePlayer(state: GameState, playerId: number, update: Partial<Player>): GameState {
@@ -144,7 +143,7 @@ export function handleHandStart(state: GameState, event: GameEvent): GameState {
 }
 
 export function handlePostBlind(state: GameState, event: GameEvent): GameState {
-  const { blindType, amount, isAllIn } = event.payload
+  const { amount, isAllIn } = event.payload
   const playerId = event.playerId!
   const player = state.players.find((p) => p.id === playerId)
 
@@ -428,7 +427,7 @@ export function handleShowdown(state: GameState, event: GameEvent): GameState {
 }
 
 export function handleAwardPot(state: GameState, event: GameEvent): GameState {
-  const { winReason, winners, payouts, potTotal } = event.payload
+  const { winners, payouts } = event.payload
 
   let newPlayers = state.players
 
@@ -459,7 +458,7 @@ export function handleAwardPot(state: GameState, event: GameEvent): GameState {
   }
 }
 
-export function handleHandComplete(state: GameState, event: GameEvent): GameState {
+export function handleHandComplete(state: GameState, _event: GameEvent): GameState {
   return {
     ...state,
     action_finished: true,

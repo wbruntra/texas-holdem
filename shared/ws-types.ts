@@ -1,7 +1,5 @@
 export type WsMessageType = 'hello' | 'subscribed' | 'game_state' | 'error' | 'ping' | 'pong'
 
-export type Card = { rank: string; suit: string }
-
 export interface WsMessage {
   type: WsMessageType
   requestId?: string
