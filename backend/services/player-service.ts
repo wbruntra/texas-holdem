@@ -6,9 +6,8 @@ import { appendEvent } from './event-store'
 import { EVENT_TYPES as EVENT_TYPES_V2 } from '@holdem/shared'
 
 export interface Player {
-  id: number
+  id: number // room_player_id
   gameId: number
-  roomPlayerId: number
   name: string
   position: number
   chips: number
@@ -59,7 +58,7 @@ export async function joinGame(gameId: number, roomPlayerId: number): Promise<Jo
   if (existingPlayer) {
     // Player already sat in this game
     return {
-      id: existingPlayer.id,
+      id: roomPlayerId,
       name: roomPlayer.name,
       position: existingPlayer.position,
       chips: existingPlayer.chips,
@@ -71,7 +70,7 @@ export async function joinGame(gameId: number, roomPlayerId: number): Promise<Jo
     throw new Error('Game already started')
   }
 
-  const playerCount = await db('game_players').where({ game_id: gameId }).count('id as count')
+  const playerCount = await db('game_players').where({ game_id: gameId }).count('* as count')
   if (playerCount[0].count >= 10) {
     throw new Error('Game is full')
   }
@@ -83,11 +82,11 @@ export async function joinGame(gameId: number, roomPlayerId: number): Promise<Jo
 
   const position = players.length > 0 ? players[0].position + 1 : 0
 
-  const [playerId] = await db('game_players').insert({
+  await db('game_players').insert({
     game_id: gameId,
     room_player_id: roomPlayerId,
     position,
-    chips: roomPlayer.chips > 0 ? roomPlayer.chips : game.starting_chips, // Use room chips or starting
+    chips: roomPlayer.chips > 0 ? roomPlayer.chips : game.starting_chips,
     current_bet: 0,
     status: 'active',
     is_dealer: 0,
@@ -101,7 +100,7 @@ export async function joinGame(gameId: number, roomPlayerId: number): Promise<Jo
   eventLogger.logEvent(
     EVENT_TYPE.PLAYER_JOINED,
     {
-      playerId,
+      playerId: roomPlayerId,
       playerName: roomPlayer.name,
       position,
       chips: roomPlayer.chips,
@@ -110,14 +109,14 @@ export async function joinGame(gameId: number, roomPlayerId: number): Promise<Jo
   )
 
   // RECORD V2 EVENT (PLAYER_JOINED)
-  await appendEvent(gameId, 0, EVENT_TYPES_V2.PLAYER_JOINED, playerId, {
+  await appendEvent(gameId, 0, EVENT_TYPES_V2.PLAYER_JOINED, roomPlayerId, {
     name: roomPlayer.name,
     position,
     startingChips: roomPlayer.chips,
   })
 
   return {
-    id: playerId,
+    id: roomPlayerId,
     name: roomPlayer.name,
     position,
     chips: roomPlayer.chips,
@@ -126,31 +125,39 @@ export async function joinGame(gameId: number, roomPlayerId: number): Promise<Jo
 }
 
 /**
- * Get player by ID with full details
+ * Get player by room_player_id with full details
+ * Requires gameId to know which game context
  */
-export async function getPlayerById(playerId: number): Promise<Player | null> {
-  const player = await db('game_players').where({ id: playerId }).first()
-  if (!player) return null
-
-  const roomPlayer = await db('room_players').where({ id: player.room_player_id }).first()
+export async function getPlayerById(
+  roomPlayerId: number,
+  gameId?: number,
+): Promise<Player | null> {
+  const roomPlayer = await db('room_players').where({ id: roomPlayerId }).first()
   if (!roomPlayer) return null
 
+  let player = null
+  if (gameId) {
+    player = await db('game_players')
+      .where({ room_player_id: roomPlayerId, game_id: gameId })
+      .first()
+    if (!player) return null
+  }
+
   return {
-    id: player.id,
-    gameId: player.game_id,
-    roomPlayerId: player.room_player_id,
+    id: roomPlayerId,
+    gameId: player?.game_id || gameId || 0,
     name: roomPlayer.name,
-    position: player.position,
-    chips: player.chips,
-    currentBet: player.current_bet,
-    holeCards: player.hole_cards ? JSON.parse(player.hole_cards) : [],
-    status: player.status,
-    isDealer: player.is_dealer === 1,
-    isSmallBlind: player.is_small_blind === 1,
-    isBigBlind: player.is_big_blind === 1,
-    lastAction: player.last_action,
+    position: player?.position || 0,
+    chips: player?.chips || roomPlayer.chips,
+    currentBet: player?.current_bet || 0,
+    holeCards: player?.hole_cards ? JSON.parse(player.hole_cards) : [],
+    status: player?.status || 'active',
+    isDealer: player?.is_dealer === 1,
+    isSmallBlind: player?.is_small_blind === 1,
+    isBigBlind: player?.is_big_blind === 1,
+    lastAction: player?.last_action || null,
     connected: roomPlayer.connected === 1,
-    showCards: player.show_cards === 1,
+    showCards: player?.show_cards === 1,
   }
 }
 
@@ -158,40 +165,36 @@ export async function getPlayerById(playerId: number): Promise<Player | null> {
  * Remove player from game (disconnect or delete)
  * Logic change: update room_player connected status, or remove from game_players if waiting
  */
-export async function leaveGame(playerId: number): Promise<void> {
-  const player = await getPlayerById(playerId)
+export async function leaveGame(roomPlayerId: number, gameId: number): Promise<void> {
+  const player = await getPlayerById(roomPlayerId, gameId)
   if (!player) {
     throw new Error('Player not found')
   }
 
-  const game = await db('games').where({ id: player.gameId }).first()
-
-  // If leaving game, we might just mark room player as disconnected?
-  // But leaveGame might mean "Stand Up".
-  // If game is waiting, delete from game_players.
+  const game = await db('games').where({ id: gameId }).first()
 
   if (game.status !== 'waiting') {
     // Cannot remove from active game easily, just mark disconnected in room_players
     await db('room_players')
-      .where({ id: player.roomPlayerId })
+      .where({ id: roomPlayerId })
       .update({ connected: 0, updated_at: new Date() })
 
     eventLogger.logEvent(
       EVENT_TYPE.PLAYER_LEFT,
       {
-        playerId,
+        playerId: roomPlayerId,
         playerName: player.name,
         disconnected: true,
       },
-      player.gameId,
+      gameId,
     )
   } else {
     // Waiting game: remove from table
-    await db('game_players').where({ id: playerId }).delete()
+    await db('game_players').where({ room_player_id: roomPlayerId, game_id: gameId }).delete()
     eventLogger.logEvent(
       EVENT_TYPE.PLAYER_LEFT,
       {
-        playerId,
+        playerId: roomPlayerId,
         playerName: player.name,
         removed: true,
       },
@@ -203,15 +206,13 @@ export async function leaveGame(playerId: number): Promise<void> {
 /**
  * Update player connection status
  */
-export async function updateConnectionStatus(playerId: number, connected: boolean): Promise<void> {
-  // playerId here is game_player.id?
-  // If so, we need to find room_player.
-  const player = await db('game_players').where({ id: playerId }).first()
-  if (player) {
-    await db('room_players')
-      .where({ id: player.room_player_id })
-      .update({ connected: connected ? 1 : 0, updated_at: new Date() })
-  }
+export async function updateConnectionStatus(
+  roomPlayerId: number,
+  connected: boolean,
+): Promise<void> {
+  await db('room_players')
+    .where({ id: roomPlayerId })
+    .update({ connected: connected ? 1 : 0, updated_at: new Date() })
 }
 
 /**
@@ -226,7 +227,7 @@ export async function getPlayersInGame(gameId: number) {
     .select('game_players.*', 'room_players.name', 'room_players.connected')
 
   return players.map((p: any) => ({
-    id: p.id,
+    id: p.room_player_id,
     name: p.name,
     position: p.position,
     chips: p.chips,
@@ -239,10 +240,14 @@ export async function getPlayersInGame(gameId: number) {
 /**
  * Set player card visibility status
  */
-export async function setShowCards(playerId: number, showCards: boolean): Promise<void> {
-  const player = await getPlayerById(playerId)
+export async function setShowCards(
+  roomPlayerId: number,
+  gameId: number,
+  showCards: boolean,
+): Promise<void> {
+  const player = await getPlayerById(roomPlayerId, gameId)
   await db('game_players')
-    .where({ id: playerId })
+    .where({ room_player_id: roomPlayerId, game_id: gameId })
     .update({ show_cards: showCards ? 1 : 0, updated_at: new Date() })
 
   if (showCards && player) {

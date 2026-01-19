@@ -170,7 +170,7 @@ class WebSocketService {
               .first()
 
             if (gamePlayer) {
-              authenticatedPlayerId = gamePlayer.id
+              authenticatedPlayerId = roomPlayer.id
               console.log('[WS] Player authenticated via Room Token:', authenticatedPlayerId)
             } else {
               console.warn('[WS] Room player found but not in this game:', roomPlayer.id)
@@ -181,7 +181,7 @@ class WebSocketService {
         }
 
         if (!authenticatedPlayerId && (ws as any).playerId) {
-          const player = await playerService.getPlayerById((ws as any).playerId)
+          const player = await playerService.getPlayerById((ws as any).playerId, game.id)
 
           if (player && player.gameId === game.id) {
             authenticatedPlayerId = player.id
@@ -190,7 +190,7 @@ class WebSocketService {
         }
 
         if (!authenticatedPlayerId && clientPlayerIdFromPayload) {
-          const player = await playerService.getPlayerById(clientPlayerIdFromPayload)
+          const player = await playerService.getPlayerById(clientPlayerIdFromPayload, game.id)
 
           if (player && player.gameId === game.id) {
             authenticatedPlayerId = player.id

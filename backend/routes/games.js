@@ -47,10 +47,8 @@ async function loadPlayer(req, res, next) {
       return res.status(403).json({ error: 'Not joined this game' })
     }
 
-    // Enrich player with room player name for convenience if needed,
-    // but playerService.getPlayerById does that.
-    // Let's get full player object.
-    const fullPlayer = await playerService.getPlayerById(player.id)
+    // Get full player object using room_player_id
+    const fullPlayer = await playerService.getPlayerById(req.roomPlayer.id, gameId)
 
     req.player = fullPlayer
     next()
@@ -292,7 +290,7 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
       return res.status(400).json({ error: 'Action required' })
     }
 
-    const gameState = await actionService.submitAction(req.player.id, action, amount || 0)
+    const gameState = await actionService.submitAction(req.player.id, gameId, action, amount || 0)
 
     const revealCards = shouldRevealAllCards(gameState)
 
@@ -328,7 +326,7 @@ router.post('/:gameId/actions', requireAuth, loadPlayer, async (req, res, next) 
 router.post('/:gameId/reveal-card', requireAuth, loadPlayer, async (req, res, next) => {
   try {
     const gameId = parseInt(req.params.gameId, 10)
-    const gameState = await actionService.revealCard(req.player.id)
+    const gameState = await actionService.revealCard(req.player.id, gameId)
 
     const revealCards = shouldRevealAllCards(gameState)
 
@@ -431,7 +429,8 @@ router.post('/:gameId/advance', requireAuth, loadPlayer, async (req, res, next) 
 
 router.get('/:gameId/actions/valid', requireAuth, loadPlayer, async (req, res, next) => {
   try {
-    const actions = await actionService.getPlayerValidActions(req.player.id)
+    const gameId = parseInt(req.params.gameId, 10)
+    const actions = await actionService.getPlayerValidActions(req.player.id, gameId)
     res.json(actions)
   } catch (error) {
     next(error)
@@ -491,7 +490,7 @@ router.post('/:gameId/show-cards', requireAuth, loadPlayer, async (req, res, nex
     if (game.currentRound !== SHOWDOWN_ROUND)
       return res.status(400).json({ error: 'Not in showdown' })
 
-    await playerService.setShowCards(req.player.id, showCards)
+    await playerService.setShowCards(req.player.id, gameId, showCards)
 
     gameEvents.emitGameUpdate(gameId, 'show_cards')
 
@@ -506,7 +505,7 @@ router.post('/:gameId/leave', requireAuth, loadPlayer, async (req, res, next) =>
     const gameId = parseInt(req.params.gameId, 10)
     const playerGameId = req.player.gameId
 
-    await playerService.leaveGame(req.player.id)
+    await playerService.leaveGame(req.player.id, playerGameId)
 
     // Note: Session management is different now, handled by client token
 

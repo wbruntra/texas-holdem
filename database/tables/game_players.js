@@ -1,6 +1,6 @@
 /**
  * game_players Table Model
- * Replaces old Players model
+ * Uses composite primary key (room_player_id, game_id)
  */
 const { Model } = require('objection')
 const knex = require('../db')
@@ -14,14 +14,17 @@ class GamePlayers extends Model {
     return 'game_players'
   }
 
+  static get idColumn() {
+    return ['room_player_id', 'game_id']
+  }
+
   static get jsonSchema() {
     return {
       type: 'object',
       required: ['game_id', 'room_player_id', 'position', 'chips', 'status', 'total_bet'],
       properties: {
-        id: { type: 'integer' },
-        game_id: { type: 'integer' },
         room_player_id: { type: 'integer' },
+        game_id: { type: 'integer' },
         position: { type: 'integer' },
         chips: { type: 'integer' },
         current_bet: { type: 'integer' },
@@ -30,7 +33,10 @@ class GamePlayers extends Model {
           type: ['array', 'null'],
           items: { type: 'string' },
         },
-        status: { type: 'string', enum: ['active', 'folded', 'all_in', 'out'] },
+        status: {
+          type: 'string',
+          enum: ['active', 'folded', 'all_in', 'out', 'sitting_out'],
+        },
         is_dealer: { type: 'boolean' },
         is_small_blind: { type: 'boolean' },
         is_big_blind: { type: 'boolean' },
@@ -45,7 +51,6 @@ class GamePlayers extends Model {
   static get relationMappings() {
     const Games = require('./games')
     const RoomPlayers = require('./room_players')
-    const Actions = require('./actions')
 
     return {
       game: {
@@ -62,27 +67,6 @@ class GamePlayers extends Model {
         join: {
           from: 'game_players.room_player_id',
           to: 'room_players.id',
-        },
-      },
-      actions: {
-        relation: Model.HasManyRelation,
-        modelClass: Actions,
-        join: {
-          // Actions table likely still points to 'player_id'.
-          // Since we dropped 'players', we need to check if 'actions' table was updated.
-          // Wait, I did NOT update 'actions' table FK in my migrations!
-          // The actions table has 'player_id'.
-          // If I dropped 'players', the FK in 'actions' might have caused issues or was dropped too?
-          // I used 'delete' in resetGame, but what about the schema?
-          // The 'actions' migration (20251230000004_create_actions_table.cjs) references 'players.id'.
-          // When I dropped 'players', the FK constraint should have been dropped or it prevented drop?
-          // I assumed 'players' drop would work.
-          // If it worked, 'actions' now has a dangling 'player_id' column or the FK is gone.
-          // I should assume 'player_id' in ACTIONS now refers to GAME_PLAYERS.id because
-          // actions are per-game-player events.
-          // So I should map 'from: game_players.id, to: actions.player_id'
-          from: 'game_players.id',
-          to: 'actions.player_id',
         },
       },
     }
