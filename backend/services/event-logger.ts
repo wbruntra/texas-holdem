@@ -10,40 +10,23 @@ interface LoggedEvent {
   sequence: number
 }
 
-class EventLogger {
+export class EventLogger {
   private enabled: boolean
   private events: LoggedEvent[]
   private logFilePath: string
   private autoFlush: boolean
+  private writeQueue: Promise<void>
 
   constructor() {
     this.enabled = process.env.LOG_EVENTS === 'true'
     this.events = []
     this.logFilePath = path.join(__dirname, '../../event-log.jsonl')
     this.autoFlush = true
+    this.writeQueue = Promise.resolve()
 
     if (this.enabled) {
       console.log('[EventLogger] Logging enabled - events will be written to', this.logFilePath)
       this.loadFromFile()
-    }
-  }
-
-  /**
-   * Load events from log file
-   */
-  loadFromFile(): void {
-    try {
-      if (fs.existsSync(this.logFilePath)) {
-        const fileContent = fs.readFileSync(this.logFilePath, 'utf-8')
-        if (fileContent) {
-          this.events = fileContent
-            .split('\n')
-            .filter(Boolean)
-            .map((line) => JSON.parse(line))
-        }
-      }
-    } catch (error) {
-      console.error('[EventLogger] Failed to load log file:', error)
     }
   }
 
@@ -114,11 +97,13 @@ class EventLogger {
   flushToFile(event: LoggedEvent): void {
     if (!this.enabled) return
 
-    try {
-      fs.appendFileSync(this.logFilePath, JSON.stringify(event) + '\n')
-    } catch (error) {
-      console.error('[EventLogger] Failed to write log file:', error)
-    }
+    this.writeQueue = this.writeQueue.then(async () => {
+      try {
+        await fs.promises.appendFile(this.logFilePath, JSON.stringify(event) + '\n')
+      } catch (error) {
+        console.error('[EventLogger] Failed to write log file:', error)
+      }
+    })
   }
 
   /**
@@ -156,6 +141,14 @@ class EventLogger {
       console.error('[EventLogger] Failed to export events:', error)
       return false
     }
+  }
+
+  /**
+   * Wait for all pending writes to complete
+   * For testing purposes
+   */
+  async waitForWrites(): Promise<void> {
+    await this.writeQueue
   }
 }
 
