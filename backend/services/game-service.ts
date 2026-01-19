@@ -167,9 +167,24 @@ export async function getGameById(gameId: number) {
 
 /**
  * Get game player record provided gameId and roomPlayerId
+ * Uses event-derived state to check player membership
  */
 export async function getGamePlayer(gameId: number, roomPlayerId: number) {
-  return db('game_players').where({ game_id: gameId, room_player_id: roomPlayerId }).first()
+  const game = await getGameById(gameId)
+  if (!game) return null
+
+  const player = game.players.find((p: any) => p.id === roomPlayerId)
+  if (!player) return null
+
+  // Return a minimal object matching what the old DB query returned
+  // This is used primarily for authorization checks
+  return {
+    game_id: gameId,
+    room_player_id: roomPlayerId,
+    position: player.position,
+    chips: player.chips,
+    status: player.status,
+  }
 }
 
 /**
