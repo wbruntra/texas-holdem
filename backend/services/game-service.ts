@@ -108,7 +108,9 @@ export async function createGameInRoom(roomId: number, config: GameConfig = {}):
   // Update room's current game
   await db('rooms').where({ id: roomId }).update({ current_game_id: id })
 
-  return getGameById(id)
+  const game = await getGameById(id)
+  if (!game) throw new Error('Failed to retrieve created game')
+  return game
 }
 
 /**
@@ -150,15 +152,8 @@ export async function getGameById(gameId: number) {
     startingChips: metadata.startingChips,
   }
 
-  // Players are added via PLAYER_JOINED events
   const derivedState = deriveGameState(gameConfig, [], events)
 
-  // We need to enrich players with names from room_players if they are in derived state?
-  // Actually derived state "players" comes from events.
-  // The PLAYER_JOINED event should contain the name.
-  // So validation should ensure name is correct.
-
-  // Merge metadata with derived state
   return {
     ...derivedState,
     id: metadata.id,
@@ -166,45 +161,7 @@ export async function getGameById(gameId: number) {
     roomCode: metadata.roomCode,
     seed: metadata.seed,
     startingChips: metadata.startingChips,
-    pots: [], // Frontend expects this
-    // We might want to attach "connected" status from game_players/room_players
-    // derivedState.players only has info from events.
-    // Let's fetch current connection status:
-    players: await (async () => {
-      // Collect all player IDs
-      const playerIds = derivedState.players.map((p: any) => p.id)
-
-      if (playerIds.length === 0) return []
-
-      // Fetch all game_players in one query
-      const gamePlayers = await db('game_players').whereIn('id', playerIds)
-
-      // Collect all room_player_ids
-      const roomPlayerIds = gamePlayers
-        .map((gp: any) => gp.room_player_id)
-        .filter((id: any) => id != null)
-
-      // Fetch all room_players in one query
-      let roomPlayers: any[] = []
-      if (roomPlayerIds.length > 0) {
-        roomPlayers = await db('room_players').whereIn('id', roomPlayerIds)
-      }
-
-      // Create lookup maps
-      const gpMap = new Map(gamePlayers.map((gp: any) => [gp.id, gp]))
-      const rpMap = new Map(roomPlayers.map((rp: any) => [rp.id, rp]))
-
-      // Map back to derived players
-      return derivedState.players.map((p: any) => {
-        const gp = gpMap.get(p.id)
-        let connected = false
-        if (gp) {
-          const rp = rpMap.get(gp.room_player_id)
-          if (rp) connected = rp.connected === 1
-        }
-        return { ...p, connected }
-      })
-    })(),
+    pots: [],
   }
 }
 
