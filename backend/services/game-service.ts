@@ -845,16 +845,14 @@ export async function recordHandHistory(gameId: number, gameState: any): Promise
 }
 
 /**
- * Start new game in the same room, carrying over players and chips
+ * Start new game in the same room with fresh chip stacks
  */
 export async function startNewGame(roomId: number) {
   const room = await db('rooms').where({ id: roomId }).first()
   if (!room) throw new Error('Room not found')
 
   const oldGameId = room.current_game_id
-  let oldPlayers: any[] = []
 
-  // Close old game if active
   if (oldGameId) {
     const oldGame = await db('games').where({ id: oldGameId }).first()
     if (oldGame && oldGame.status !== GAME_STATUS.COMPLETED) {
@@ -862,57 +860,41 @@ export async function startNewGame(roomId: number) {
         .where({ id: oldGameId })
         .update({ status: GAME_STATUS.COMPLETED, updated_at: new Date() })
     }
-
-    // Get players from old game to carry over chips
-    oldPlayers = await db('game_players').where({ game_id: oldGameId })
   }
 
-  // Create new game
   const newGame = await createGameInRoom(roomId)
 
-  // Carry over players
-  // Strategy:
-  // 1. If player was in old game and not "out" (0 chips), carry them over with their chips.
-  // 2. If player was "out", do we rebuy them? Or keep them out?
-  //    Usually, if "New Game" is pressed, maybe we allow rebuys or just reset active players?
-  //    User said: "reset chip counts? no." -> implied carry over.
-  //    If chips are 0, they are out. Unless they want to rebuy.
-  //    Let's assume "New Game" carries over active players.
-  //    BUT, what about players who just joined the room?
-  //    Let's add ALL connected room_players.
+  const [connectedRoomPlayers, oldPlayers] = await Promise.all([
+    db('room_players').where({ room_id: roomId, connected: true }),
+    oldGameId ? db('game_players').where({ game_id: oldGameId }) : Promise.resolve([]),
+  ])
 
-  const connectedRoomPlayers = await db('room_players').where({ room_id: roomId, connected: true })
+  const oldPositionMap = new Map<number, number>(
+    oldPlayers.map((p: any) => [p.room_player_id, p.position]),
+  )
+  const usedPositions = new Set<number>()
+
+  const gamePlayerInserts = []
+  const joinEvents = []
 
   for (const roomPlayer of connectedRoomPlayers) {
-    const oldPlayerParams = oldPlayers.find((op) => op.room_player_id === roomPlayer.id)
+    let position: number | undefined = oldPositionMap.get(roomPlayer.id)
 
-    let chips = room.starting_chips
-    let position = 0 // Needs logic
-
-    if (oldPlayerParams) {
-      // User requested a full reset for new games
-      chips = room.starting_chips
-      position = oldPlayerParams.position
-    } else {
-      // New player, find empty position
-      // Simple logic: max position + 1
-      const currentPlayers = await db('game_players').where({ game_id: newGame.id })
-      const positions = currentPlayers.map((p: any) => p.position)
-      let pos = 0
-      while (positions.includes(pos)) pos++
-      position = pos
+    if (position === undefined || usedPositions.has(position)) {
+      position = 0
+      while (usedPositions.has(position)) position++
     }
 
-    // Create game_player
-    // @ts-ignore
-    const [gpId] = await db('game_players').insert({
+    usedPositions.add(position)
+
+    gamePlayerInserts.push({
       game_id: newGame.id,
       room_player_id: roomPlayer.id,
       position,
-      chips,
+      chips: room.starting_chips,
       current_bet: 0,
       total_bet: 0,
-      status: chips > 0 ? 'active' : 'out',
+      status: 'active',
       is_dealer: false,
       is_small_blind: false,
       is_big_blind: false,
@@ -920,14 +902,34 @@ export async function startNewGame(roomId: number) {
       created_at: new Date(),
       updated_at: new Date(),
     })
+  }
 
-    // Log join event
-    await appendEvent(newGame.id, 0, EVENT_TYPES_V2.PLAYER_JOINED, gpId, {
-      name: roomPlayer.name,
-      position,
-      startingChips: chips,
+  if (gamePlayerInserts.length === 0) {
+    return getGameById(newGame.id)
+  }
+
+  const insertedIds = await db('game_players').insert(gamePlayerInserts)
+  const firstId = Array.isArray(insertedIds) ? insertedIds[0] : insertedIds
+
+  for (let i = 0; i < connectedRoomPlayers.length; i++) {
+    const roomPlayer = connectedRoomPlayers[i]
+    const gpId = firstId + i
+
+    joinEvents.push({
+      gameId: newGame.id,
+      handNumber: 0,
+      sequenceNumber: i,
+      eventType: EVENT_TYPES_V2.PLAYER_JOINED,
+      playerId: gpId,
+      payload: {
+        name: roomPlayer.name,
+        position: gamePlayerInserts[i].position,
+        startingChips: room.starting_chips,
+      },
     })
   }
+
+  await appendEvents(joinEvents)
 
   return getGameById(newGame.id)
 }
