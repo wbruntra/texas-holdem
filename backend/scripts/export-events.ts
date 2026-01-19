@@ -33,7 +33,11 @@ async function listGames(games: any[], title: string = 'Recent games') {
     const players = await db('game_players')
       .join('room_players', 'game_players.room_player_id', 'room_players.id')
       .where('game_players.game_id', g.id)
-      .select('room_players.name', 'game_players.id as playerId', 'game_players.position')
+      .select(
+        'room_players.name',
+        'game_players.room_player_id as playerId',
+        'game_players.position',
+      )
 
     const playerNames = players.map((p: any) => p.name).join(', ')
     let resultStr = ''

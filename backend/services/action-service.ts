@@ -1,5 +1,5 @@
 // @ts-ignore
-import db from '@holdem/database/db'
+// import db from '@holdem/database/db' // REMOVED
 import { validateAction, processAction, getValidActions } from '@/lib/betting-logic'
 import * as gameService from '@/services/game-service'
 import * as playerService from '@/services/player-service'
@@ -181,7 +181,7 @@ export async function submitAction(
   await appendEvent(game.id, newState.handNumber, v2EventType, roomPlayerId, payload)
 
   if (game.currentRound) {
-    await recordAction(game.id, roomPlayerId, action, amount, game.currentRound)
+    // Legacy action recording removed
   }
 
   const activePlayers = newState.players.filter((p: any) => p.status === PLAYER_STATUS.ACTIVE)
@@ -271,36 +271,6 @@ export async function getPlayerValidActions(roomPlayerId: number, gameId: number
 /**
  * Record an action in the database for hand history
  */
-export async function recordAction(
-  gameId: number,
-  playerId: number,
-  actionType: string,
-  amount: number,
-  round: string,
-) {
-  const hand = await db('hands').where({ game_id: gameId }).orderBy('hand_number', 'desc').first()
-
-  if (!hand) {
-    console.warn('No hand record found for action', { gameId, playerId, actionType })
-    return
-  }
-
-  const lastAction = await db('actions')
-    .where({ hand_id: hand.id })
-    .orderBy('sequence_number', 'desc')
-    .first()
-
-  const sequenceNumber = lastAction ? lastAction.sequence_number + 1 : 1
-
-  await db('actions').insert({
-    hand_id: hand.id,
-    player_id: playerId,
-    action_type: actionType,
-    amount,
-    round,
-    sequence_number: sequenceNumber,
-  })
-}
 
 /**
  * Record blind posting (small blind or big blind) in database and events
@@ -320,27 +290,7 @@ export async function recordBlindPost(
     },
     gameId,
   )
-  await recordAction(gameId, playerId, blindType, amount, 'preflop')
-}
-
-/**
- * Get all actions for a specific hand
- */
-export async function getHandActions(handId: number) {
-  const actions = await db('actions')
-    .where({ hand_id: handId })
-    .orderBy('sequence_number')
-    .orderBy('created_at')
-
-  return actions.map((a: any) => ({
-    id: a.id,
-    playerId: a.player_id,
-    actionType: a.action_type,
-    amount: a.amount,
-    round: a.round,
-    sequenceNumber: a.sequence_number,
-    timestamp: a.created_at,
-  }))
+  // Legacy action recording removed
 }
 
 /**
@@ -407,35 +357,4 @@ export async function revealCard(roomPlayerId: number, gameId: number) {
   await validateGameState(game.id)
 
   return gameService.getGameById(game.id)
-}
-
-/**
- * Get all actions for a game, optionally filtered by hand number
- */
-export async function getGameActions(gameId: number, handNumber: number | null = null) {
-  let query = db('actions')
-    .join('hands', 'actions.hand_id', 'hands.id')
-    .where('hands.game_id', gameId)
-
-  if (handNumber !== null) {
-    query = query.where('hands.hand_number', handNumber)
-  }
-
-  const actions = await query
-    .select('actions.*', 'hands.hand_number')
-    .orderBy('hands.hand_number')
-    .orderBy('actions.sequence_number')
-    .orderBy('actions.created_at')
-
-  return actions.map((a: any) => ({
-    id: a.id,
-    handId: a.hand_id,
-    handNumber: a.hand_number,
-    playerId: a.player_id,
-    actionType: a.action_type,
-    amount: a.amount,
-    round: a.round,
-    sequenceNumber: a.sequence_number,
-    timestamp: a.created_at,
-  }))
 }
