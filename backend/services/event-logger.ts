@@ -19,12 +19,50 @@ class EventLogger {
   constructor() {
     this.enabled = process.env.LOG_EVENTS === 'true'
     this.events = []
-    this.logFilePath = path.join(__dirname, '../../event-log.json')
+    this.logFilePath = path.join(__dirname, '../../event-log.jsonl')
     this.autoFlush = true
 
     if (this.enabled) {
       console.log('[EventLogger] Logging enabled - events will be written to', this.logFilePath)
-      this.initializeLogFile()
+      this.loadFromFile()
+    }
+  }
+
+  /**
+   * Load events from log file
+   */
+  loadFromFile(): void {
+    try {
+      if (fs.existsSync(this.logFilePath)) {
+        const fileContent = fs.readFileSync(this.logFilePath, 'utf-8')
+        if (fileContent) {
+          this.events = fileContent
+            .split('\n')
+            .filter(Boolean)
+            .map((line) => JSON.parse(line))
+        }
+      }
+    } catch (error) {
+      console.error('[EventLogger] Failed to load log file:', error)
+    }
+  }
+
+  /**
+   * Load events from log file
+   */
+  loadFromFile(): void {
+    try {
+      if (fs.existsSync(this.logFilePath)) {
+        const fileContent = fs.readFileSync(this.logFilePath, 'utf-8')
+        if (fileContent) {
+          this.events = fileContent
+            .split('\n')
+            .filter(Boolean)
+            .map((line) => JSON.parse(line))
+        }
+      }
+    } catch (error) {
+      console.error('[EventLogger] Failed to load log file:', error)
     }
   }
 
@@ -33,7 +71,7 @@ class EventLogger {
    */
   initializeLogFile(): void {
     try {
-      fs.writeFileSync(this.logFilePath, JSON.stringify([], null, 2))
+      fs.writeFileSync(this.logFilePath, '')
     } catch (error) {
       console.error('[EventLogger] Failed to initialize log file:', error)
     }
@@ -60,7 +98,7 @@ class EventLogger {
     this.events.push(event)
 
     if (this.autoFlush) {
-      this.flushToFile()
+      this.flushToFile(event)
     }
 
     console.log(
@@ -71,13 +109,13 @@ class EventLogger {
   }
 
   /**
-   * Write all events to log file
+   * Write a single event to the log file
    */
-  flushToFile(): void {
+  flushToFile(event: LoggedEvent): void {
     if (!this.enabled) return
 
     try {
-      fs.writeFileSync(this.logFilePath, JSON.stringify(this.events, null, 2))
+      fs.appendFileSync(this.logFilePath, JSON.stringify(event) + '\n')
     } catch (error) {
       console.error('[EventLogger] Failed to write log file:', error)
     }
