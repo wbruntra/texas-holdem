@@ -170,19 +170,41 @@ export async function getGameById(gameId: number) {
     // We might want to attach "connected" status from game_players/room_players
     // derivedState.players only has info from events.
     // Let's fetch current connection status:
-    players: await Promise.all(
-      derivedState.players.map(async (p: any) => {
-        // Find game_player to get room_player link
-        // Wait, derivedState p.id IS game_player.id (likely)
-        const gp = await db('game_players').where({ id: p.id }).first()
+    players: await (async () => {
+      // Collect all player IDs
+      const playerIds = derivedState.players.map((p: any) => p.id)
+
+      if (playerIds.length === 0) return []
+
+      // Fetch all game_players in one query
+      const gamePlayers = await db('game_players').whereIn('id', playerIds)
+
+      // Collect all room_player_ids
+      const roomPlayerIds = gamePlayers
+        .map((gp: any) => gp.room_player_id)
+        .filter((id: any) => id != null)
+
+      // Fetch all room_players in one query
+      let roomPlayers: any[] = []
+      if (roomPlayerIds.length > 0) {
+        roomPlayers = await db('room_players').whereIn('id', roomPlayerIds)
+      }
+
+      // Create lookup maps
+      const gpMap = new Map(gamePlayers.map((gp: any) => [gp.id, gp]))
+      const rpMap = new Map(roomPlayers.map((rp: any) => [rp.id, rp]))
+
+      // Map back to derived players
+      return derivedState.players.map((p: any) => {
+        const gp = gpMap.get(p.id)
         let connected = false
         if (gp) {
-          const rp = await db('room_players').where({ id: gp.room_player_id }).first()
+          const rp = rpMap.get(gp.room_player_id)
           if (rp) connected = rp.connected === 1
         }
         return { ...p, connected }
-      }),
-    ),
+      })
+    })(),
   }
 }
 
