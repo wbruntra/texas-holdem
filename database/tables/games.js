@@ -23,16 +23,21 @@ CREATE TABLE games (
     showdown_processed boolean NOT NULL DEFAULT '0',
     action_finished boolean NOT NULL DEFAULT '0',
     seed TEXT,
+    room_id INTEGER NOT NULL,
+    game_number INTEGER NOT NULL DEFAULT '1',
     PRIMARY KEY (id),
-    CONSTRAINT games_room_code_unique UNIQUE (room_code)
+    CONSTRAINT fk_games_room_id_rooms_id FOREIGN KEY (room_id) REFERENCES rooms(id)
 );
 
 -- Referenced by:
 -- * hands.game_id (fk_hands_game_id_games_id)
--- * players.game_id (fk_players_game_id_games_id)
 -- * showdown_history.game_id (fk_showdown_history_game_id_games_id)
 -- * game_events.game_id (fk_game_events_game_id_games_id)
 -- * game_snapshots.game_id (fk_game_snapshots_game_id_games_id)
+-- * game_players.game_id (fk_game_players_game_id_games_id)
+
+-- References:
+-- * rooms via room_id (fk_games_room_id_rooms_id)
  * END_DDL
  */
 const { Model } = require('objection')

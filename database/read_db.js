@@ -18,7 +18,7 @@ const getTableDdl = async (tableName) => {
     const foreignKeys = foreignKeysResult
     const indexes = indexListResult
 
-    // Process primary keys and unique constraints from column info and indexes
+    // Process primaknex_migrationsry keys and unique constraints from column info and indexes
     const primaryKeys = columns
       .filter((col) => col.pk > 0)
       .sort((a, b) => a.pk - b.pk)
@@ -153,6 +153,8 @@ const hashLogic = (tableName) => {
   // `
 }
 
+const skippedTables = ['knex_migrations', 'knex_migrations_lock']
+
 const generateModelFile = async (tableName) => {
   const hashLogicResult = hashLogic(tableName)
 
@@ -285,6 +287,11 @@ const run = async () => {
 
   // Process all tables
   for (const tableName of tableNames) {
+    if (skippedTables.includes(tableName)) {
+      console.log(`Skipping table ${tableName}`)
+      continue
+    }
+
     await generateModelFile(tableName)
   }
 
