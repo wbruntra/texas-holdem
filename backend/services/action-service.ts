@@ -53,7 +53,7 @@ export async function normalizeTurnIfNeeded(gameId: number) {
 
   const next = getNextActingPosition(game.players, game.currentPlayerPosition)
   const patched = { ...game, currentPlayerPosition: next }
-  await gameService.saveGameState(game.id, patched)
+  // await gameService.saveGameState(game.id, patched) - REMOVED
 
   if (next === null) {
     return gameService.advanceRoundIfReady(game.id)
@@ -117,7 +117,7 @@ export async function submitAction(
     newState = { ...newState, action_finished: true }
   }
 
-  await gameService.saveGameState(game.id, newState)
+  // await gameService.saveGameState(game.id, newState) - REMOVED
 
   const eventTypeMap: Record<string, string> = {
     check: EVENT_TYPE.ACTION_CHECK,
@@ -200,7 +200,7 @@ export async function submitAction(
     const gameStateBeforeShowdown = { ...newState }
     newState = processShowdown(newState)
 
-    await gameService.saveGameState(game.id, newState)
+    // await gameService.saveGameState(game.id, newState) - REMOVED
 
     await gameService.completeHandRecord(game.id, newState)
 
@@ -407,12 +407,12 @@ export async function revealCard(roomPlayerId: number, gameId: number) {
     newCommunityCards: newState.communityCards.slice(game.communityCards.length),
   })
 
-  await gameService.saveGameState(game.id, newState)
+  // await gameService.saveGameState(game.id, newState) - REMOVED
 
   if (newState.currentRound === 'showdown') {
     const { processShowdown } = await import('@/lib/game-state-machine')
     newState = processShowdown(newState)
-    await gameService.saveGameState(game.id, newState)
+    // await gameService.saveGameState(game.id, newState) - REMOVED
 
     // Get the most recent hand ID for this game
     const recentHand = await db('hands')

@@ -224,7 +224,7 @@ export async function startGame(gameId: number) {
 
   const newState = startNewHand(gameState, game.seed)
 
-  await saveGameState(gameId, newState)
+  // await saveGameState(gameId, newState) - REMOVED
 
   await createHandRecord(gameId, newState)
 
@@ -348,49 +348,14 @@ export async function startGame(gameId: number) {
 /**
  * Save complete game state to database
  */
+/**
+ * Save complete game state to database
+ * @deprecated - State is now derived from events. This function is removed.
+ */
 export async function saveGameState(gameId: number, state: any): Promise<void> {
-  await db.transaction(async (trx: any) => {
-    await trx('games')
-      .where({ id: gameId })
-      .update({
-        status: state.status,
-        dealer_position: state.dealerPosition,
-        current_round: state.currentRound,
-        pot: state.pot,
-        community_cards:
-          state.communityCards.length > 0 ? JSON.stringify(state.communityCards) : null,
-        deck: state.deck && state.deck.length > 0 ? JSON.stringify(state.deck) : null,
-        winners:
-          Array.isArray(state.winners) && state.winners.length > 0
-            ? JSON.stringify(state.winners)
-            : null,
-        current_bet: state.currentBet,
-        current_player_position: state.currentPlayerPosition,
-        hand_number: state.handNumber,
-        last_raise: state.lastRaise,
-        showdown_processed: state.showdownProcessed === true || state.showdownProcessed === 1,
-        action_finished: state.action_finished === true || state.action_finished === 1,
-        updated_at: new Date(),
-      })
-
-    for (const player of state.players) {
-      await trx('game_players')
-        .where({ room_player_id: player.id, game_id: gameId })
-        .update({
-          chips: player.chips,
-          current_bet: player.currentBet,
-          total_bet: player.totalBet || 0,
-          hole_cards: player.holeCards.length > 0 ? JSON.stringify(player.holeCards) : null,
-          status: player.status,
-          is_dealer: player.isDealer ? 1 : 0,
-          is_small_blind: player.isSmallBlind ? 1 : 0,
-          is_big_blind: player.isBigBlind ? 1 : 0,
-          show_cards: player.showCards ? 1 : 0,
-          last_action: player.lastAction,
-          updated_at: new Date(),
-        })
-    }
-  })
+  // Function body removed to prevent accidental usage.
+  // This is kept temporarily if other modules import it, but it does nothing.
+  return Promise.resolve()
 }
 
 /**
@@ -421,7 +386,7 @@ export async function advanceOneRound(gameId: number) {
 
   if (shouldContinueToNextRound(gameState)) {
     gameState = advanceRound(gameState)
-    await saveGameState(gameId, gameState)
+    // await saveGameState(gameId, gameState) - REMOVED
 
     // RECORD V2 EVENTS (ROUND STARTED)
     await appendEvent(gameId, gameState.handNumber, EVENT_TYPES_V2.DEAL_COMMUNITY, null, {
@@ -449,7 +414,7 @@ export async function advanceOneRound(gameId: number) {
       )
       const gameStateBeforeShowdown = { ...gameState }
       gameState = processShowdown(gameState)
-      await saveGameState(gameId, gameState)
+      //       await saveGameState(gameId, gameState)
 
       await completeHandRecord(gameId, gameState)
 
@@ -494,7 +459,7 @@ export async function advanceOneRound(gameId: number) {
       await saveSnapshot(gameId, gameState.handNumber, lastSeq, derivedState)
     } else {
       // Not advancing from river, just save the state
-      await saveGameState(gameId, gameState)
+      // await saveGameState(gameId, gameState) - REMOVED
       // Validate State
       await validateGameState(gameId)
     }
@@ -533,7 +498,7 @@ export async function advanceRoundIfReady(gameId: number) {
           const { processAction } = await import('@/lib/betting-logic')
 
           gameState = processAction(gameState, playerPosition, 'check', 0)
-          await saveGameState(gameId, gameState)
+          // await saveGameState(gameId, gameState) - REMOVED
 
           const { recordAction } = await import('./action-service')
           await recordAction(gameId, actingPlayer.id, 'check', 0, gameState.currentRound!)
@@ -558,7 +523,7 @@ export async function advanceRoundIfReady(gameId: number) {
         gameState.autoAdvanceTimestamp = Date.now()
       }
 
-      await saveGameState(gameId, gameState)
+      // await saveGameState(gameId, gameState) - REMOVED
 
       // RECORD V2 EVENTS (ROUND STARTED)
       await appendEvent(gameId, gameState.handNumber, EVENT_TYPES_V2.DEAL_COMMUNITY, null, {
@@ -581,7 +546,7 @@ export async function advanceRoundIfReady(gameId: number) {
       )
       const gameStateBeforeShowdown = { ...gameState }
       gameState = processShowdown(gameState)
-      await saveGameState(gameId, gameState)
+      //       await saveGameState(gameId, gameState)
 
       await completeHandRecord(gameId, gameState)
 
@@ -643,7 +608,7 @@ export async function startNextHand(gameId: number) {
   }
 
   const newState = startNewHand(game)
-  await saveGameState(gameId, newState)
+  // await saveGameState(gameId, newState) - REMOVED
 
   await createHandRecord(gameId, newState)
 
