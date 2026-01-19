@@ -12,6 +12,10 @@ router.get('/health', function (req, res, next) {
 
 router.use('/games', gamesRouter)
 router.use('/rooms', roomsRouter)
-router.use('/admin', adminRouter)
+
+// only mount in dev
+if (process.env.NODE_ENV === 'development') {
+  router.use('/admin', adminRouter)
+}
 
 export default router
