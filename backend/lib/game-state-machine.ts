@@ -335,7 +335,7 @@ export function advanceRound(state: GameState): GameState {
     currentRound: newRound,
     players,
     communityCards: [...state.communityCards, ...newCards],
-    deck: state.deck.slice(deckIndex + 1),
+    deck: state.deck.slice(deckIndex),
     currentPlayerPosition: newRound === ROUND.SHOWDOWN ? null : firstToAct,
     currentBet: 0,
     pot: newPot,

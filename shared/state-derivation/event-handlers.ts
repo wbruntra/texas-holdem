@@ -378,9 +378,9 @@ export function handleDealCommunity(state: GameState, event: GameEvent): GameSta
   const { round, communityCards } = event.payload
 
   let cardsToConsume = 0
-  if (round === 'flop') cardsToConsume = 5
-  else if (round === 'turn') cardsToConsume = 3
-  else if (round === 'river') cardsToConsume = 3
+  if (round === 'flop') cardsToConsume = 4
+  else if (round === 'turn') cardsToConsume = 2
+  else if (round === 'river') cardsToConsume = 2
 
   const newDeck = state.deck.slice(cardsToConsume)
 
@@ -483,9 +483,9 @@ export function handleAdvanceRound(state: GameState, event: GameEvent): GameStat
   const communityCards = [...state.communityCards, ...newCommunityCards]
 
   let cardsToConsume = 0
-  if (toRound === 'flop') cardsToConsume = 5
-  else if (toRound === 'turn') cardsToConsume = 3
-  else if (toRound === 'river') cardsToConsume = 3
+  if (toRound === 'flop') cardsToConsume = 4
+  else if (toRound === 'turn') cardsToConsume = 2
+  else if (toRound === 'river') cardsToConsume = 2
 
   const newDeck = state.deck.slice(cardsToConsume)
 

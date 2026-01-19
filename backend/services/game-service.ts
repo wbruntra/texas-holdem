@@ -250,7 +250,7 @@ export async function startGame(gameId: number) {
         isSmallBlind: p.isSmallBlind,
         isBigBlind: p.isBigBlind,
       })),
-      deck: newState.deck,
+      deck: newState.deck.slice(0, 12),
     },
     gameId,
   )
@@ -299,7 +299,7 @@ export async function startGame(gameId: number) {
         smallBlindPosition: newState.players.findIndex((p) => p.isSmallBlind),
         // @ts-ignore
         bigBlindPosition: newState.players.findIndex((p) => p.isBigBlind),
-        deck: newState.deck,
+        deck: newState.deck.slice(0, 12),
         holeCards,
       },
     })
@@ -670,7 +670,7 @@ export async function startNextHand(gameId: number) {
         isSmallBlind: p.isSmallBlind,
         isBigBlind: p.isBigBlind,
       })),
-      deck: newState.deck,
+      deck: newState.deck.slice(0, 12),
     },
     gameId,
   )
@@ -719,7 +719,7 @@ export async function startNextHand(gameId: number) {
         smallBlindPosition: newState.players.findIndex((p) => p.isSmallBlind),
         // @ts-ignore
         bigBlindPosition: newState.players.findIndex((p) => p.isBigBlind),
-        deck: newState.deck,
+        deck: newState.deck.slice(0, 12),
         holeCards,
       },
     })
