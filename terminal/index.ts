@@ -137,7 +137,8 @@ class PokerTerminal {
 
   private async viewTableLoop(gameId: number, roomCode: string) {
     const { WsClient, createWsUrl } = await import('./ws-client')
-    const ws = new WsClient(createWsUrl(3660))
+    const { BACKEND_LOCAL_PORT } = await import('../shared/config')
+    const ws = new WsClient(createWsUrl(BACKEND_LOCAL_PORT))
     ws.setHandlers({
       onOpen: () => console.log('WebSocket connected'),
       onClose: () => console.log('WebSocket disconnected'),

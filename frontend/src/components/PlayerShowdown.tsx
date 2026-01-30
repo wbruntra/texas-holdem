@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import type { GameState } from '~/components/table/types'
 import PokerCard from '~/components/table/PokerCard'
 
@@ -7,6 +8,7 @@ interface PlayerShowdownProps {
   amWinner: boolean
   onNextHand: () => Promise<any>
   onToggleShowCards: (show: boolean) => Promise<any>
+  onSeatPositionsChange?: (positions: Map<number, { left: number; top: number }>) => void
 }
 
 export default function PlayerShowdown({
@@ -15,7 +17,34 @@ export default function PlayerShowdown({
   amWinner,
   onNextHand,
   onToggleShowCards,
+  onSeatPositionsChange,
 }: PlayerShowdownProps) {
+  const playerRefs = useRef(new Map<number, HTMLDivElement | null>())
+
+  const updatePositions = useCallback(() => {
+    if (!onSeatPositionsChange) return
+
+    const positions = new Map<number, { left: number; top: number }>()
+    playerRefs.current.forEach((el, position) => {
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      const left = ((rect.left + rect.width / 2) / window.innerWidth) * 100
+      const top = ((rect.top + rect.height / 2) / window.innerHeight) * 100
+      positions.set(position, { left, top })
+    })
+
+    onSeatPositionsChange(positions)
+  }, [onSeatPositionsChange])
+
+  useLayoutEffect(() => {
+    updatePositions()
+  }, [updatePositions, game.players, winnerPositions])
+
+  useEffect(() => {
+    window.addEventListener('resize', updatePositions)
+    return () => window.removeEventListener('resize', updatePositions)
+  }, [updatePositions])
+
   return (
     <div className="d-flex flex-column h-100">
       <div className="text-center mb-3">
@@ -75,7 +104,13 @@ export default function PlayerShowdown({
                     {p.name} {winnerPositions.includes(p.position) && '🏆'}
                   </div>
                 </div>
-                <div className="d-flex gap-1 justify-content-center">
+                <div
+                  ref={(el) => {
+                    if (el) playerRefs.current.set(p.position, el)
+                    else playerRefs.current.delete(p.position)
+                  }}
+                  className="d-flex gap-1 justify-content-center"
+                >
                   {(p.holeCards || []).length > 0 ? (
                     p.holeCards!.map((card, idx) => (
                       <PokerCard key={idx} card={card} className="small" />

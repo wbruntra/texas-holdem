@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { Offcanvas, Button } from 'react-bootstrap'
 import HorizontalSlider from '~/components/HorizontalSlider'
 import PlayerJoinGame from '~/components/PlayerJoinGame'
 import PlayerShowdown from '~/components/PlayerShowdown'
 import PokerCard from '~/components/table/PokerCard'
+import PotWinAnimation, { type WinnerPayout } from '~/components/table/PotWinAnimation'
 import { usePlayerGame } from '~/hooks/usePlayerGame'
 import { getDisplayPot } from '~/utils/potUtils'
 import type { Player, Card } from '~/components/table/types'
+import { createMockPlayerViewState } from '~/dev/mock-player-view'
 
 // Import sound assets
 import checkSoundUrl from '~/assets/check.mp3'
@@ -25,26 +27,112 @@ export default function PlayerView() {
   const { roomCode } = useParams<{ roomCode: string }>()
   const [showCommunityCards, setShowCommunityCards] = useState(false)
   const [isActing, setIsActing] = useState(false)
+  const [animatingWinners, setAnimatingWinners] = useState<WinnerPayout[]>([])
+  const previousWinnersRef = useRef<string>('')
+  const [seatPositions, setSeatPositions] = useState<Map<number, { left: number; top: number }>>(
+    new Map(),
+  )
 
   const {
-    game,
-    validActions,
-    playerName,
+    game: liveGame,
+    validActions: liveValidActions,
+    playerName: livePlayerName,
     setPlayerName,
-    joined,
+    joined: liveJoined,
     error,
-    checkingAuth,
-    wsConnected,
-    betAmount,
-    raiseAmount,
-    joinGame,
-    startGame,
-    performAction,
-    nextHand,
-    toggleShowCards,
-    setBetAmount,
-    setRaiseAmount,
+    checkingAuth: liveCheckingAuth,
+    wsConnected: liveWsConnected,
+    betAmount: liveBetAmount,
+    raiseAmount: liveRaiseAmount,
+    joinGame: liveJoinGame,
+    startGame: liveStartGame,
+    performAction: livePerformAction,
+    nextHand: liveNextHand,
+    toggleShowCards: liveToggleShowCards,
+    setBetAmount: liveSetBetAmount,
+    setRaiseAmount: liveSetRaiseAmount,
   } = usePlayerGame(roomCode)
+
+  const isMockMode =
+    import.meta.env.DEV && new URLSearchParams(window.location.search).get('mock') === 'showdown'
+  const mockState = useMemo(
+    () => createMockPlayerViewState(roomCode, livePlayerName),
+    [roomCode, livePlayerName],
+  )
+
+  const game = isMockMode ? mockState.game : liveGame
+  const validActions = isMockMode ? mockState.validActions : liveValidActions
+  const playerName = isMockMode ? mockState.playerName : livePlayerName
+  const joined = isMockMode ? true : liveJoined
+  const checkingAuth = isMockMode ? false : liveCheckingAuth
+  const wsConnected = isMockMode ? true : liveWsConnected
+  const betAmount = isMockMode ? mockState.betAmount : liveBetAmount
+  const raiseAmount = isMockMode ? mockState.raiseAmount : liveRaiseAmount
+  const joinGame = isMockMode ? async () => {} : liveJoinGame
+  const startGame = isMockMode ? async () => {} : liveStartGame
+  const performAction = isMockMode ? async () => {} : livePerformAction
+  const nextHand = isMockMode ? async () => {} : liveNextHand
+  const toggleShowCards = isMockMode ? async () => {} : liveToggleShowCards
+  const setBetAmount = isMockMode ? () => {} : liveSetBetAmount
+  const setRaiseAmount = isMockMode ? () => {} : liveSetRaiseAmount
+
+  // Animation complete handler
+  const handleAnimationComplete = useCallback(() => {
+    setAnimatingWinners([])
+  }, [])
+
+  // Detect when winners are announced and trigger animation
+  useEffect(() => {
+    if (!game) {
+      setAnimatingWinners([])
+      previousWinnersRef.current = ''
+      return
+    }
+
+    const isShowdown = game.currentRound === 'showdown'
+    const fallbackWinners = Array.isArray(game.winners) ? game.winners : []
+    const potWinners = (game.pots || []).flatMap((pot) => pot.winners || [])
+    const resolvedWinners = fallbackWinners.length > 0 ? fallbackWinners : potWinners
+    const hasWinners = resolvedWinners.length > 0
+    const hasPots = game.pots && game.pots.length > 0
+
+    if (!isShowdown || !hasWinners || !hasPots) {
+      setAnimatingWinners([])
+      previousWinnersRef.current = ''
+      return
+    }
+
+    // Create unique key for current winners state
+    const winnersKey = `${resolvedWinners.join(',')}-${game.pots?.map((p) => p.amount).join(',')}`
+
+    // Only trigger animation if winners changed
+    if (winnersKey === previousWinnersRef.current) return
+    previousWinnersRef.current = winnersKey
+
+    // Calculate payouts for animation
+    const payouts: WinnerPayout[] = []
+    game.pots?.forEach((pot) => {
+      const potWinners = pot.winners && pot.winners.length > 0 ? pot.winners : fallbackWinners
+      if (!potWinners || potWinners.length === 0) return
+
+      const winAmount = pot.winAmount || Math.floor(pot.amount / potWinners.length)
+      potWinners.forEach((position) => {
+        const player = game.players.find((p) => p.position === position)
+        if (player) {
+          payouts.push({
+            playerId: player.id,
+            position,
+            amount: winAmount,
+            name: player.name,
+          })
+        }
+      })
+    })
+
+    if (payouts.length > 0) {
+      setAnimatingWinners(payouts)
+    }
+  }, [game])
 
   const playSound = (type: 'check' | 'bet' | 'fold') => {
     const audio = audioMap[type]
@@ -73,6 +161,29 @@ export default function PlayerView() {
     }
   }
 
+  const myPlayer = useMemo(
+    () => game?.players?.find((p: Player) => p.name === playerName) ?? null,
+    [game?.players, playerName],
+  )
+  const isMyTurn = !!myPlayer && game?.currentPlayerPosition === myPlayer.position
+  const isShowdown = game?.currentRound === 'showdown'
+  const winnerPositions = useMemo(
+    () => (Array.isArray(game?.winners) ? (game?.winners ?? []) : []),
+    [game?.winners],
+  )
+  const amWinner = !!myPlayer && winnerPositions.includes(myPlayer.position)
+  const derivedMaxBet = validActions?.maxBet ?? validActions?.maxRaise ?? myPlayer?.chips ?? 0
+  const displayPot = game ? getDisplayPot(game.players, game.pots) : 0
+  const shouldShowFab = game?.status === 'active'
+
+  const handleSeatPositionsChange = useCallback(
+    (positions: Map<number, { left: number; top: number }>) => {
+      setSeatPositions(positions)
+    },
+    [],
+  )
+
+  // Early returns after all hooks
   if (checkingAuth) {
     return (
       <div className="container d-flex flex-column justify-content-center align-items-center min-vh-100 text-white text-center">
@@ -106,20 +217,6 @@ export default function PlayerView() {
       </div>
     )
   }
-
-  const myPlayer = game.players.find((p: Player) => p.name === playerName)
-  const isMyTurn = myPlayer && game.currentPlayerPosition === myPlayer.position
-
-  const isShowdown = game.currentRound === 'showdown'
-  const winnerPositions = Array.isArray(game.winners) ? game.winners : []
-  const amWinner = !!myPlayer && winnerPositions.includes(myPlayer.position)
-
-  const derivedMaxBet = validActions?.maxBet ?? validActions?.maxRaise ?? myPlayer?.chips ?? 0
-
-  const displayPot = getDisplayPot(game.players, game.pots)
-
-  // Determine if we should show the FAB
-  const shouldShowFab = game.status === 'active' && !isShowdown
 
   return (
     <div
@@ -200,7 +297,7 @@ export default function PlayerView() {
                         >
                           {p.status === 'all_in' ? 'ALL-IN' : p.status}
                         </span>
-                      ) : isWinner ? (
+                      ) : isWinner && isShowdown ? (
                         <span className="text-warning small" style={{ fontSize: '0.7rem' }}>
                           🏆 WIN
                         </span>
@@ -213,7 +310,7 @@ export default function PlayerView() {
                         </div>
                       )}
                     </div>
-                    {(p.status !== 'active' || isWinner) && (
+                    {(p.status !== 'active' || (isWinner && isShowdown)) && (
                       <div
                         className="font-monospace text-success fw-bold mt-1"
                         style={{ fontSize: '0.75rem', opacity: 0.8 }}
@@ -273,14 +370,45 @@ export default function PlayerView() {
       </div>
 
       {isShowdown ? (
-        <div className="glass-panel flex-grow-1 p-3">
-          <PlayerShowdown
-            game={game}
-            winnerPositions={winnerPositions}
-            amWinner={amWinner}
-            onNextHand={nextHand}
-            onToggleShowCards={toggleShowCards}
-          />
+        <div className="d-flex flex-column flex-grow-1 gap-3">
+          <div className="glass-panel p-3 text-center">
+            <div
+              className="text-secondary text-uppercase small mb-1"
+              style={{ letterSpacing: '2px' }}
+            >
+              Pot
+            </div>
+            <div
+              className="display-4 fw-bold text-warning"
+              style={{ textShadow: '0 2px 10px rgba(212, 175, 55, 0.3)' }}
+            >
+              ${displayPot}
+            </div>
+            <div className="d-flex justify-content-center gap-2 mt-2">
+              <div
+                className="rounded-circle"
+                style={{ width: '16px', height: '16px', background: '#ffd700' }}
+              />
+              <div
+                className="rounded-circle"
+                style={{ width: '16px', height: '16px', background: '#9b59b6' }}
+              />
+              <div
+                className="rounded-circle"
+                style={{ width: '16px', height: '16px', background: '#2c3e50' }}
+              />
+            </div>
+          </div>
+          <div className="glass-panel flex-grow-1 p-3">
+            <PlayerShowdown
+              game={game}
+              winnerPositions={winnerPositions}
+              amWinner={amWinner}
+              onNextHand={nextHand}
+              onToggleShowCards={toggleShowCards}
+              onSeatPositionsChange={handleSeatPositionsChange}
+            />
+          </div>
         </div>
       ) : (
         <>
@@ -465,6 +593,14 @@ export default function PlayerView() {
         >
           Start Game
         </button>
+      )}
+
+      {animatingWinners.length > 0 && (
+        <PotWinAnimation
+          winners={animatingWinners}
+          seatPositions={seatPositions}
+          onComplete={handleAnimationComplete}
+        />
       )}
     </div>
   )

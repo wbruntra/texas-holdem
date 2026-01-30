@@ -5,8 +5,7 @@ import { ActionSelector, type ActionResult } from './action-selector'
 import { api, ApiClient } from './api-client'
 import type { GameState, ValidActions } from './types'
 import { sessionStorage } from './session-storage'
-
-const BACKEND_PORT = 3660
+import { BACKEND_LOCAL_PORT } from '../shared/config'
 
 export class GameLoop {
   private ws: WsClient | null = null
@@ -245,7 +244,7 @@ export class GameLoop {
   private connectWebSocket(): void {
     if (!this.gameId) return
 
-    this.ws = new WsClient(createWsUrl(BACKEND_PORT))
+    this.ws = new WsClient(createWsUrl(BACKEND_LOCAL_PORT))
     this.ws.setHandlers({
       onOpen: () => {
         console.log('WebSocket connected')

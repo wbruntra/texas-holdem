@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import type { GameState } from './types'
 import CommunityCenter from './CommunityCenter'
 import PlayerSeat from './PlayerSeat'
+import PotWinAnimation, { type WinnerPayout } from './PotWinAnimation'
 import './PokerTableScene.css'
 
 type Props = {
@@ -32,10 +33,78 @@ function computeSeatStyle(index: number, count: number): { style: CSSProperties;
 
 export default function PokerTableScene({ game, wsConnected, children }: Props) {
   const activePlayers = game.players.filter((p) => p.status !== 'out')
+  const [animatingWinners, setAnimatingWinners] = useState<WinnerPayout[]>([])
+  const previousWinnersRef = useRef<string>('')
 
   const seatData = useMemo(() => {
     return game.players.map((_, idx) => computeSeatStyle(idx, game.players.length))
   }, [game.players])
+
+  // Build seat positions map for animation
+  const seatPositions = useMemo(() => {
+    const positions = new Map<number, { left: number; top: number }>()
+    game.players.forEach((player, idx) => {
+      const { style } = seatData[idx]
+      const left = parseFloat(style.left as string)
+      const top = parseFloat(style.top as string)
+      positions.set(player.position, { left, top })
+    })
+    return positions
+  }, [game.players, seatData])
+
+  // Detect when winners are announced and trigger animation
+  useEffect(() => {
+    const isShowdown = game.currentRound === 'showdown'
+    const hasWinners = game.winners && game.winners.length > 0
+    const hasPots = game.pots && game.pots.length > 0
+
+    if (!isShowdown || !hasWinners || !hasPots) {
+      setAnimatingWinners([])
+      return
+    }
+
+    // Create unique key for current winners state
+    const winnersKey = `${(game.winners || []).join(',')}-${game.pots?.map((p) => p.amount).join(',')}`
+
+    // Only trigger animation if winners changed
+    if (winnersKey === previousWinnersRef.current) return
+    previousWinnersRef.current = winnersKey
+
+    // Debug logging
+    console.log(
+      '[PotWinAnimation] Triggering animation for winners:',
+      game.winners,
+      'pots:',
+      game.pots,
+    )
+
+    // Calculate payouts for animation
+    const payouts: WinnerPayout[] = []
+    game.pots?.forEach((pot) => {
+      if (!pot.winners || pot.winners.length === 0) return
+
+      const winAmount = pot.winAmount || Math.floor(pot.amount / pot.winners.length)
+      pot.winners.forEach((position) => {
+        const player = game.players.find((p) => p.position === position)
+        if (player) {
+          payouts.push({
+            playerId: player.id,
+            position,
+            amount: winAmount,
+            name: player.name,
+          })
+        }
+      })
+    })
+
+    if (payouts.length > 0) {
+      setAnimatingWinners(payouts)
+    }
+  }, [game.currentRound, game.winners, game.pots, game.players])
+
+  const handleAnimationComplete = useCallback(() => {
+    setAnimatingWinners([])
+  }, [])
 
   const roundLabel = game.currentRound
     ? game.currentRound.charAt(0).toUpperCase() + game.currentRound.slice(1)
@@ -106,6 +175,14 @@ export default function PokerTableScene({ game, wsConnected, children }: Props) 
 
         {children ? <div className="mt-3">{children}</div> : null}
       </div>
+
+      {animatingWinners.length > 0 && (
+        <PotWinAnimation
+          winners={animatingWinners}
+          seatPositions={seatPositions}
+          onComplete={handleAnimationComplete}
+        />
+      )}
     </div>
   )
 }

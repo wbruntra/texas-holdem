@@ -4,6 +4,7 @@ import type {
   WsSubscribedPayload,
   WsGameStatePayload,
 } from '~/hooks/ws-types'
+import { BACKEND_LOCAL_PORT } from '../../../shared/config'
 
 interface WsHandlers {
   onHello?: (payload: WsHelloPayload) => void
@@ -60,7 +61,7 @@ export class WebSocketManager {
     const isDevelopment =
       window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     const wsUrl = isDevelopment
-      ? `${protocol}//localhost:3660/ws`
+      ? `${protocol}//localhost:${BACKEND_LOCAL_PORT}/ws`
       : `${protocol}//${window.location.host}/ws`
 
     console.log('[WebSocketManager] Connecting to:', wsUrl)

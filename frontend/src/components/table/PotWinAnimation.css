@@ -1,0 +1,95 @@
+.pot-win-animation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.flying-chip {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--chip-color, #ffd700);
+  border: 2px dashed rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  left: var(--from-x);
+  top: var(--from-y);
+  animation: chipFly 800ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
+}
+
+@keyframes chipFly {
+  0% {
+    left: var(--from-x);
+    top: var(--from-y);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(45deg);
+  }
+  50% {
+    left: var(--mid-x);
+    top: var(--mid-y);
+    transform: translate(-50%, -50%) scale(1.1) rotate(180deg);
+  }
+  100% {
+    left: var(--to-x);
+    top: var(--to-y);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.8) rotate(360deg);
+  }
+}
+
+/* Chip color variables */
+:root {
+  --chip-white: #f5f5f5;
+  --chip-red: #e74c3c;
+  --chip-green: #27ae60;
+  --chip-black: #2c3e50;
+  --chip-purple: #9b59b6;
+  --chip-gold: #ffd700;
+}
+
+/* Winner highlight pulse effect */
+.winner-highlight {
+  animation: winnerPulse 1s ease-in-out 2;
+}
+
+@keyframes winnerPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 40px rgba(16, 185, 129, 0.8),
+      0 0 60px rgba(255, 215, 0, 0.4);
+  }
+}
+
+/* Chip stack gain animation */
+.stack-gain {
+  animation: stackGrow 600ms ease-out;
+}
+
+@keyframes stackGrow {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

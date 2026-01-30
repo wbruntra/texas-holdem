@@ -57,8 +57,9 @@ async function main() {
   }
 
   const token = generateToken(player.id, player.game_id)
+  const { BACKEND_LOCAL_PORT } = require('../shared/config')
 
-  const baseUrl = 'http://localhost:3660'
+  const baseUrl = `http://localhost:${BACKEND_LOCAL_PORT}`
   let url = apiRoute
 
   if (!url.startsWith('/')) {

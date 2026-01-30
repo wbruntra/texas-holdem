@@ -1,7 +1,7 @@
 import type { Player, Pot, GameState, ValidActions } from './types'
+import { BACKEND_LOCAL_PORT } from '../shared/config'
 
-const BACKEND_PORT = 3660
-const BASE_URL = `http://localhost:${BACKEND_PORT}`
+const BASE_URL = `http://localhost:${BACKEND_LOCAL_PORT}`
 
 export interface ApiClientOptions {
   baseUrl?: string
