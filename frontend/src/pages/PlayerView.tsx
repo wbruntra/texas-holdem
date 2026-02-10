@@ -599,6 +599,7 @@ export default function PlayerView() {
         <PotWinAnimation
           winners={animatingWinners}
           seatPositions={seatPositions}
+          potPosition={{ left: 50, top: 50 }}
           onComplete={handleAnimationComplete}
         />
       )}

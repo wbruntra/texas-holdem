@@ -1,7 +1,9 @@
 import { readFileSync, mkdirSync, writeFileSync, existsSync } from 'fs'
 import path from 'path'
+import * as config from '../knexfile.js'
 
-const dbPath = path.join(__dirname, '..', 'holdem.sqlite3')
+const env = process.env.NODE_ENV || 'development'
+const dbPath = config[env].connection.filename
 const tablesDir = path.join(__dirname, '..', 'ddl')
 
 if (!existsSync(dbPath)) {
