@@ -72,16 +72,28 @@ export async function appendEvents(
 }
 
 /**
- * Get all events for a game, optionally starting after a sequence number
- * NOTE: Sequence number is per hand, so this "after" logic is global
- * and might need refinement if used across hands.
- * For now, simpler to get all events or by hand.
+ * Get events for a game, optionally starting after a specific hand and sequence
  */
-export async function getEvents(gameId: number): Promise<GameEvent[]> {
-  const rows = await db('game_events')
-    .where({ game_id: gameId })
-    .orderBy('hand_number', 'asc')
-    .orderBy('sequence_number', 'asc')
+export async function getEvents(
+  gameId: number,
+  afterHand?: number,
+  afterSequence?: number,
+): Promise<GameEvent[]> {
+  let query = db('game_events').where({ game_id: gameId })
+
+  if (afterHand !== undefined) {
+    if (afterSequence !== undefined) {
+      query = query.andWhere(function (this: any) {
+        this.where('hand_number', '>', afterHand).orWhere(function (this: any) {
+          this.where('hand_number', '=', afterHand).andWhere('sequence_number', '>', afterSequence)
+        })
+      })
+    } else {
+      query = query.where('hand_number', '>', afterHand)
+    }
+  }
+
+  const rows = await query.orderBy('hand_number', 'asc').orderBy('sequence_number', 'asc')
 
   return rows.map(mapRowToEvent)
 }
