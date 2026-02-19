@@ -310,13 +310,14 @@ class WebSocketService {
       if (!game) return
 
       const revision = game.handNumber ? String(game.handNumber) : '0'
+      const tableState = this.sanitizeTableState(game)
 
       for (const [ws, subscription] of this.subscriptions.entries()) {
         if (subscription.gameId === gameId && ws.readyState === WebSocket.OPEN) {
           const sanitizedState =
             subscription.stream === 'player' && subscription.playerId
               ? this.sanitizePlayerState(game, subscription.playerId)
-              : this.sanitizeTableState(game)
+              : tableState
 
           this.sendMessage(ws, {
             type: 'game_state',
@@ -348,6 +349,7 @@ class WebSocketService {
       }
 
       const revision = game.handNumber ? String(game.handNumber) : '0'
+      const tableState = this.sanitizeTableState(game)
 
       for (const [ws, subscription] of this.subscriptions.entries()) {
         if (subscription.roomCode === roomCode && ws.readyState === WebSocket.OPEN) {
@@ -357,7 +359,7 @@ class WebSocketService {
           const sanitizedState =
             subscription.stream === 'player' && subscription.playerId
               ? this.sanitizePlayerState(game, subscription.playerId)
-              : this.sanitizeTableState(game)
+              : tableState
 
           this.sendMessage(ws, {
             type: 'game_state',
