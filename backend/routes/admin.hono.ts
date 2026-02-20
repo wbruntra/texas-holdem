@@ -1,15 +1,15 @@
-import express from 'express'
+import { Hono } from 'hono'
 // @ts-ignore
 import db from '@holdem/database/db'
-import { getEvents } from '@/services/event-store'
+import { getEvents } from '../services/event-store'
 
-const router = express.Router()
+const app = new Hono()
 
 /**
  * GET /api/admin/games
  * List all games with metadata for replay selection
  */
-router.get('/games', async (req, res, next) => {
+app.get('/games', async (c) => {
   try {
     const games = await db('games')
       .join('rooms', 'games.room_id', 'rooms.id')
@@ -44,9 +44,9 @@ router.get('/games', async (req, res, next) => {
       players: game.playerNames ? game.playerNames.split(',') : [],
     }))
 
-    res.json(formattedGames)
-  } catch (error) {
-    next(error)
+    return c.json(formattedGames)
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
   }
 })
 
@@ -54,12 +54,13 @@ router.get('/games', async (req, res, next) => {
  * GET /api/admin/games/:gameId/events
  * Get all events for a game (for replay)
  */
-router.get('/games/:gameId/events', async (req, res, next) => {
+app.get('/games/:gameId/events', async (c) => {
   try {
-    const gameId = parseInt(req.params.gameId, 10)
+    const gameIdStr = c.req.param('gameId')
+    const gameId = parseInt(gameIdStr, 10)
 
     if (isNaN(gameId)) {
-      return res.status(400).json({ error: 'Invalid game ID' })
+      return c.json({ error: 'Invalid game ID' }, 400)
     }
 
     // Get game metadata first
@@ -77,13 +78,13 @@ router.get('/games/:gameId/events', async (req, res, next) => {
       .first()
 
     if (!game) {
-      return res.status(404).json({ error: 'Game not found' })
+      return c.json({ error: 'Game not found' }, 404)
     }
 
     // Get all events for this game
     const events = await getEvents(gameId)
 
-    res.json({
+    return c.json({
       game: {
         id: game.id,
         roomCode: game.roomCode,
@@ -93,9 +94,9 @@ router.get('/games/:gameId/events', async (req, res, next) => {
       },
       events,
     })
-  } catch (error) {
-    next(error)
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
   }
 })
 
-export default router
+export default app

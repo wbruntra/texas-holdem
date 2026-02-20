@@ -3,29 +3,22 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "api": "bun --watch ./bin/www",
+    "api": "bun --watch ./bin/server.ts",
     "test": "bun test"
   },
   "dependencies": {
-    "@holdem/shared": "*",
     "@holdem/database": "*",
+    "@holdem/shared": "*",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
-    "cookie-parser": "~1.4.4",
-    "cookie-session": "^2.1.1",
-    "debug": "~2.6.9",
-    "express": "~4.16.1",
-    "http-errors": "~1.6.3",
+    "hono": "^4.11.9",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
-    "keygrip": "^1.1.0",
-    "morgan": "~1.9.1",
     "objection": "^3.1.4",
-    "uuid": "^10.0.0",
-    "ws": "^8.18.3"
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
-    "@types/ws": "^8.18.1",
+    "@types/jsonwebtoken": "^9.0.10",
     "supertest": "^7.1.4"
   }
 }
