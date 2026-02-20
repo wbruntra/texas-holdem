@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'holdem-server',
       cwd: '/home/william/personal/texas-holdem/backend',
-      script: 'bin/www',
+      script: 'bin/server.ts',
       exec_mode: 'fork',
       interpreter: 'bun',
       instances: 1,
