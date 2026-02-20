@@ -41,10 +41,11 @@ app.notFound((c) => {
 
 // Error Handling
 app.onError((err, c) => {
-  console.error('Hono App Error:', err)
   if (err instanceof HTTPException) {
+    if (err.status >= 500) console.error('Hono App Error:', err)
     return err.getResponse()
   }
+  console.error('Hono App Error:', err)
 
   const errorObj: Record<string, unknown> = {
     error: {
