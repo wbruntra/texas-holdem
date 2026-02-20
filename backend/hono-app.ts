@@ -4,15 +4,15 @@ import { cors } from 'hono/cors'
 import { prettyJSON } from 'hono/pretty-json'
 import { HTTPException } from 'hono/http-exception'
 import apiRoutes from './routes/index.hono'
+import customLogger from './middleware/customLogger'
 
 const app = new Hono()
 const isDevelopment = process.env.NODE_ENV === 'development'
 
 // Middleware
-app.use('*', logger())
+app.use('*', customLogger)
 app.use('*', cors())
 app.use('*', prettyJSON())
-
 // Health Check
 app.get('/api/health', (c) => c.json({ health: 'OK' }))
 

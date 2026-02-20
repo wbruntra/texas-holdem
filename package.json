@@ -10,7 +10,7 @@
     "database"
   ],
   "scripts": {
-    "backend": "cd backend && bun run api:hono",
+    "backend": "cd backend && bun run api",
     "frontend": "cd frontend && bun run dev",
     "dev": "bun run --parallel backend frontend",
     "prepare": "husky",
