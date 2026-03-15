@@ -28,5 +28,9 @@ CREATE TABLE "games" (
   `seed` text NULL,
   `room_id` integer NOT NULL,
   `game_number` integer NOT NULL DEFAULT '1',
+  `tournament_mode` boolean default '0',
+  `hands_per_blind_level` integer default '20',
+  `initial_small_blind` integer null,
+  `initial_big_blind` integer null,
   FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE
 )

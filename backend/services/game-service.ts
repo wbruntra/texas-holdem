@@ -19,9 +19,7 @@ import eventLogger from './event-logger'
 import { EVENT_TYPE } from '@/lib/event-types'
 import { appendEvents, appendEvent } from './event-store'
 import { validateGameState } from './state-validator'
-import { saveSnapshot } from './snapshot-store'
 import { getEvents } from './event-store'
-import { deriveGameStateForGame } from '@/lib/state-derivation'
 
 function calculatePayouts(beforeState: any, afterState: any) {
   const payouts: any[] = []
@@ -42,6 +40,8 @@ export interface GameConfig {
   bigBlind?: number
   startingChips?: number
   seed?: string | number
+  tournamentMode?: boolean
+  handsPerBlindLevel?: number
 }
 
 export interface Game {
@@ -53,6 +53,10 @@ export interface Game {
   bigBlind: number
   startingChips: number
   seed?: string
+  tournamentMode?: boolean
+  handsPerBlindLevel?: number
+  initialSmallBlind?: number
+  initialBigBlind?: number
 }
 
 export interface PlayerStackInfo {
@@ -89,6 +93,9 @@ export async function createGameInRoom(roomId: number, config: GameConfig = {}):
   const bigBlind = config.bigBlind || room.big_blind
   const startingChips = config.startingChips || room.starting_chips
 
+  const tournamentMode = config.tournamentMode ?? room.tournament_mode ?? false
+  const handsPerBlindLevel = config.handsPerBlindLevel ?? room.hands_per_blind_level ?? 20
+
   const [id] = await db('games').insert({
     room_id: roomId,
     game_number: gameNumber,
@@ -103,6 +110,10 @@ export async function createGameInRoom(roomId: number, config: GameConfig = {}):
     hand_number: 0,
     last_raise: 0,
     seed: config.seed || crypto.randomUUID(),
+    tournament_mode: tournamentMode,
+    hands_per_blind_level: handsPerBlindLevel,
+    initial_small_blind: smallBlind,
+    initial_big_blind: bigBlind,
   })
 
   // Update room's current game
@@ -129,6 +140,10 @@ export async function getGameMetadata(gameId: number) {
     bigBlind: game.big_blind,
     startingChips: game.starting_chips,
     seed: game.seed,
+    tournamentMode: !!game.tournament_mode,
+    handsPerBlindLevel: game.hands_per_blind_level ?? 20,
+    initialSmallBlind: game.initial_small_blind ?? game.small_blind,
+    initialBigBlind: game.initial_big_blind ?? game.big_blind,
   }
 }
 
@@ -162,6 +177,10 @@ export async function getGameById(gameId: number) {
     seed: metadata.seed,
     startingChips: metadata.startingChips,
     pots: [],
+    tournamentMode: metadata.tournamentMode,
+    handsPerBlindLevel: metadata.handsPerBlindLevel,
+    initialSmallBlind: metadata.initialSmallBlind,
+    initialBigBlind: metadata.initialBigBlind,
   }
 }
 
@@ -450,13 +469,6 @@ export async function advanceOneRound(gameId: number) {
 
       // Validate State
       await validateGameState(gameId)
-
-      // CREATE SNAPSHOT
-      const derivedState = await deriveGameStateForGame(gameId)
-      const events = await getEvents(gameId)
-      const lastSeq = events.length > 0 ? events[events.length - 1].sequenceNumber : 0
-
-      await saveSnapshot(gameId, gameState.handNumber, lastSeq, derivedState)
     } else {
       // Not advancing from river, just save the state
       // await saveGameState(gameId, gameState) - REMOVED
@@ -580,13 +592,6 @@ export async function advanceRoundIfReady(gameId: number) {
       // Validate State
       await validateGameState(gameId)
 
-      // CREATE SNAPSHOT
-      const derivedState = await deriveGameStateForGame(gameId)
-      const events = await getEvents(gameId)
-      const lastSeq = events.length > 0 ? events[events.length - 1].sequenceNumber : 0
-
-      await saveSnapshot(gameId, gameState.handNumber, lastSeq, derivedState)
-
       break
     }
   }
@@ -605,6 +610,29 @@ export async function startNextHand(gameId: number) {
 
   if (game.currentRound !== ROUND.SHOWDOWN) {
     throw new Error('Current hand not finished')
+  }
+
+  // Tournament mode: escalate blinds when crossing a level boundary
+  if (game.tournamentMode && game.handsPerBlindLevel && game.handsPerBlindLevel > 0) {
+    const nextHandNumber = (game.handNumber as number) + 1
+    const currentLevel = Math.floor((game.handNumber as number) / game.handsPerBlindLevel)
+    const nextLevel = Math.floor(nextHandNumber / game.handsPerBlindLevel)
+
+    if (nextLevel > currentLevel) {
+      const initialSB = game.initialSmallBlind ?? game.smallBlind
+      const initialBB = game.initialBigBlind ?? game.bigBlind
+      const newSmallBlind = initialSB * Math.pow(2, nextLevel)
+      const newBigBlind = initialBB * Math.pow(2, nextLevel)
+
+      await db('games').where({ id: gameId }).update({
+        small_blind: newSmallBlind,
+        big_blind: newBigBlind,
+      })
+
+      // Update in-memory object so startNewHand uses the new blind values
+      ;(game as any).smallBlind = newSmallBlind
+      ;(game as any).bigBlind = newBigBlind
+    }
   }
 
   const newState = startNewHand(game)

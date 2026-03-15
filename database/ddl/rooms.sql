@@ -9,5 +9,7 @@ CREATE TABLE `rooms` (
   `starting_chips` integer not null default '1000',
   `current_game_id` integer null,
   `created_at` datetime not null default CURRENT_TIMESTAMP,
-  `updated_at` datetime not null default CURRENT_TIMESTAMP
+  `updated_at` datetime not null default CURRENT_TIMESTAMP,
+  `tournament_mode` boolean default '0',
+  `hands_per_blind_level` integer default '20'
 )

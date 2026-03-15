@@ -61,6 +61,10 @@ export interface GameState {
   seed?: string
   winners?: number[]
   isGameOver?: boolean
+  tournamentMode?: boolean
+  handsPerBlindLevel?: number
+  initialSmallBlind?: number
+  initialBigBlind?: number
 }
 
 // API-specific interfaces (frontend/terminal)
@@ -91,9 +95,14 @@ export interface ApiGameState {
   players: ApiPlayer[]
   dealerPosition: number
   winners?: number[] | null
+  smallBlind?: number
   bigBlind?: number
   handNumber?: number
   isGameOver?: boolean
+  tournamentMode?: boolean
+  handsPerBlindLevel?: number
+  initialSmallBlind?: number
+  initialBigBlind?: number
 }
 
 // Additional shared interfaces

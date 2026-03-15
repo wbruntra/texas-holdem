@@ -27,6 +27,7 @@ export default function PlayerView() {
   const { roomCode } = useParams<{ roomCode: string }>()
   const [showCommunityCards, setShowCommunityCards] = useState(false)
   const [isActing, setIsActing] = useState(false)
+  const [showFoldWarning, setShowFoldWarning] = useState(false)
   const [animatingWinners, setAnimatingWinners] = useState<WinnerPayout[]>([])
   const previousWinnersRef = useRef<string>('')
   const [seatPositions, setSeatPositions] = useState<Map<number, { left: number; top: number }>>(
@@ -41,7 +42,6 @@ export default function PlayerView() {
     joined: liveJoined,
     error,
     checkingAuth: liveCheckingAuth,
-    wsConnected: liveWsConnected,
     betAmount: liveBetAmount,
     raiseAmount: liveRaiseAmount,
     joinGame: liveJoinGame,
@@ -65,7 +65,6 @@ export default function PlayerView() {
   const playerName = isMockMode ? mockState.playerName : livePlayerName
   const joined = isMockMode ? true : liveJoined
   const checkingAuth = isMockMode ? false : liveCheckingAuth
-  const wsConnected = isMockMode ? true : liveWsConnected
   const betAmount = isMockMode ? mockState.betAmount : liveBetAmount
   const raiseAmount = isMockMode ? mockState.raiseAmount : liveRaiseAmount
   const joinGame = isMockMode ? async () => {} : liveJoinGame
@@ -166,6 +165,11 @@ export default function PlayerView() {
     [game?.players, playerName],
   )
   const isMyTurn = !!myPlayer && game?.currentPlayerPosition === myPlayer.position
+
+  // Dismiss fold warning when it's no longer the player's turn
+  useEffect(() => {
+    if (!isMyTurn) setShowFoldWarning(false)
+  }, [isMyTurn])
   const isShowdown = game?.currentRound === 'showdown'
   const winnerPositions = useMemo(
     () => (Array.isArray(game?.winners) ? (game?.winners ?? []) : []),
@@ -341,12 +345,12 @@ export default function PlayerView() {
             <Button
               variant="dark"
               size="sm"
-              className="d-flex align-items-center justify-content-center gap-1 px-3 border border-secondary border-opacity-50"
-              style={{ height: '32px' }}
+              className="d-flex align-items-center justify-content-center gap-1 px-3 border border-info border-opacity-50"
+              style={{ height: '32px', background: 'rgba(13, 202, 240, 0.12)' }}
               onClick={() => setShowCommunityCards(!showCommunityCards)}
             >
               <span style={{ fontSize: '16px' }}>🃏</span>
-              <span className="small">Board</span>
+              <span className="small text-info">Board</span>
             </Button>
           )}
 
@@ -358,14 +362,38 @@ export default function PlayerView() {
           </div>
         </div>
 
-        <div className="d-flex justify-content-between align-items-center border-top border-secondary border-opacity-25 pt-2">
-          <div className="small">
+        <div
+          className="border-top border-secondary border-opacity-25 pt-2 align-items-center"
+          style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr' }}
+        >
+          <div className="small text-start">
             <span className="text-secondary">Room:</span>{' '}
             <span className="text-white fw-bold">{game.roomCode}</span>
           </div>
-          <div className={`small fw-bold ${wsConnected ? 'text-success' : 'text-warning'}`}>
-            {wsConnected ? '● LIVE' : '○ POLL'}
+          <div className="d-flex justify-content-center">
+            {game.currentRound && game.status === 'active' && (
+              <div
+                className="badge bg-dark border border-secondary text-white fw-bold text-uppercase"
+                style={{ fontSize: '0.68rem', letterSpacing: '1px' }}
+              >
+                {game.currentRound.replace('preflop', 'Pre-Flop')}
+              </div>
+            )}
           </div>
+          {game.status === 'active' && (
+            <div className="d-flex flex-column align-items-end">
+              {game.handNumber !== undefined && (
+                <div className="text-white fw-bold" style={{ fontSize: '0.78rem' }}>
+                  Hand {game.handNumber + 1}
+                </div>
+              )}
+              {(game.smallBlind || game.bigBlind) && (
+                <div className="text-secondary font-monospace" style={{ fontSize: '0.72rem' }}>
+                  {game.smallBlind ?? game.bigBlind! / 2}/{game.bigBlind}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -412,80 +440,217 @@ export default function PlayerView() {
         </div>
       ) : (
         <>
-          {/* Moved Fold Button to the top for safety */}
+          {/* Fold button / free-check warning */}
           {game.status === 'active' &&
             isMyTurn &&
             validActions?.canAct &&
             validActions.canFold && (
               <div className="mb-3">
-                <button
-                  onClick={() => handleAction('fold')}
-                  disabled={isActing}
-                  className="btn-poker btn-poker-danger btn-action-lg w-100"
-                >
-                  <span>{isActing ? 'Folding...' : 'Fold'}</span>
-                  <span>{isActing ? '⏳' : '✕'}</span>
-                </button>
+                {showFoldWarning && validActions.canCheck ? (
+                  <div
+                    className="rounded-3 p-3 border border-warning border-opacity-75"
+                    style={{ background: 'rgba(255, 193, 7, 0.1)' }}
+                  >
+                    <div className="text-warning fw-bold mb-2 text-center small">
+                      You can check for free — fold anyway?
+                    </div>
+                    <div className="d-flex gap-2">
+                      <button
+                        onClick={() => {
+                          setShowFoldWarning(false)
+                          handleAction('check')
+                        }}
+                        disabled={isActing}
+                        className="btn-poker btn-poker-primary btn-action-lg flex-grow-1"
+                      >
+                        <span>Check</span>
+                        <span>✓</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowFoldWarning(false)
+                          handleAction('fold')
+                        }}
+                        disabled={isActing}
+                        className="btn-poker btn-poker-danger btn-action-lg flex-grow-1"
+                      >
+                        <span>{isActing ? 'Folding...' : 'Fold Anyway'}</span>
+                        <span>{isActing ? '⏳' : '✕'}</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      if (validActions.canCheck) {
+                        setShowFoldWarning(true)
+                      } else {
+                        handleAction('fold')
+                      }
+                    }}
+                    disabled={isActing}
+                    className="btn-poker btn-poker-danger btn-action-lg w-100"
+                  >
+                    <span>{isActing ? 'Folding...' : 'Fold'}</span>
+                    <span>{isActing ? '⏳' : '✕'}</span>
+                  </button>
+                )}
               </div>
             )}
 
-          <div className="glass-panel flex-grow-1 p-3 d-flex flex-column justify-content-center align-items-center mb-3 text-center position-relative">
-            <div className="mb-4 w-100">
-              <div
-                className="text-secondary text-uppercase small mb-1"
-                style={{ letterSpacing: '2px' }}
-              >
-                Pot
+          <div className="glass-panel flex-grow-1 p-3 d-flex flex-column mb-3 position-relative">
+            {/* Pot + Cards */}
+            <div className="d-flex flex-column align-items-center text-center flex-grow-1 justify-content-center">
+              <div className="mb-4 w-100">
+                <div
+                  className="text-secondary text-uppercase small mb-1"
+                  style={{ letterSpacing: '2px' }}
+                >
+                  Pot
+                </div>
+                <div
+                  className="display-3 fw-bold text-warning"
+                  style={{ textShadow: '0 2px 10px rgba(212, 175, 55, 0.3)' }}
+                >
+                  ${displayPot}
+                </div>
+                {game.currentBet > 0 && (
+                  <div className="mt-2 text-info fw-bold">To Call: ${game.currentBet}</div>
+                )}
               </div>
-              <div
-                className="display-3 fw-bold text-warning"
-                style={{ textShadow: '0 2px 10px rgba(212, 175, 55, 0.3)' }}
-              >
-                ${displayPot}
-              </div>
-              {game.currentBet > 0 && (
-                <div className="mt-2 text-info fw-bold">To Call: ${game.currentBet}</div>
+
+              {myPlayer?.holeCards && myPlayer.holeCards.length > 0 && (
+                <div className="d-flex gap-3 justify-content-center mb-4">
+                  {myPlayer.holeCards.map((card: Card, idx: number) => (
+                    <PokerCard key={idx} card={card} className="large" />
+                  ))}
+                </div>
               )}
             </div>
 
-            {myPlayer?.holeCards && myPlayer.holeCards.length > 0 && (
-              <div className="d-flex gap-3 justify-content-center mb-4">
-                {myPlayer.holeCards.map((card: Card, idx: number) => (
-                  <PokerCard key={idx} card={card} className="large" />
-                ))}
+            {/* Player table */}
+            <div className="w-100 border-top border-secondary border-opacity-25 pt-2 mt-1">
+              <div
+                className="text-secondary text-uppercase text-center mb-2"
+                style={{ letterSpacing: '1.5px', fontSize: '0.68rem' }}
+              >
+                Players
               </div>
-            )}
+              <div className="d-flex flex-column gap-1">
+                {[...game.players]
+                  .sort((a: Player, b: Player) => a.position - b.position)
+                  .map((p: Player) => {
+                    const isMe = p.name === playerName
+                    const isActive = p.position === game.currentPlayerPosition
+                    const isFolded = p.status === 'folded'
+                    const isAllIn = p.status === 'all_in'
+                    const isOut = p.status === 'out'
+
+                    return (
+                      <div
+                        key={p.id}
+                        className={`d-flex align-items-center px-2 rounded ${
+                          isActive
+                            ? 'bg-primary bg-opacity-25 border border-primary border-opacity-50'
+                            : 'border border-white border-opacity-10'
+                        }`}
+                        style={{
+                          fontSize: '0.85rem',
+                          opacity: isFolded || isOut ? 0.45 : 1,
+                          minHeight: '30px',
+                        }}
+                      >
+                        {/* Active turn dot */}
+                        <div style={{ width: '10px', flexShrink: 0, marginRight: '6px' }}>
+                          {isActive && (
+                            <div
+                              className="rounded-circle bg-primary"
+                              style={{ width: '8px', height: '8px' }}
+                            />
+                          )}
+                        </div>
+
+                        {/* Name */}
+                        <div
+                          className={`flex-grow-1 fw-bold text-truncate ${isMe ? 'text-info' : 'text-white'}`}
+                          style={{ maxWidth: '55%' }}
+                        >
+                          {p.name}
+                          {isMe && (
+                            <span className="text-secondary ms-1" style={{ fontSize: '0.68rem' }}>
+                              (you)
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Status badge */}
+                        {isFolded && (
+                          <span
+                            className="badge bg-secondary me-2"
+                            style={{ fontSize: '0.62rem' }}
+                          >
+                            FOLD
+                          </span>
+                        )}
+                        {isAllIn && (
+                          <span className="badge bg-danger me-2" style={{ fontSize: '0.62rem' }}>
+                            ALL-IN
+                          </span>
+                        )}
+
+                        {/* Stack */}
+                        <div
+                          className={`font-monospace fw-bold ${isFolded || isOut ? 'text-muted' : 'text-success'}`}
+                          style={{ fontSize: '0.82rem', flexShrink: 0 }}
+                        >
+                          ${p.chips}
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
           </div>
 
           {game.status === 'active' && isMyTurn && validActions?.canAct ? (
             <div className="glass-panel p-3">
-              <div className="d-grid gap-3">
-                {/* Fold moved to top */}
-
-                {validActions.canCheck && (
-                  <button
-                    onClick={() => handleAction('check')}
-                    disabled={isActing}
-                    className="btn-poker btn-poker-primary btn-action-lg w-100"
+              <div className="d-flex gap-2 align-items-stretch">
+                {/* Left: Check or Call */}
+                {(validActions.canCheck ||
+                  (validActions.canCall && validActions.callAmount !== undefined)) && (
+                  <div
+                    className="d-flex"
+                    style={
+                      validActions.canBet || validActions.canRaise
+                        ? { width: '38%', flexShrink: 0 }
+                        : { flex: 1 }
+                    }
                   >
-                    <span>{isActing ? 'Checking...' : 'Check'}</span>
-                    <span>{isActing ? '⏳' : '✓'}</span>
-                  </button>
+                    {validActions.canCheck ? (
+                      <button
+                        onClick={() => handleAction('check')}
+                        disabled={isActing}
+                        className="btn-poker btn-poker-primary btn-action-lg w-100 h-100"
+                      >
+                        <span>{isActing ? 'Checking...' : 'Check'}</span>
+                        <span>{isActing ? '⏳' : '✓'}</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleAction('call')}
+                        disabled={isActing}
+                        className="btn-poker btn-poker-primary btn-action-lg w-100 h-100"
+                      >
+                        <span>{isActing ? 'Calling...' : `Call $${validActions.callAmount}`}</span>
+                      </button>
+                    )}
+                  </div>
                 )}
 
-                {validActions.canCall && validActions.callAmount !== undefined && (
-                  <button
-                    onClick={() => handleAction('call')}
-                    disabled={isActing}
-                    className="btn-poker btn-poker-primary btn-action-lg w-100"
-                  >
-                    <span>{isActing ? 'Calling...' : `Call $${validActions.callAmount}`}</span>
-                  </button>
-                )}
-
+                {/* Right: Bet or Raise */}
                 {(validActions.canBet || validActions.canRaise) && (
-                  <div className="d-flex flex-column gap-3">
-                    <div className="bg-black bg-opacity-25 rounded-3 p-3 border border-white border-opacity-10">
+                  <div className="flex-grow-1">
+                    <div className="bg-black bg-opacity-25 rounded-3 p-3 border border-white border-opacity-10 h-100 d-flex flex-column justify-content-between">
                       {(() => {
                         const isRaise = validActions.canRaise
                         const minVal = isRaise ? validActions.minRaise! : validActions.minBet!
@@ -498,7 +663,7 @@ export default function PlayerView() {
 
                         return (
                           <>
-                            <div className="d-flex align-items-center gap-3 mb-3">
+                            <div className="d-flex align-items-center gap-2 mb-2">
                               <button
                                 className="btn-chip chip-minus"
                                 onClick={() =>

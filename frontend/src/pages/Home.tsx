@@ -9,6 +9,8 @@ export default function Home() {
   const [showGameSettings, setShowGameSettings] = useState(false)
   const [bigBlind, setBigBlind] = useState(10)
   const [startingChips, setStartingChips] = useState(1000)
+  const [tournamentMode, setTournamentMode] = useState(false)
+  const [handsPerBlindLevel, setHandsPerBlindLevel] = useState(20)
   const navigate = useNavigate()
 
   const getErrorMessage = (err: unknown, fallback: string) => {
@@ -30,6 +32,8 @@ export default function Home() {
         smallBlind,
         bigBlind,
         startingChips,
+        tournamentMode,
+        handsPerBlindLevel: tournamentMode ? handsPerBlindLevel : undefined,
       })
 
       const roomCode = response.data.room_code // Note: casing might change in new API response
@@ -61,6 +65,8 @@ export default function Home() {
     setShowGameSettings(false)
     setBigBlind(10)
     setStartingChips(1000)
+    setTournamentMode(false)
+    setHandsPerBlindLevel(20)
   }
 
   const handleJoinRoom = () => {
@@ -223,6 +229,98 @@ export default function Home() {
                     </button>
                   </div>
                 </div>
+
+                <hr className="border-secondary" />
+
+                <div className="mb-2">
+                  <div className="d-flex align-items-center gap-3 justify-content-center">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={tournamentMode}
+                      onClick={() => setTournamentMode((v) => !v)}
+                      style={{
+                        width: '52px',
+                        height: '28px',
+                        borderRadius: '14px',
+                        border: 'none',
+                        padding: '2px',
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        transition: 'background-color 0.25s ease, box-shadow 0.25s ease',
+                        backgroundColor: tournamentMode ? '#d4af37' : '#374151',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: tournamentMode ? 'flex-end' : 'flex-start',
+                        boxShadow: tournamentMode
+                          ? '0 0 8px rgba(212,175,55,0.5)'
+                          : '0 0 0 1px rgba(255,255,255,0.12)',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          backgroundColor: '#fff',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                        }}
+                      />
+                    </button>
+                    <span
+                      className="fw-bold fs-6"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => setTournamentMode((v) => !v)}
+                    >
+                      Tournament Mode
+                    </span>
+                  </div>
+                  <p className="text-secondary small text-center mt-1 mb-0">
+                    Blinds double every set number of hands
+                  </p>
+                </div>
+
+                {tournamentMode && (
+                  <div className="mt-3 text-center">
+                    <label htmlFor="handsPerLevel" className="form-label fw-bold d-block mb-3">
+                      Hands Per Blind Level
+                    </label>
+                    <div className="d-flex gap-3 align-items-center justify-content-center">
+                      <button
+                        type="button"
+                        onClick={() => setHandsPerBlindLevel((prev) => Math.max(1, prev - 5))}
+                        className="btn btn-outline-secondary rounded-circle"
+                        style={{ width: '48px', height: '48px', fontSize: '24px', lineHeight: 0 }}
+                      >
+                        −
+                      </button>
+                      <input
+                        id="handsPerLevel"
+                        type="number"
+                        min="1"
+                        step="5"
+                        value={handsPerBlindLevel}
+                        onChange={(e) =>
+                          setHandsPerBlindLevel(Math.max(1, parseInt(e.target.value) || 1))
+                        }
+                        className="form-control form-control-lg bg-black text-white border-secondary text-center fw-bold"
+                        style={{ maxWidth: '120px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setHandsPerBlindLevel((prev) => prev + 5)}
+                        className="btn btn-outline-secondary rounded-circle"
+                        style={{ width: '48px', height: '48px', fontSize: '24px', lineHeight: 0 }}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="small text-secondary mt-2">
+                      Blinds: {Math.floor(bigBlind / 2)}/{bigBlind} → {bigBlind}/{bigBlind * 2}{' '}
+                      after hand {handsPerBlindLevel}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="modal-footer border-secondary p-3">
                 <button

@@ -168,8 +168,36 @@ export default function TableView() {
     )
   }
 
+  const tournamentInfo = (() => {
+    if (!game.tournamentMode || !game.handsPerBlindLevel) return null
+    const handNumber = game.handNumber ?? 0
+    const level = Math.floor(handNumber / game.handsPerBlindLevel)
+    const handsUntilNext = game.handsPerBlindLevel - (handNumber % game.handsPerBlindLevel)
+    return { level, handsUntilNext }
+  })()
+
   return (
     <>
+      {tournamentInfo && game.status === 'active' && (
+        <div
+          className="position-fixed d-flex flex-column align-items-center gap-1"
+          style={{ top: '12px', left: '12px', zIndex: 900 }}
+        >
+          <div
+            className="badge bg-warning text-dark fw-bold px-3 py-2 shadow"
+            style={{ fontSize: '0.8rem', letterSpacing: '0.5px' }}
+          >
+            TOURNAMENT — Level {tournamentInfo.level + 1}
+          </div>
+          <div
+            className="badge bg-dark border border-secondary text-secondary fw-normal px-3 py-1 shadow"
+            style={{ fontSize: '0.72rem' }}
+          >
+            Blinds up in {tournamentInfo.handsUntilNext} hand
+            {tournamentInfo.handsUntilNext !== 1 ? 's' : ''}
+          </div>
+        </div>
+      )}
       <PokerTableScene game={game} wsConnected={wsConnected}>
         {game.status === 'waiting' && (
           <div

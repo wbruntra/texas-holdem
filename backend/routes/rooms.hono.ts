@@ -11,12 +11,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'sellingswam'
 
 app.post('/', async (c) => {
   try {
-    const { smallBlind, bigBlind, startingChips } = await c.req.json()
+    const { smallBlind, bigBlind, startingChips, tournamentMode, handsPerBlindLevel } =
+      await c.req.json()
     // @ts-ignore
     const room = await roomService.createRoom({
       smallBlind,
       bigBlind,
       startingChips,
+      tournamentMode,
+      handsPerBlindLevel,
     })
     return c.json(room)
   } catch (error: any) {

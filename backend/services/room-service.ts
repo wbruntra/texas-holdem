@@ -7,6 +7,8 @@ export interface RoomConfig {
   smallBlind?: number
   bigBlind?: number
   startingChips?: number
+  tournamentMode?: boolean
+  handsPerBlindLevel?: number
 }
 
 function generateRoomCode(): string {
@@ -22,6 +24,8 @@ async function createRoom(config: RoomConfig = {}) {
   const smallBlind = config.smallBlind || 5
   const bigBlind = config.bigBlind || 10
   const startingChips = config.startingChips || 1000
+  const tournamentMode = config.tournamentMode ?? false
+  const handsPerBlindLevel = config.handsPerBlindLevel ?? 20
 
   let roomCode = generateRoomCode()
   let unique = false
@@ -37,6 +41,8 @@ async function createRoom(config: RoomConfig = {}) {
     small_blind: smallBlind,
     big_blind: bigBlind,
     starting_chips: startingChips,
+    tournament_mode: tournamentMode,
+    hands_per_blind_level: handsPerBlindLevel,
   })
 
   // Create initial game
@@ -44,6 +50,8 @@ async function createRoom(config: RoomConfig = {}) {
     smallBlind,
     bigBlind,
     startingChips,
+    tournamentMode,
+    handsPerBlindLevel,
   })
 
   return getRoomById(id)
