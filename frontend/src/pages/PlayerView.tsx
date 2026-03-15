@@ -440,63 +440,66 @@ export default function PlayerView() {
         </div>
       ) : (
         <>
-          {/* Fold button / free-check warning */}
-          {game.status === 'active' &&
-            isMyTurn &&
-            validActions?.canAct &&
-            validActions.canFold && (
-              <div className="mb-3">
-                {showFoldWarning && validActions.canCheck ? (
-                  <div
-                    className="rounded-3 p-3 border border-warning border-opacity-75"
-                    style={{ background: 'rgba(255, 193, 7, 0.1)' }}
-                  >
-                    <div className="text-warning fw-bold mb-2 text-center small">
-                      You can check for free — fold anyway?
-                    </div>
-                    <div className="d-flex gap-2">
-                      <button
-                        onClick={() => {
-                          setShowFoldWarning(false)
-                          handleAction('check')
-                        }}
-                        disabled={isActing}
-                        className="btn-poker btn-poker-primary btn-action-lg flex-grow-1"
-                      >
-                        <span>Check</span>
-                        <span>✓</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowFoldWarning(false)
-                          handleAction('fold')
-                        }}
-                        disabled={isActing}
-                        className="btn-poker btn-poker-danger btn-action-lg flex-grow-1"
-                      >
-                        <span>{isActing ? 'Folding...' : 'Fold Anyway'}</span>
-                        <span>{isActing ? '⏳' : '✕'}</span>
-                      </button>
-                    </div>
+          {/* Fold button - always visible during active hand */}
+          {game.status === 'active' && !isShowdown && (
+            <div className="mb-3">
+              {showFoldWarning && validActions?.canCheck ? (
+                <div
+                  className="rounded-3 p-3 border border-warning border-opacity-75"
+                  style={{ background: 'rgba(255, 193, 7, 0.1)' }}
+                >
+                  <div className="text-warning fw-bold mb-2 text-center small">
+                    You can check for free — fold anyway?
                   </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      if (validActions.canCheck) {
-                        setShowFoldWarning(true)
-                      } else {
+                  <div className="d-flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowFoldWarning(false)
+                        handleAction('check')
+                      }}
+                      disabled={isActing}
+                      className="btn-poker btn-poker-primary btn-action-lg flex-grow-1"
+                    >
+                      <span>Check</span>
+                      <span>✓</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowFoldWarning(false)
                         handleAction('fold')
-                      }
-                    }}
-                    disabled={isActing}
-                    className="btn-poker btn-poker-danger btn-action-lg w-100"
-                  >
-                    <span>{isActing ? 'Folding...' : 'Fold'}</span>
-                    <span>{isActing ? '⏳' : '✕'}</span>
-                  </button>
-                )}
-              </div>
-            )}
+                      }}
+                      disabled={isActing}
+                      className="btn-poker btn-poker-danger btn-action-lg flex-grow-1"
+                    >
+                      <span>{isActing ? 'Folding...' : 'Fold Anyway'}</span>
+                      <span>{isActing ? '⏳' : '✕'}</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (validActions?.canCheck) {
+                      setShowFoldWarning(true)
+                    } else {
+                      handleAction('fold')
+                    }
+                  }}
+                  disabled={
+                    isActing || !isMyTurn || !validActions?.canAct || !validActions?.canFold
+                  }
+                  className="btn-poker btn-poker-danger btn-action-lg w-100"
+                  style={{
+                    opacity: isMyTurn && validActions?.canAct && validActions?.canFold ? 1 : 0.35,
+                    transition: 'opacity 0.3s',
+                  }}
+                >
+                  <span>{isActing ? 'Folding...' : 'Fold'}</span>
+                  <span>{isActing ? '⏳' : '✕'}</span>
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="glass-panel flex-grow-1 p-3 d-flex flex-column mb-3 position-relative">
             {/* Pot + Cards */}
@@ -612,54 +615,93 @@ export default function PlayerView() {
             </div>
           </div>
 
-          {game.status === 'active' && isMyTurn && validActions?.canAct ? (
-            <div className="glass-panel p-3">
-              <div className="d-flex gap-2 align-items-stretch">
-                {/* Left: Check or Call */}
-                {(validActions.canCheck ||
-                  (validActions.canCall && validActions.callAmount !== undefined)) && (
-                  <div
-                    className="d-flex"
-                    style={
-                      validActions.canBet || validActions.canRaise
-                        ? { width: '38%', flexShrink: 0 }
-                        : { flex: 1 }
-                    }
-                  >
-                    {validActions.canCheck ? (
-                      <button
-                        onClick={() => handleAction('check')}
-                        disabled={isActing}
-                        className="btn-poker btn-poker-primary btn-action-lg w-100 h-100"
-                      >
-                        <span>{isActing ? 'Checking...' : 'Check'}</span>
-                        <span>{isActing ? '⏳' : '✓'}</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleAction('call')}
-                        disabled={isActing}
-                        className="btn-poker btn-poker-primary btn-action-lg w-100 h-100"
-                      >
-                        <span>{isActing ? 'Calling...' : `Call $${validActions.callAmount}`}</span>
-                      </button>
-                    )}
+          {/* Action panel - always visible during active hand */}
+          {game.status === 'active' &&
+            !isShowdown &&
+            (validActions?.canAdvance ? (
+              <div className="glass-panel p-3">
+                <div className="d-grid gap-3">
+                  <div className="text-center text-white mb-2">
+                    {validActions.advanceReason === 'all_in_situation'
+                      ? 'All players are All-In. Advance to next round?'
+                      : 'Ready to advance?'}
                   </div>
-                )}
+                  <button
+                    onClick={() => handleAction('advance_round')}
+                    disabled={isActing}
+                    className="btn-poker btn-poker-primary btn-action-lg w-100"
+                  >
+                    <span>{isActing ? 'Advancing...' : 'Advance Round'}</span>
+                    <span>{isActing ? '⏳' : '⏩'}</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="glass-panel p-3">
+                <div className="d-flex gap-2 align-items-stretch">
+                  {/* Left: Check or Call */}
+                  <div style={{ width: '38%', flexShrink: 0 }}>
+                    <button
+                      onClick={() => {
+                        if (validActions?.canCheck) handleAction('check')
+                        else if (validActions?.canCall) handleAction('call')
+                      }}
+                      disabled={isActing || !isMyTurn || !validActions?.canAct}
+                      className="btn-poker btn-poker-primary btn-action-lg w-100 h-100"
+                      style={{
+                        opacity: isMyTurn && validActions?.canAct ? 1 : 0.35,
+                        transition: 'opacity 0.3s',
+                      }}
+                    >
+                      <span>
+                        {isMyTurn && validActions?.canCall && !validActions?.canCheck
+                          ? isActing
+                            ? 'Calling...'
+                            : `Call $${validActions.callAmount}`
+                          : isActing
+                            ? 'Checking...'
+                            : 'Check'}
+                      </span>
+                      <span>{isActing ? '⏳' : '✓'}</span>
+                    </button>
+                  </div>
 
-                {/* Right: Bet or Raise */}
-                {(validActions.canBet || validActions.canRaise) && (
-                  <div className="flex-grow-1">
+                  {/* Right: Bet or Raise */}
+                  <div
+                    className="flex-grow-1"
+                    style={{
+                      opacity:
+                        isMyTurn &&
+                        validActions?.canAct &&
+                        (validActions?.canBet || validActions?.canRaise)
+                          ? 1
+                          : 0.35,
+                      transition: 'opacity 0.3s',
+                    }}
+                  >
                     <div className="bg-black bg-opacity-25 rounded-3 p-3 border border-white border-opacity-10 h-100 d-flex flex-column justify-content-between">
                       {(() => {
-                        const isRaise = validActions.canRaise
-                        const minVal = isRaise ? validActions.minRaise! : validActions.minBet!
-                        const maxVal = isRaise ? validActions.maxRaise! : derivedMaxBet
-                        const currentVal = isRaise
-                          ? Math.min(Math.max(raiseAmount, minVal), maxVal)
-                          : Math.max(betAmount, minVal)
+                        const canBetOrRaise = !!(
+                          isMyTurn &&
+                          validActions?.canAct &&
+                          (validActions?.canBet || validActions?.canRaise)
+                        )
+                        const isRaise = !!(isMyTurn && validActions?.canRaise)
+                        const minVal = isRaise
+                          ? (validActions?.minRaise ?? game.bigBlind ?? 10)
+                          : (validActions?.minBet ?? game.bigBlind ?? 10)
+                        const maxVal = isRaise
+                          ? (validActions?.maxRaise ?? myPlayer?.chips ?? 0)
+                          : derivedMaxBet || (myPlayer?.chips ?? 0)
+                        const currentVal = canBetOrRaise
+                          ? isRaise
+                            ? Math.min(Math.max(raiseAmount, minVal), maxVal)
+                            : Math.max(betAmount, minVal)
+                          : (game.bigBlind ?? 10)
                         const setVal = isRaise ? setRaiseAmount : setBetAmount
                         const totalBet = isRaise ? game.currentBet + currentVal : currentVal
+                        const displayMin = minVal || game.bigBlind || 10
+                        const displayMax = maxVal || myPlayer?.chips || 100
 
                         return (
                           <>
@@ -669,16 +711,17 @@ export default function PlayerView() {
                                 onClick={() =>
                                   setVal(Math.max(currentVal - (game.bigBlind || 10), minVal))
                                 }
+                                disabled={!canBetOrRaise || isActing}
                               >
                                 −
                               </button>
                               <div className="flex-grow-1">
                                 <HorizontalSlider
                                   value={currentVal}
-                                  min={minVal}
-                                  max={maxVal}
+                                  min={displayMin}
+                                  max={displayMax}
                                   step={1}
-                                  onChange={setVal}
+                                  onChange={canBetOrRaise ? setVal : () => {}}
                                   thumbColor={isRaise ? '#ffc107' : '#0dcaf0'}
                                   trackColor="rgba(255,255,255,0.1)"
                                 />
@@ -688,19 +731,22 @@ export default function PlayerView() {
                                 onClick={() =>
                                   setVal(Math.min(currentVal + (game.bigBlind || 10), maxVal))
                                 }
+                                disabled={!canBetOrRaise || isActing}
                               >
                                 +
                               </button>
                             </div>
                             <button
                               onClick={() => handleAction(isRaise ? 'raise' : 'bet', currentVal)}
-                              disabled={isActing}
+                              disabled={isActing || !canBetOrRaise}
                               className={`btn-poker ${isRaise ? 'btn-poker-secondary' : 'btn-poker-info'} btn-action-lg w-100`}
                             >
                               <span>
                                 {isActing
                                   ? 'Processing...'
-                                  : `${isRaise ? 'Raise To' : 'Bet'} $${totalBet}`}
+                                  : canBetOrRaise
+                                    ? `${isRaise ? 'Raise To' : 'Bet'} $${totalBet}`
+                                    : 'Bet'}
                               </span>
                               <span>{isActing ? '⏳' : isRaise ? '' : '💰'}</span>
                             </button>
@@ -709,45 +755,21 @@ export default function PlayerView() {
                       })()}
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
-          ) : validActions?.canAdvance ? (
-            <div className="glass-panel p-3">
-              <div className="d-grid gap-3">
-                <div className="text-center text-white mb-2">
-                  {validActions.advanceReason === 'all_in_situation'
-                    ? 'All players are All-In. Advance to next round?'
-                    : 'Ready to advance?'}
                 </div>
-                <button
-                  onClick={() => handleAction('advance_round')}
-                  disabled={isActing}
-                  className="btn-poker btn-poker-primary btn-action-lg w-100"
-                >
-                  <span>{isActing ? 'Advancing...' : 'Advance Round'}</span>
-                  <span>{isActing ? '⏳' : '⏩'}</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            game.status === 'active' &&
-            !isShowdown && (
-              <div className="glass-panel p-3 text-center text-secondary">
+
+                {/* Status indicator when not acting */}
                 {myPlayer?.status === 'folded' ? (
-                  <div>
-                    <div className="h4 text-danger mb-1">Folded</div>
-                    <div className="small">Waiting for next hand</div>
+                  <div className="text-center text-danger small mt-2">
+                    Folded — waiting for next hand
                   </div>
-                ) : (
-                  <div>
-                    <div className="spinner-border spinner-border-sm text-secondary mb-2"></div>
-                    <div>Waiting for action...</div>
+                ) : !isMyTurn ? (
+                  <div className="text-center text-secondary small mt-2 d-flex align-items-center justify-content-center gap-2">
+                    <span className="spinner-border spinner-border-sm"></span>
+                    <span>Waiting for action...</span>
                   </div>
-                )}
+                ) : null}
               </div>
-            )
-          )}
+            ))}
         </>
       )}
 
