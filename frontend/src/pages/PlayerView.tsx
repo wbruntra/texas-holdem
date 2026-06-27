@@ -638,123 +638,117 @@ export default function PlayerView() {
               </div>
             ) : (
               <div className="glass-panel p-3">
-                <div className="d-flex gap-2 align-items-stretch">
-                  {/* Left: Check or Call */}
-                  <div style={{ width: '38%', flexShrink: 0 }}>
-                    <button
-                      onClick={() => {
-                        if (validActions?.canCheck) handleAction('check')
-                        else if (validActions?.canCall) handleAction('call')
-                      }}
-                      disabled={isActing || !isMyTurn || !validActions?.canAct}
-                      className="btn-poker btn-poker-primary btn-action-lg w-100 h-100"
-                      style={{
-                        opacity: isMyTurn && validActions?.canAct ? 1 : 0.35,
-                        transition: 'opacity 0.3s',
-                      }}
-                    >
-                      <span>
-                        {isMyTurn && validActions?.canCall && !validActions?.canCheck
-                          ? isActing
-                            ? 'Calling...'
-                            : `Call $${validActions.callAmount}`
-                          : isActing
-                            ? 'Checking...'
-                            : 'Check'}
-                      </span>
-                      <span>{isActing ? '⏳' : '✓'}</span>
-                    </button>
-                  </div>
+                <div className="d-flex flex-column gap-2">
+                  {/* Bet or Raise: full-width slider on top */}
+                  {(() => {
+                    const canBetOrRaise = !!(
+                      isMyTurn &&
+                      validActions?.canAct &&
+                      (validActions?.canBet || validActions?.canRaise)
+                    )
+                    const isRaise = !!(isMyTurn && validActions?.canRaise)
+                    const minVal = isRaise
+                      ? (validActions?.minRaise ?? game.bigBlind ?? 10)
+                      : (validActions?.minBet ?? game.bigBlind ?? 10)
+                    const maxVal = isRaise
+                      ? (validActions?.maxRaise ?? myPlayer?.chips ?? 0)
+                      : derivedMaxBet || (myPlayer?.chips ?? 0)
+                    const currentVal = canBetOrRaise
+                      ? isRaise
+                        ? Math.min(Math.max(raiseAmount, minVal), maxVal)
+                        : Math.max(betAmount, minVal)
+                      : (game.bigBlind ?? 10)
+                    const setVal = isRaise ? setRaiseAmount : setBetAmount
+                    const totalBet = isRaise ? game.currentBet + currentVal : currentVal
+                    const displayMin = minVal || game.bigBlind || 10
+                    const displayMax = maxVal || myPlayer?.chips || 100
 
-                  {/* Right: Bet or Raise */}
-                  <div
-                    className="flex-grow-1"
+                    return (
+                      <div
+                        className="bg-black bg-opacity-25 rounded-3 p-3 border border-white border-opacity-10"
+                        style={{
+                          opacity:
+                            isMyTurn &&
+                            validActions?.canAct &&
+                            (validActions?.canBet || validActions?.canRaise)
+                              ? 1
+                              : 0.35,
+                          transition: 'opacity 0.3s',
+                        }}
+                      >
+                        <div className="d-flex align-items-center gap-2 mb-2">
+                          <button
+                            className="btn-chip chip-minus"
+                            onClick={() =>
+                              setVal(Math.max(currentVal - (game.bigBlind || 10), minVal))
+                            }
+                            disabled={!canBetOrRaise || isActing}
+                          >
+                            −
+                          </button>
+                          <div className="flex-grow-1">
+                            <HorizontalSlider
+                              value={currentVal}
+                              min={displayMin}
+                              max={displayMax}
+                              step={1}
+                              onChange={canBetOrRaise ? setVal : () => {}}
+                              thumbColor={isRaise ? '#ffc107' : '#0dcaf0'}
+                              trackColor="rgba(255,255,255,0.1)"
+                            />
+                          </div>
+                          <button
+                            className="btn-chip chip-plus"
+                            onClick={() =>
+                              setVal(Math.min(currentVal + (game.bigBlind || 10), maxVal))
+                            }
+                            disabled={!canBetOrRaise || isActing}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => handleAction(isRaise ? 'raise' : 'bet', currentVal)}
+                          disabled={isActing || !canBetOrRaise}
+                          className={`btn-poker ${isRaise ? 'btn-poker-secondary' : 'btn-poker-info'} btn-action-lg w-100`}
+                        >
+                          <span>
+                            {isActing
+                              ? 'Processing...'
+                              : canBetOrRaise
+                                ? `${isRaise ? 'Raise To' : 'Bet'} $${totalBet}`
+                                : 'Bet'}
+                          </span>
+                          <span>{isActing ? '⏳' : isRaise ? '' : '💰'}</span>
+                        </button>
+                      </div>
+                    )
+                  })()}
+
+                  {/* Check or Call: smaller button below */}
+                  <button
+                    onClick={() => {
+                      if (validActions?.canCheck) handleAction('check')
+                      else if (validActions?.canCall) handleAction('call')
+                    }}
+                    disabled={isActing || !isMyTurn || !validActions?.canAct}
+                    className="btn-poker btn-poker-primary btn-action-lg w-100"
                     style={{
-                      opacity:
-                        isMyTurn &&
-                        validActions?.canAct &&
-                        (validActions?.canBet || validActions?.canRaise)
-                          ? 1
-                          : 0.35,
+                      opacity: isMyTurn && validActions?.canAct ? 1 : 0.35,
                       transition: 'opacity 0.3s',
                     }}
                   >
-                    <div className="bg-black bg-opacity-25 rounded-3 p-3 border border-white border-opacity-10 h-100 d-flex flex-column justify-content-between">
-                      {(() => {
-                        const canBetOrRaise = !!(
-                          isMyTurn &&
-                          validActions?.canAct &&
-                          (validActions?.canBet || validActions?.canRaise)
-                        )
-                        const isRaise = !!(isMyTurn && validActions?.canRaise)
-                        const minVal = isRaise
-                          ? (validActions?.minRaise ?? game.bigBlind ?? 10)
-                          : (validActions?.minBet ?? game.bigBlind ?? 10)
-                        const maxVal = isRaise
-                          ? (validActions?.maxRaise ?? myPlayer?.chips ?? 0)
-                          : derivedMaxBet || (myPlayer?.chips ?? 0)
-                        const currentVal = canBetOrRaise
-                          ? isRaise
-                            ? Math.min(Math.max(raiseAmount, minVal), maxVal)
-                            : Math.max(betAmount, minVal)
-                          : (game.bigBlind ?? 10)
-                        const setVal = isRaise ? setRaiseAmount : setBetAmount
-                        const totalBet = isRaise ? game.currentBet + currentVal : currentVal
-                        const displayMin = minVal || game.bigBlind || 10
-                        const displayMax = maxVal || myPlayer?.chips || 100
-
-                        return (
-                          <>
-                            <div className="d-flex align-items-center gap-2 mb-2">
-                              <button
-                                className="btn-chip chip-minus"
-                                onClick={() =>
-                                  setVal(Math.max(currentVal - (game.bigBlind || 10), minVal))
-                                }
-                                disabled={!canBetOrRaise || isActing}
-                              >
-                                −
-                              </button>
-                              <div className="flex-grow-1">
-                                <HorizontalSlider
-                                  value={currentVal}
-                                  min={displayMin}
-                                  max={displayMax}
-                                  step={1}
-                                  onChange={canBetOrRaise ? setVal : () => {}}
-                                  thumbColor={isRaise ? '#ffc107' : '#0dcaf0'}
-                                  trackColor="rgba(255,255,255,0.1)"
-                                />
-                              </div>
-                              <button
-                                className="btn-chip chip-plus"
-                                onClick={() =>
-                                  setVal(Math.min(currentVal + (game.bigBlind || 10), maxVal))
-                                }
-                                disabled={!canBetOrRaise || isActing}
-                              >
-                                +
-                              </button>
-                            </div>
-                            <button
-                              onClick={() => handleAction(isRaise ? 'raise' : 'bet', currentVal)}
-                              disabled={isActing || !canBetOrRaise}
-                              className={`btn-poker ${isRaise ? 'btn-poker-secondary' : 'btn-poker-info'} btn-action-lg w-100`}
-                            >
-                              <span>
-                                {isActing
-                                  ? 'Processing...'
-                                  : canBetOrRaise
-                                    ? `${isRaise ? 'Raise To' : 'Bet'} $${totalBet}`
-                                    : 'Bet'}
-                              </span>
-                              <span>{isActing ? '⏳' : isRaise ? '' : '💰'}</span>
-                            </button>
-                          </>
-                        )
-                      })()}
-                    </div>
-                  </div>
+                    <span>
+                      {isMyTurn && validActions?.canCall && !validActions?.canCheck
+                        ? isActing
+                          ? 'Calling...'
+                          : `Call $${validActions.callAmount}`
+                        : isActing
+                          ? 'Checking...'
+                          : 'Check'}
+                    </span>
+                    <span>{isActing ? '⏳' : '✓'}</span>
+                  </button>
                 </div>
 
                 {/* Status indicator when not acting */}

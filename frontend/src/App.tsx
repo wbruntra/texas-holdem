@@ -8,7 +8,7 @@ import './App.css'
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.VITE_BASE ?? '/'}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/table/:roomCode" element={<TableView />} />
