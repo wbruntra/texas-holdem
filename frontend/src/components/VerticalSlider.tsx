@@ -1,3 +1,5 @@
+import { verticalSliderStyles } from '../styles/verticalSliderStyles'
+
 interface VerticalSliderProps {
   value: number
   min: number
@@ -6,6 +8,8 @@ interface VerticalSliderProps {
   onChange: (value: number) => void
   thumbColor?: string
   trackColor?: string
+  height?: number
+  showFill?: boolean
 }
 
 export default function VerticalSlider({
@@ -15,68 +19,51 @@ export default function VerticalSlider({
   step,
   onChange,
   thumbColor = '#0a0',
-  trackColor = '#456',
+  trackColor = 'rgba(255,255,255,0.1)',
+  height = 160,
+  showFill = true,
 }: VerticalSliderProps) {
+  const percentage = showFill ? ((value - min) / (max - min)) * 100 : 0
+
+  const dynamicStyles = `
+    .vertical-slider::-webkit-slider-runnable-track {
+      background: linear-gradient(
+        to top,
+        ${thumbColor} 0%,
+        ${thumbColor} ${percentage}%,
+        ${trackColor} ${percentage}%,
+        ${trackColor} 100%
+      );
+    }
+    .vertical-slider::-webkit-slider-thumb {
+      background: ${thumbColor};
+    }
+    .vertical-slider::-moz-range-track {
+      background: linear-gradient(
+        to top,
+        ${thumbColor} 0%,
+        ${thumbColor} ${percentage}%,
+        ${trackColor} ${percentage}%,
+        ${trackColor} 100%
+      );
+    }
+    .vertical-slider::-moz-range-thumb {
+      background: ${thumbColor};
+    }
+  `
+
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        height: '200px',
+        height: `${height}px`,
         justifyContent: 'center',
       }}
     >
-      <style>{`
-        .vertical-slider {
-          width: 200px;
-          height: 6px;
-          cursor: pointer;
-          writing-mode: vertical-lr;
-          direction: rtl;
-        }
-        
-        /* Webkit browsers (Chrome, Safari, Edge) */
-        .vertical-slider::-webkit-slider-runnable-track {
-          background: ${trackColor};
-          border-radius: 3px;
-          width: 200px;
-          height: 6px;
-        }
-        
-        .vertical-slider::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: ${thumbColor};
-          cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          border: none;
-          margin-top: -6px;
-        }
-        
-        /* Firefox */
-        .vertical-slider::-moz-range-track {
-          background: ${trackColor};
-          border-radius: 3px;
-          width: 200px;
-          height: 6px;
-          border: none;
-        }
-        
-        .vertical-slider::-moz-range-thumb {
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: ${thumbColor};
-          cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          border: none;
-          margin-top: -6px;
-        }
-      `}</style>
+      <style>{verticalSliderStyles}</style>
+      <style>{dynamicStyles}</style>
 
       <input
         type="range"

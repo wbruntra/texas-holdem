@@ -99,3 +99,25 @@
 .poker-card.large .card-text {
   font-size: clamp(36px, 4.6vw, 72px);
 }
+
+/* Board / Community Row - compact for inline mobile display */
+.poker-card.board {
+  width: clamp(40px, 11vw, 64px);
+  height: clamp(56px, 15vw, 90px);
+  border-radius: 5px;
+}
+
+.poker-card.board .card-text {
+  font-size: clamp(22px, 3.2vw, 40px);
+  letter-spacing: -1px;
+}
+
+/* Hole cards - prominent, slightly smaller than large */
+.poker-card.hole {
+  width: clamp(52px, 14vw, 80px);
+  height: clamp(73px, 20vw, 112px);
+}
+
+.poker-card.hole .card-text {
+  font-size: clamp(30px, 4.2vw, 58px);
+}
