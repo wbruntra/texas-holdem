@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { FaSpinner, FaForward, FaXmark, FaCheck, FaKeyboard } from 'react-icons/fa6'
+import { FaCaretUp } from 'react-icons/fa'
 import HorizontalSlider from './HorizontalSlider'
 import NumberPadModal from './NumberPadModal'
 import type { ValidActions } from '@holdem/shared/game-types'
@@ -68,7 +70,7 @@ export default function ActionBar({
             className="btn-poker btn-poker-primary btn-action-lg w-100"
           >
             <span>{isActing ? 'Advancing...' : 'Advance Round'}</span>
-            <span>{isActing ? '⏳' : '⏩'}</span>
+            <span>{isActing ? <FaSpinner className="spin" /> : <FaForward />}</span>
           </button>
         </div>
       </div>
@@ -135,7 +137,9 @@ export default function ActionBar({
         createPortal(
           <div className="fold-confirm-backdrop" onClick={onFoldConfirm} role="presentation">
             <div className="fold-confirm-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="fold-confirm-icon">✕</div>
+              <div className="fold-confirm-icon">
+                <FaXmark />
+              </div>
               <div className="fold-confirm-title">Fold for free?</div>
               <div className="fold-confirm-body">You can check — no need to fold.</div>
               <div className="fold-confirm-actions">
@@ -145,7 +149,9 @@ export default function ActionBar({
                   className="btn-poker btn-poker-primary btn-action-lg flex-grow-1"
                 >
                   <span>Check instead</span>
-                  <span>✓</span>
+                  <span>
+                    <FaCheck />
+                  </span>
                 </button>
                 <button
                   onClick={onFoldCancel}
@@ -168,7 +174,7 @@ export default function ActionBar({
             style={{ opacity: canFold ? 1 : 0.35 }}
           >
             <span>{isActing ? 'Folding...' : 'Fold'}</span>
-            <span>{isActing ? '⏳' : '✕'}</span>
+            <span>{isActing ? <FaSpinner className="spin" /> : <FaXmark />}</span>
           </button>
 
           <button
@@ -180,7 +186,7 @@ export default function ActionBar({
             <span>
               {isActing ? (canCall && !canCheck ? 'Calling...' : 'Checking...') : callLabel}
             </span>
-            <span>{isActing ? '⏳' : '✓'}</span>
+            <span>{isActing ? <FaSpinner className="spin" /> : <FaCheck />}</span>
           </button>
 
           {canBetOrRaise && (
@@ -190,7 +196,9 @@ export default function ActionBar({
               className={`btn-poker ${isRaise ? 'btn-poker-secondary' : 'btn-poker-info'} btn-action-lg flex-grow-1`}
             >
               <span>{isRaise ? 'Raise' : 'Bet'}</span>
-              <span>⏶</span>
+              <span>
+                <FaCaretUp />
+              </span>
             </button>
           )}
         </div>
@@ -262,7 +270,7 @@ export default function ActionBar({
               onClick={() => setNumpadOpen(true)}
               disabled={isActing}
             >
-              ⌨ Type Amount
+              <FaKeyboard className="me-1" /> Type Amount
             </button>
 
             <div className="bet-drawer-actions">

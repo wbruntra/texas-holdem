@@ -1,4 +1,5 @@
 import type { Player } from '~/components/table/types'
+import { useAnimatedNumber } from '~/hooks/useAnimatedNumber'
 
 type Props = {
   players: Player[]
@@ -30,6 +31,55 @@ function formatAction(p: Player): string | null {
   }
 }
 
+function OpponentTile({
+  player,
+  isMe,
+  isActive,
+  isDealer,
+  isFolded,
+  isAllIn,
+  isOut,
+  actionText,
+}: {
+  player: Player
+  isMe: boolean
+  isActive: boolean
+  isDealer: boolean
+  isFolded: boolean
+  isAllIn: boolean
+  isOut: boolean
+  actionText: string | null
+}) {
+  const { value: displayedChips, isAnimating, direction } = useAnimatedNumber(player.chips)
+
+  const cls = [
+    'opponent-tile',
+    isMe ? 'me' : '',
+    isActive ? 'active' : '',
+    isFolded ? 'folded' : '',
+    isAllIn ? 'allin' : '',
+    isOut ? 'out' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  return (
+    <div className={cls}>
+      <div className="opponent-tile-head">
+        {isDealer && <span className="dealer-chip">D</span>}
+        <span className="opponent-name">{player.name}</span>
+      </div>
+      <div className={`opponent-stack ${isAnimating && direction === 'up' ? 'stack-gain' : ''}`}>
+        ${displayedChips}
+      </div>
+      {actionText && <div className="opponent-action">{actionText}</div>}
+      {(isFolded || isAllIn || isOut) && !actionText && (
+        <div className="opponent-action">{isFolded ? 'FOLD' : isAllIn ? 'ALL-IN' : 'OUT'}</div>
+      )}
+    </div>
+  )
+}
+
 export default function OpponentStrip({
   players,
   myName,
@@ -45,40 +95,21 @@ export default function OpponentStrip({
   return (
     <div className="opponent-strip">
       {sortedPlayers.map((p) => {
-        const isMe = p.name === myName
-        const isActive = p.position === currentPlayerPosition
-        const isDealer = p.position === dealerPosition
-        const isFolded = p.status === 'folded'
-        const isAllIn = p.status === 'all_in'
-        const isOut = p.status === 'out'
         const isWinner = winnerPositions.includes(p.position)
         const actionText = isShowdown && isWinner ? 'WIN' : formatAction(p)
 
-        const cls = [
-          'opponent-tile',
-          isMe ? 'me' : '',
-          isActive ? 'active' : '',
-          isFolded ? 'folded' : '',
-          isAllIn ? 'allin' : '',
-          isOut ? 'out' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')
-
         return (
-          <div key={p.id} className={cls}>
-            <div className="opponent-tile-head">
-              {isDealer && <span className="dealer-chip">D</span>}
-              <span className="opponent-name">{p.name}</span>
-            </div>
-            <div className="opponent-stack">${p.chips}</div>
-            {actionText && <div className="opponent-action">{actionText}</div>}
-            {(isFolded || isAllIn || isOut) && !actionText && (
-              <div className="opponent-action">
-                {isFolded ? 'FOLD' : isAllIn ? 'ALL-IN' : 'OUT'}
-              </div>
-            )}
-          </div>
+          <OpponentTile
+            key={p.id}
+            player={p}
+            isMe={p.name === myName}
+            isActive={p.position === currentPlayerPosition}
+            isDealer={p.position === dealerPosition}
+            isFolded={p.status === 'folded'}
+            isAllIn={p.status === 'all_in'}
+            isOut={p.status === 'out'}
+            actionText={actionText}
+          />
         )
       })}
     </div>

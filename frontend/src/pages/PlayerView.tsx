@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
+import { FaTrophy, FaSyncAlt } from 'react-icons/fa'
+import { useAnimatedNumber } from '~/hooks/useAnimatedNumber'
 import PlayerJoinGame from '~/components/PlayerJoinGame'
 import PlayerShowdown from '~/components/PlayerShowdown'
-import PotWinAnimation, { type WinnerPayout } from '~/components/table/PotWinAnimation'
 import BoardArea from '~/components/table/BoardArea'
 import OpponentStrip from '~/components/OpponentStrip'
 import ActionBar from '~/components/ActionBar'
@@ -26,6 +27,51 @@ const audioMap = {
   fold: new Audio(foldSoundUrl),
 }
 
+function TableRosterRow({
+  player,
+  isTurn,
+  isDealer,
+  isFolded,
+  isAllIn,
+  isOut,
+  isWinner,
+}: {
+  player: Player
+  isTurn: boolean
+  isDealer: boolean
+  isFolded: boolean
+  isAllIn: boolean
+  isOut: boolean
+  isWinner: boolean
+}) {
+  const { value: displayedChips, isAnimating, direction } = useAnimatedNumber(player.chips)
+
+  return (
+    <div
+      className={`table-roster-row ${isTurn ? 'turn' : ''} ${isFolded || isOut ? 'folded' : ''} ${isWinner ? 'winner' : ''}`}
+    >
+      <div className="table-roster-name">
+        {isDealer && <span className="dealer-chip">D</span>}
+        <span>{player.name}</span>
+      </div>
+      <div className="table-roster-meta">
+        {isFolded && <span className="table-roster-tag">FOLD</span>}
+        {isAllIn && <span className="table-roster-tag">ALL-IN</span>}
+        {isOut && <span className="table-roster-tag">OUT</span>}
+        {isWinner && <span className="table-roster-tag win">WIN</span>}
+        {player.currentBet > 0 && !isFolded && (
+          <span className="table-roster-bet">${player.currentBet}</span>
+        )}
+        <span
+          className={`table-roster-stack ${isAnimating && direction === 'up' ? 'stack-gain' : ''}`}
+        >
+          ${displayedChips}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 export default function PlayerView() {
   const { roomCode } = useParams<{ roomCode: string }>()
   const [isActing, setIsActing] = useState(false)
@@ -34,11 +80,6 @@ export default function PlayerView() {
   const [isResetting, setIsResetting] = useState(false)
   const wasGameOverRef = useRef(false)
   const [showFoldWarning, setShowFoldWarning] = useState(false)
-  const [animatingWinners, setAnimatingWinners] = useState<WinnerPayout[]>([])
-  const previousWinnersRef = useRef<string>('')
-  const [seatPositions, setSeatPositions] = useState<Map<number, { left: number; top: number }>>(
-    new Map(),
-  )
 
   const {
     game: liveGame,
@@ -83,11 +124,6 @@ export default function PlayerView() {
   const setBetAmount = isMockMode ? () => {} : liveSetBetAmount
   const setRaiseAmount = isMockMode ? () => {} : liveSetRaiseAmount
 
-  // Animation complete handler
-  const handleAnimationComplete = useCallback(() => {
-    setAnimatingWinners([])
-  }, [])
-
   const gameOver = !!game && (game.status === 'completed' || !!game.isGameOver)
 
   // Start a fresh game from the beginning (mirrors the table view's reset).
@@ -109,59 +145,6 @@ export default function PlayerView() {
     if (gameOver && !wasGameOverRef.current) setShowResults(true)
     wasGameOverRef.current = gameOver
   }, [gameOver])
-
-  // Detect when winners are announced and trigger animation
-  useEffect(() => {
-    if (!game) {
-      setAnimatingWinners([])
-      previousWinnersRef.current = ''
-      return
-    }
-
-    const isShowdown = game.currentRound === 'showdown'
-    const fallbackWinners = Array.isArray(game.winners) ? game.winners : []
-    const potWinners = (game.pots || []).flatMap((pot) => pot.winners || [])
-    const resolvedWinners = fallbackWinners.length > 0 ? fallbackWinners : potWinners
-    const hasWinners = resolvedWinners.length > 0
-    const hasPots = game.pots && game.pots.length > 0
-
-    if (!isShowdown || !hasWinners || !hasPots) {
-      setAnimatingWinners([])
-      previousWinnersRef.current = ''
-      return
-    }
-
-    // Create unique key for current winners state
-    const winnersKey = `${resolvedWinners.join(',')}-${game.pots?.map((p) => p.amount).join(',')}`
-
-    // Only trigger animation if winners changed
-    if (winnersKey === previousWinnersRef.current) return
-    previousWinnersRef.current = winnersKey
-
-    // Calculate payouts for animation
-    const payouts: WinnerPayout[] = []
-    game.pots?.forEach((pot) => {
-      const potWinners = pot.winners && pot.winners.length > 0 ? pot.winners : fallbackWinners
-      if (!potWinners || potWinners.length === 0) return
-
-      const winAmount = pot.winAmount || Math.floor(pot.amount / potWinners.length)
-      potWinners.forEach((position) => {
-        const player = game.players.find((p) => p.position === position)
-        if (player) {
-          payouts.push({
-            playerId: player.id,
-            position,
-            amount: winAmount,
-            name: player.name,
-          })
-        }
-      })
-    })
-
-    if (payouts.length > 0) {
-      setAnimatingWinners(payouts)
-    }
-  }, [game])
 
   const playSound = (type: 'check' | 'bet' | 'fold') => {
     const audio = audioMap[type]
@@ -207,13 +190,6 @@ export default function PlayerView() {
   )
   const amWinner = !!myPlayer && winnerPositions.includes(myPlayer.position)
   const displayPot = game ? getDisplayPot(game.players, game.pots) : 0
-
-  const handleSeatPositionsChange = useCallback(
-    (positions: Map<number, { left: number; top: number }>) => {
-      setSeatPositions(positions)
-    },
-    [],
-  )
 
   // Early returns after all hooks
   if (checkingAuth) {
@@ -325,36 +301,18 @@ export default function PlayerView() {
         )}
 
         <div className="table-roster">
-          {sortedPlayers.map((p) => {
-            const isTurn = p.position === game.currentPlayerPosition
-            const isDealer = p.position === game.dealerPosition
-            const isFolded = p.status === 'folded'
-            const isAllIn = p.status === 'all_in'
-            const isOut = p.status === 'out'
-            const isWinner = winnerPositions.includes(p.position)
-
-            return (
-              <div
-                key={p.id}
-                className={`table-roster-row ${isTurn ? 'turn' : ''} ${isFolded || isOut ? 'folded' : ''} ${isWinner ? 'winner' : ''}`}
-              >
-                <div className="table-roster-name">
-                  {isDealer && <span className="dealer-chip">D</span>}
-                  <span>{p.name}</span>
-                </div>
-                <div className="table-roster-meta">
-                  {isFolded && <span className="table-roster-tag">FOLD</span>}
-                  {isAllIn && <span className="table-roster-tag">ALL-IN</span>}
-                  {isOut && <span className="table-roster-tag">OUT</span>}
-                  {isWinner && <span className="table-roster-tag win">WIN</span>}
-                  {p.currentBet > 0 && !isFolded && (
-                    <span className="table-roster-bet">${p.currentBet}</span>
-                  )}
-                  <span className="table-roster-stack">${p.chips}</span>
-                </div>
-              </div>
-            )
-          })}
+          {sortedPlayers.map((p) => (
+            <TableRosterRow
+              key={p.id}
+              player={p}
+              isTurn={p.position === game.currentPlayerPosition}
+              isDealer={p.position === game.dealerPosition}
+              isFolded={p.status === 'folded'}
+              isAllIn={p.status === 'all_in'}
+              isOut={p.status === 'out'}
+              isWinner={winnerPositions.includes(p.position)}
+            />
+          ))}
         </div>
 
         {game.status === 'waiting' && (
@@ -372,14 +330,22 @@ export default function PlayerView() {
               onClick={() => setShowResults(true)}
               className="btn-poker btn-poker-secondary flex-grow-1"
             >
-              🏆 View Results
+              <FaTrophy className="me-2" />
+              View Results
             </button>
             <button
               onClick={handleNewGame}
               disabled={isResetting}
               className="btn-poker btn-poker-primary flex-grow-1"
             >
-              {isResetting ? 'Resetting…' : '🔄 New Game'}
+              {isResetting ? (
+                'Resetting…'
+              ) : (
+                <>
+                  <FaSyncAlt className="me-2" />
+                  New Game
+                </>
+              )}
             </button>
           </div>
         )}
@@ -458,7 +424,6 @@ export default function PlayerView() {
                 amWinner={amWinner}
                 onNextHand={nextHand}
                 onToggleShowCards={toggleShowCards}
-                onSeatPositionsChange={handleSeatPositionsChange}
               />
             </div>
           </div>
@@ -519,15 +484,6 @@ export default function PlayerView() {
         >
           Start Game
         </button>
-      )}
-
-      {animatingWinners.length > 0 && (
-        <PotWinAnimation
-          winners={animatingWinners}
-          seatPositions={seatPositions}
-          potPosition={{ left: 50, top: 50 }}
-          onComplete={handleAnimationComplete}
-        />
       )}
 
       <GameOverModal

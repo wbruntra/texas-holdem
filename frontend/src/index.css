@@ -281,6 +281,10 @@ body::before {
   text-align: right;
 }
 
+.table-roster-stack.stack-gain {
+  animation: opponent-stack-gain-flash 0.8s ease-out;
+}
+
 .table-tab-card {
   width: clamp(36px, 9vw, 48px);
   height: clamp(50px, 12.5vw, 67px);
@@ -442,6 +446,23 @@ body::before {
   font-weight: 700;
   font-size: 0.85rem;
   color: var(--accent-primary);
+}
+
+.opponent-tile .opponent-stack.stack-gain {
+  animation: opponent-stack-gain-flash 0.8s ease-out;
+}
+
+@keyframes opponent-stack-gain-flash {
+  0% {
+    color: #4dff88;
+    text-shadow: 0 0 8px rgba(77, 255, 136, 0.9);
+    transform: scale(1.15);
+  }
+  100% {
+    color: var(--accent-primary);
+    text-shadow: none;
+    transform: scale(1);
+  }
 }
 .opponent-tile .opponent-action {
   font-size: 0.62rem;
@@ -1178,4 +1199,17 @@ body::before {
 .btn-poker .icon {
   margin-right: 8px;
   font-size: 1.2em;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

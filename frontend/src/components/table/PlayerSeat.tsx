@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
 import type { CSSProperties } from 'react'
+import { FaTrophy } from 'react-icons/fa6'
 import type { GameState, Player } from './types'
 import PokerCard from './PokerCard'
 import ChipStack from './ChipStack'
+import { useAnimatedNumber } from '~/hooks/useAnimatedNumber'
 
 type Props = {
   game: GameState
@@ -23,23 +24,11 @@ export default function PlayerSeat({ game, player, index, style, orientation = '
   const isWinner = winnerPositions.includes(player.position)
   const isShowdown = game.currentRound === 'showdown'
 
-  // Track chip stack animation
-  const [showStackGain, setShowStackGain] = useState(false)
-  const previousChipsRef = useRef(player.chips)
-  const previousWinnerRef = useRef(isWinner)
-
-  useEffect(() => {
-    // Trigger stack gain animation when player becomes a winner and chips increase
-    if (isWinner && isShowdown && player.chips > previousChipsRef.current) {
-      setShowStackGain(true)
-      const timer = setTimeout(() => {
-        setShowStackGain(false)
-      }, 600)
-      return () => clearTimeout(timer)
-    }
-    previousChipsRef.current = player.chips
-    previousWinnerRef.current = isWinner
-  }, [isWinner, isShowdown, player.chips])
+  const {
+    value: displayedChips,
+    isAnimating: chipsAnimating,
+    direction: chipsDirection,
+  } = useAnimatedNumber(player.chips)
 
   // Helper for initials
   const getInitials = (name: string) => {
@@ -138,13 +127,13 @@ export default function PlayerSeat({ game, player, index, style, orientation = '
         {/* Player Info */}
         <div className="seat-info">
           <div className="player-name">
-            {isWinner && isShowdown && '🏆 '}
+            {isWinner && isShowdown && <FaTrophy className="text-warning me-1" />}
             {player.name}
           </div>
           <div
-            className={`player-stack ${isAllIn ? 'all-in-text' : ''} ${showStackGain ? 'stack-gain' : ''}`}
+            className={`player-stack ${isAllIn ? 'all-in-text' : ''} ${chipsAnimating && chipsDirection === 'up' ? 'stack-gain' : ''}`}
           >
-            {isAllIn ? 'ALL-IN' : `$${player.chips}`}
+            {isAllIn ? 'ALL-IN' : `$${displayedChips}`}
           </div>
         </div>
       </div>

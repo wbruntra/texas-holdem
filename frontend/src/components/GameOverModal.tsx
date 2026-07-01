@@ -1,3 +1,5 @@
+import { FaTrophy } from 'react-icons/fa6'
+import { FaSyncAlt } from 'react-icons/fa'
 import type { GameState } from '~/components/table/types'
 
 interface GameOverModalProps {
@@ -34,7 +36,9 @@ export default function GameOverModal({
           ></button>
 
           <div className="modal-body text-center p-4">
-            <div className="display-1 mb-3">🏆</div>
+            <div className="display-1 mb-3 text-warning">
+              <FaTrophy />
+            </div>
             <h2 className="display-6 fw-bold text-warning mb-4">GAME OVER!</h2>
 
             <p className="small text-secondary mb-4 uppercase text-uppercase fw-bold">
@@ -76,7 +80,10 @@ export default function GameOverModal({
                       Resetting...
                     </>
                   ) : (
-                    <>🔄 Start New Game</>
+                    <>
+                      <FaSyncAlt className="me-2" />
+                      Start New Game
+                    </>
                   )}
                 </button>
               )}

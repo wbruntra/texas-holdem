@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { FaTrophy, FaEye, FaEyeSlash } from 'react-icons/fa6'
 import type { GameState, Player } from '~/components/table/types'
 import PokerCard from '~/components/table/PokerCard'
+import { useAnimatedNumber } from '~/hooks/useAnimatedNumber'
 
 interface PlayerShowdownProps {
   game: GameState
@@ -9,7 +10,55 @@ interface PlayerShowdownProps {
   amWinner: boolean
   onNextHand: () => Promise<any>
   onToggleShowCards: (show: boolean) => Promise<any>
-  onSeatPositionsChange?: (positions: Map<number, { left: number; top: number }>) => void
+}
+
+function ShowdownPlayerCard({
+  player,
+  isWinner,
+  preWinChips,
+}: {
+  player: Player
+  isWinner: boolean
+  preWinChips: number
+}) {
+  const {
+    value: displayedChips,
+    isAnimating,
+    direction,
+  } = useAnimatedNumber(player.chips, 400, 800, preWinChips)
+
+  return (
+    <div
+      className={`p-2 rounded h-100 ${
+        isWinner
+          ? 'bg-warning bg-opacity-10 border border-warning'
+          : 'bg-black bg-opacity-25 border border-white border-opacity-10'
+      }`}
+    >
+      <div className="text-center mb-2">
+        <div className="fw-bold text-truncate" style={{ fontSize: '0.9rem' }}>
+          {player.name} {isWinner && <FaTrophy className="text-warning" />}
+        </div>
+        <div
+          className={`small fw-bold ${isAnimating && direction === 'up' ? 'stack-gain' : 'text-warning'}`}
+        >
+          ${displayedChips}
+        </div>
+      </div>
+      <div className="d-flex gap-1 justify-content-center">
+        {(player.holeCards || []).length > 0 ? (
+          player.holeCards!.map((card, idx) => (
+            <PokerCard key={idx} card={card} className="small" />
+          ))
+        ) : (
+          <>
+            <PokerCard hidden className="small" />
+            <PokerCard hidden className="small" />
+          </>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function PlayerShowdown({
@@ -19,33 +68,18 @@ export default function PlayerShowdown({
   amWinner,
   onNextHand,
   onToggleShowCards,
-  onSeatPositionsChange,
 }: PlayerShowdownProps) {
-  const playerRefs = useRef(new Map<number, HTMLDivElement | null>())
-
-  const updatePositions = useCallback(() => {
-    if (!onSeatPositionsChange) return
-
-    const positions = new Map<number, { left: number; top: number }>()
-    playerRefs.current.forEach((el, position) => {
-      if (!el) return
-      const rect = el.getBoundingClientRect()
-      const left = ((rect.left + rect.width / 2) / window.innerWidth) * 100
-      const top = ((rect.top + rect.height / 2) / window.innerHeight) * 100
-      positions.set(position, { left, top })
+  // Winnings are already applied to player.chips by the time this component
+  // mounts (it only renders once currentRound === 'showdown'), so seed the
+  // count-up animation from chips-minus-winnings rather than the live value.
+  const winningsByPosition = new Map<number, number>()
+  game.pots?.forEach((pot) => {
+    if (!pot.winners || pot.winners.length === 0) return
+    const winAmount = pot.winAmount || Math.floor(pot.amount / pot.winners.length)
+    pot.winners.forEach((position) => {
+      winningsByPosition.set(position, (winningsByPosition.get(position) || 0) + winAmount)
     })
-
-    onSeatPositionsChange(positions)
-  }, [onSeatPositionsChange])
-
-  useLayoutEffect(() => {
-    updatePositions()
-  }, [updatePositions, game.players, winnerPositions])
-
-  useEffect(() => {
-    window.addEventListener('resize', updatePositions)
-    return () => window.removeEventListener('resize', updatePositions)
-  }, [updatePositions])
+  })
 
   return (
     <div className="d-flex flex-column h-100">
@@ -94,37 +128,11 @@ export default function PlayerShowdown({
         <div className="row g-2">
           {game.players.map((p) => (
             <div key={p.id} className="col-6">
-              <div
-                className={`p-2 rounded h-100 ${
-                  winnerPositions.includes(p.position)
-                    ? 'bg-warning bg-opacity-10 border border-warning'
-                    : 'bg-black bg-opacity-25 border border-white border-opacity-10'
-                }`}
-              >
-                <div className="text-center mb-2">
-                  <div className="fw-bold text-truncate" style={{ fontSize: '0.9rem' }}>
-                    {p.name} {winnerPositions.includes(p.position) && '🏆'}
-                  </div>
-                </div>
-                <div
-                  ref={(el) => {
-                    if (el) playerRefs.current.set(p.position, el)
-                    else playerRefs.current.delete(p.position)
-                  }}
-                  className="d-flex gap-1 justify-content-center"
-                >
-                  {(p.holeCards || []).length > 0 ? (
-                    p.holeCards!.map((card, idx) => (
-                      <PokerCard key={idx} card={card} className="small" />
-                    ))
-                  ) : (
-                    <>
-                      <PokerCard hidden className="small" />
-                      <PokerCard hidden className="small" />
-                    </>
-                  )}
-                </div>
-              </div>
+              <ShowdownPlayerCard
+                player={p}
+                isWinner={winnerPositions.includes(p.position)}
+                preWinChips={p.chips - (winningsByPosition.get(p.position) || 0)}
+              />
             </div>
           ))}
         </div>
@@ -138,14 +146,26 @@ export default function PlayerShowdown({
               className="btn-poker btn-poker-info w-100 btn-action-lg"
               style={{ height: '48px', fontSize: '1rem' }}
             >
-              {myPlayer.showCards ? '🙈 Hide Cards' : '👁️ Reveal Cards'}
+              {myPlayer.showCards ? (
+                <>
+                  <FaEyeSlash className="me-2" />
+                  Hide Cards
+                </>
+              ) : (
+                <>
+                  <FaEye className="me-2" />
+                  Reveal Cards
+                </>
+              )}
             </button>
           </div>
         )}
 
         {game.isGameOver ? (
           <div className="alert alert-warning text-center fw-bold border-2 border-warning mb-0">
-            <div className="display-6 mb-2">🏆</div>
+            <div className="display-6 mb-2">
+              <FaTrophy />
+            </div>
             <div>GAME OVER</div>
             <div className="small fw-normal mt-1">Check the main screen for results</div>
           </div>
@@ -156,7 +176,14 @@ export default function PlayerShowdown({
               amWinner ? 'btn-poker-secondary' : 'btn-poker-primary'
             }`}
           >
-            {amWinner ? '🏆 Next Hand' : 'Start Next Hand'}
+            {amWinner ? (
+              <>
+                <FaTrophy className="me-2" />
+                Next Hand
+              </>
+            ) : (
+              'Start Next Hand'
+            )}
           </button>
         )}
       </div>

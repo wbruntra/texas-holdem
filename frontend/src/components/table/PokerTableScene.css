@@ -271,6 +271,23 @@
   text-transform: uppercase;
 }
 
+.player-stack.stack-gain {
+  animation: stack-gain-flash 0.8s ease-out;
+}
+
+@keyframes stack-gain-flash {
+  0% {
+    color: #4dff88;
+    text-shadow: 0 0 10px rgba(77, 255, 136, 0.9);
+    transform: scale(1.18);
+  }
+  100% {
+    color: #ffd700;
+    text-shadow: none;
+    transform: scale(1);
+  }
+}
+
 /* Bet Bubble - Speech bubble style */
 .bet-bubble {
   position: absolute;
