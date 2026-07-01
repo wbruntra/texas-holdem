@@ -352,7 +352,6 @@ class BunWebSocketService {
       (p: any) => p.status === 'active' || p.status === 'all_in',
     )
     const isRealShowdown = isShowdown && eligiblePlayers.length > 1
-    const shouldRevealAllCards = isRealShowdown || game.action_finished === true
 
     let pots =
       game.pots && game.pots.length > 0 && !isRealShowdown
@@ -388,14 +387,10 @@ class BunWebSocketService {
         currentBet: p.currentBet,
         totalBet: p.totalBet || 0,
         status: p.status,
-        holeCards:
-          (shouldRevealAllCards &&
-            (game.players.filter((pl: any) => pl.status === 'active' || pl.status === 'all_in')
-              .length > 1 ||
-              p.showCards)) ||
-          p.showCards
-            ? p.holeCards || []
-            : [],
+        // Reveal only cards flagged showCards during derivation: winners at a
+        // real showdown, every player in an all-in runout, or anyone who chose
+        // to reveal. Losers/callers at a normal showdown stay mucked.
+        holeCards: p.showCards ? p.holeCards || [] : [],
         lastAction: p.lastAction || null,
         connected: p.connected,
       })),
@@ -446,14 +441,11 @@ class BunWebSocketService {
         currentBet: p.currentBet,
         totalBet: p.totalBet || 0,
         status: p.status,
-        holeCards:
-          (isShowdown &&
-            (game.players.filter((pl: any) => pl.status === 'active' || pl.status === 'all_in')
-              .length > 1 ||
-              p.showCards)) ||
-          p.id === playerId
-            ? p.holeCards || []
-            : [],
+        // Reveal only cards flagged showCards during derivation: winners at a
+        // real showdown, every player in an all-in runout, or anyone who chose
+        // to reveal. A player always sees their own cards. Losers/callers at a
+        // normal showdown stay mucked.
+        holeCards: p.showCards || p.id === playerId ? p.holeCards || [] : [],
         lastAction: p.lastAction || null,
         connected: p.connected,
         isDealer: p.isDealer,

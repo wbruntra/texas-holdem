@@ -142,6 +142,28 @@ describe('validateAction', () => {
     expect(result.valid).toBe(true)
   })
 
+  it('should reject a bet below the minimum when the player has more chips available', () => {
+    const state = createTestGameState({
+      currentPlayerPosition: 0,
+      currentBet: 0,
+      bigBlind: 10,
+    })
+    const result = validateAction(state, 0, ACTION_TYPE.BET, 5)
+    expect(result.valid).toBe(false)
+    expect(result.error).toBe('Minimum bet is 10')
+  })
+
+  it('should allow a short-stacked player to bet all-in below the minimum', () => {
+    const state = createTestGameState({
+      currentPlayerPosition: 0,
+      currentBet: 0,
+      bigBlind: 10,
+    })
+    state.players[0].chips = 4
+    const result = validateAction(state, 0, ACTION_TYPE.BET, 4)
+    expect(result.valid).toBe(true)
+  })
+
   it('should reject invalid action types', () => {
     const state = createTestGameState({ currentPlayerPosition: 0 })
     const result = validateAction(state, 0, 'invalid_action')
@@ -209,6 +231,24 @@ describe('processAction', () => {
     expect(newState.currentBet).toBe(50)
     expect(newState.lastRaise).toBe(50)
     expect(newState.players[0].lastAction).toBe(ACTION_TYPE.BET)
+  })
+
+  it('should floor lastRaise at the big blind after a short all-in bet', () => {
+    const state = createTestGameState({
+      currentPlayerPosition: 0,
+      currentBet: 0,
+      bigBlind: 10,
+      pot: 0,
+    })
+    state.players[0].chips = 4
+    const newState = processAction(state, 0, ACTION_TYPE.BET, 4)
+
+    expect(newState.players[0].chips).toBe(0)
+    expect(newState.players[0].status).toBe(PLAYER_STATUS.ALL_IN)
+    expect(newState.currentBet).toBe(4)
+    // A subsequent raiser must still raise by the full big blind, not just
+    // match the short all-in amount.
+    expect(newState.lastRaise).toBe(10)
   })
 
   it('should process raise action', () => {
@@ -312,6 +352,20 @@ describe('getValidActions', () => {
     expect(actions.canRaise).toBe(false)
     expect(actions.canAllIn).toBe(true)
     expect(actions.allInAmount).toBe(1000)
+  })
+
+  it('should allow betting all-in when short of the minimum bet', () => {
+    const state = createTestGameState({
+      currentPlayerPosition: 0,
+      currentBet: 0,
+      bigBlind: 10,
+    })
+    state.players[0].chips = 4
+    const actions = getValidActions(state, 0)
+
+    expect(actions.canBet).toBe(true)
+    expect(actions.minBet).toBe(4)
+    expect(actions.maxBet).toBe(4)
   })
 
   it('should return correct actions when there is a bet to call', () => {

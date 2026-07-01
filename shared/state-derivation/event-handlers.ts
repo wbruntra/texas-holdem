@@ -427,7 +427,7 @@ export function handleShowdown(state: GameState, event: GameEvent): GameState {
 }
 
 export function handleAwardPot(state: GameState, event: GameEvent): GameState {
-  const { winners, payouts } = event.payload
+  const { winReason, winners, payouts } = event.payload
 
   let newPlayers = state.players
 
@@ -443,6 +443,16 @@ export function handleAwardPot(state: GameState, event: GameEvent): GameState {
     })
   } else {
     newPlayers = state.players.map((p) => ({ ...p, currentBet: 0 }))
+  }
+
+  // Winning hands are revealed at a real showdown. Players who lose (or simply
+  // called) are not required to show and may stay mucked. A win by everyone
+  // else folding doesn't force a reveal either — there was no comparison.
+  if (winReason === 'showdown' && Array.isArray(winners)) {
+    const winningPositions = new Set<number>(winners)
+    newPlayers = newPlayers.map((p) =>
+      winningPositions.has(p.position) ? { ...p, showCards: true } : p,
+    )
   }
 
   return {

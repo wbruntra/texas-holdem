@@ -251,4 +251,92 @@ describe('State Derivation Engine', () => {
     expect(state.currentBet).toBe(150)
     expect(state.currentRound).toBe('flop')
   })
+
+  it('should only auto-reveal the winning hand at a real showdown, not the loser', () => {
+    const events: GameEvent[] = [
+      {
+        id: 1,
+        gameId: 1,
+        handNumber: 0,
+        sequenceNumber: 1,
+        eventType: EVENT_TYPES.PLAYER_JOINED,
+        playerId: 101,
+        payload: { name: 'Alice', position: 0, startingChips: 1000 },
+        createdAt: new Date(),
+      },
+      {
+        id: 2,
+        gameId: 1,
+        handNumber: 0,
+        sequenceNumber: 2,
+        eventType: EVENT_TYPES.PLAYER_JOINED,
+        playerId: 102,
+        payload: { name: 'Bob', position: 1, startingChips: 1000 },
+        createdAt: new Date(),
+      },
+      {
+        id: 3,
+        gameId: 1,
+        handNumber: 1,
+        sequenceNumber: 3,
+        eventType: EVENT_TYPES.AWARD_POT,
+        payload: {
+          winReason: 'showdown',
+          winners: [0],
+          payouts: [{ playerId: 101, amount: 40 }],
+          potTotal: 40,
+        },
+        createdAt: new Date(),
+      },
+    ]
+
+    const state = deriveGameState(mockConfig, mockPlayers, events)
+
+    expect(state.players[0].showCards).toBe(true) // Alice won, must show
+    expect(state.players[1].showCards).toBeFalsy() // Bob lost, may muck
+  })
+
+  it('should not force a reveal when the pot is won because everyone else folded', () => {
+    const events: GameEvent[] = [
+      {
+        id: 1,
+        gameId: 1,
+        handNumber: 0,
+        sequenceNumber: 1,
+        eventType: EVENT_TYPES.PLAYER_JOINED,
+        playerId: 101,
+        payload: { name: 'Alice', position: 0, startingChips: 1000 },
+        createdAt: new Date(),
+      },
+      {
+        id: 2,
+        gameId: 1,
+        handNumber: 0,
+        sequenceNumber: 2,
+        eventType: EVENT_TYPES.PLAYER_JOINED,
+        playerId: 102,
+        payload: { name: 'Bob', position: 1, startingChips: 1000 },
+        createdAt: new Date(),
+      },
+      {
+        id: 3,
+        gameId: 1,
+        handNumber: 1,
+        sequenceNumber: 3,
+        eventType: EVENT_TYPES.AWARD_POT,
+        payload: {
+          winReason: 'fold',
+          winners: [0],
+          payouts: [{ playerId: 101, amount: 40 }],
+          potTotal: 40,
+        },
+        createdAt: new Date(),
+      },
+    ]
+
+    const state = deriveGameState(mockConfig, mockPlayers, events)
+
+    expect(state.players[0].showCards).toBeFalsy()
+    expect(state.players[1].showCards).toBeFalsy()
+  })
 })

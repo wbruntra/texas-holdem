@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
-import type { GameState } from '~/components/table/types'
+import type { GameState, Player } from '~/components/table/types'
 import PokerCard from '~/components/table/PokerCard'
 
 interface PlayerShowdownProps {
   game: GameState
+  myPlayer: Player | null
   winnerPositions: number[]
   amWinner: boolean
   onNextHand: () => Promise<any>
@@ -13,6 +14,7 @@ interface PlayerShowdownProps {
 
 export default function PlayerShowdown({
   game,
+  myPlayer,
   winnerPositions,
   amWinner,
   onNextHand,
@@ -129,24 +131,17 @@ export default function PlayerShowdown({
       </div>
 
       <div className="mt-3">
-        {amWinner &&
-          game.players.filter((p) => p.status === 'active' || p.status === 'all_in').length ===
-            1 && (
-            <div className="mb-3">
-              <button
-                onClick={() => {
-                  const me = game.players.find((p) => winnerPositions.includes(p.position))
-                  if (me) onToggleShowCards(!((me as { showCards?: boolean }).showCards ?? false))
-                }}
-                className="btn-poker btn-poker-info w-100 btn-action-lg"
-                style={{ height: '48px', fontSize: '1rem' }}
-              >
-                {game.players.find((p) => winnerPositions.includes(p.position))?.showCards
-                  ? '🙈 Hide Cards'
-                  : '👁️ Reveal Cards'}
-              </button>
-            </div>
-          )}
+        {myPlayer && (myPlayer.status === 'active' || myPlayer.status === 'all_in') && (
+          <div className="mb-3">
+            <button
+              onClick={() => onToggleShowCards(!myPlayer.showCards)}
+              className="btn-poker btn-poker-info w-100 btn-action-lg"
+              style={{ height: '48px', fontSize: '1rem' }}
+            >
+              {myPlayer.showCards ? '🙈 Hide Cards' : '👁️ Reveal Cards'}
+            </button>
+          </div>
+        )}
 
         {game.isGameOver ? (
           <div className="alert alert-warning text-center fw-bold border-2 border-warning mb-0">

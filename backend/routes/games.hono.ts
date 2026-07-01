@@ -23,11 +23,11 @@ type Variables = {
 
 const app = new Hono<{ Variables: Variables }>()
 
+// Forces every hole card to be visible during an all-in runout, since the
+// remaining action is automatic and equities are shown immediately. A real
+// showdown does NOT force a full reveal — winners get showCards=true when
+// pots are awarded, but a losing/calling hand may stay mucked (p.showCards).
 function shouldRevealAllCards(game: any) {
-  if (game.currentRound === SHOWDOWN_ROUND) {
-    return true
-  }
-
   const playersWithChips = game.players.filter(
     (p: any) => p.chips > 0 && p.status !== 'out' && p.status !== 'folded',
   )

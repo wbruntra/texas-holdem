@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import HorizontalSlider from './HorizontalSlider'
+import NumberPadModal from './NumberPadModal'
 import type { ValidActions } from '@holdem/shared/game-types'
 import type { Player } from './table/types'
 
@@ -42,6 +43,7 @@ export default function ActionBar({
   onFoldCancel,
 }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [numpadOpen, setNumpadOpen] = useState(false)
 
   const canActNow = !!validActions?.canAct && isMyTurn
   const canBetOrRaiseNow = canActNow && (!!validActions?.canBet || !!validActions?.canRaise)
@@ -254,6 +256,15 @@ export default function ActionBar({
               ))}
             </div>
 
+            <button
+              type="button"
+              className="numpad-trigger"
+              onClick={() => setNumpadOpen(true)}
+              disabled={isActing}
+            >
+              ⌨ Type Amount
+            </button>
+
             <div className="bet-drawer-actions">
               <button
                 onClick={() => setDrawerOpen(false)}
@@ -272,6 +283,20 @@ export default function ActionBar({
             </div>
           </div>
         </div>
+      )}
+
+      {numpadOpen && canBetOrRaise && (
+        <NumberPadModal
+          label={betVerb}
+          min={isRaise ? currentBet + minVal : minVal}
+          max={isRaise ? currentBet + maxVal : maxVal}
+          initialValue={displayAmount}
+          onCancel={() => setNumpadOpen(false)}
+          onConfirm={(total) => {
+            setFromTotal(total)
+            setNumpadOpen(false)
+          }}
+        />
       )}
 
       {!canAct && !showFoldWarning && validActions?.canAdvance === undefined && (

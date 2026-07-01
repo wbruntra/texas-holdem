@@ -341,7 +341,6 @@ export default function PlayerView() {
                 <div className="table-roster-name">
                   {isDealer && <span className="dealer-chip">D</span>}
                   <span>{p.name}</span>
-                  {p.name === playerName && <span className="table-roster-you">YOU</span>}
                 </div>
                 <div className="table-roster-meta">
                   {isFolded && <span className="table-roster-tag">FOLD</span>}
@@ -454,6 +453,7 @@ export default function PlayerView() {
             <div className="glass-panel flex-grow-1 p-3">
               <PlayerShowdown
                 game={game}
+                myPlayer={myPlayer}
                 winnerPositions={winnerPositions}
                 amWinner={amWinner}
                 onNextHand={nextHand}

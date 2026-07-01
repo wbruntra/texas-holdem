@@ -240,21 +240,10 @@ body::before {
   min-width: 0;
 }
 
-.table-roster-name > span:not(.dealer-chip):not(.table-roster-you) {
+.table-roster-name > span:not(.dealer-chip) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.table-roster-you {
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  color: var(--accent-info);
-  border: 1px solid var(--accent-info);
-  border-radius: 4px;
-  padding: 1px 4px;
-  flex-shrink: 0;
 }
 
 .table-roster-meta {
@@ -412,6 +401,14 @@ body::before {
   box-shadow:
     0 0 0 1px rgba(212, 175, 55, 0.4),
     0 0 12px rgba(212, 175, 55, 0.2);
+}
+.opponent-tile.me {
+  border-color: var(--accent-info);
+  background: rgba(6, 182, 212, 0.1);
+}
+.opponent-tile.me.active {
+  border-color: #d4af37;
+  background: rgba(212, 175, 55, 0.12);
 }
 .opponent-tile-head {
   display: flex;
@@ -679,6 +676,24 @@ body::before {
   opacity: 0.4;
   cursor: default;
 }
+.numpad-trigger {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px dashed var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.numpad-trigger:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+.numpad-trigger:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .bet-drawer-actions {
   display: flex;
   gap: 8px;
@@ -760,6 +775,92 @@ body::before {
 .fold-confirm-actions .btn-action-lg {
   height: 52px;
   font-size: 1rem;
+}
+
+/* Number pad modal (manual bet/raise entry) */
+.numpad-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: bet-drawer-fade 0.12s ease;
+}
+.numpad-modal {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 20px 20px;
+  background: rgba(15, 20, 30, 0.98);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  animation: fold-modal-pop 0.15s ease;
+}
+.numpad-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-secondary);
+}
+.numpad-display {
+  font-size: 2.4rem;
+  font-weight: 800;
+  font-family: monospace;
+  color: var(--accent-primary);
+}
+.numpad-display.invalid {
+  color: var(--accent-danger);
+}
+.numpad-range {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: -6px;
+  margin-bottom: 4px;
+}
+.numpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+.numpad-key {
+  height: 56px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition:
+    transform 0.1s,
+    background 0.1s;
+}
+.numpad-key:active {
+  transform: scale(0.94);
+  background: rgba(255, 255, 255, 0.14);
+}
+.numpad-key-func {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+.numpad-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+.numpad-actions .btn-poker {
+  height: 52px;
 }
 
 .action-fold-warning {

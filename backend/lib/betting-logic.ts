@@ -14,6 +14,7 @@ export interface ValidActions {
   callAmount?: number
   canBet?: boolean
   minBet?: number
+  maxBet?: number
   canRaise?: boolean
   minRaise?: number
   maxRaise?: number
@@ -87,11 +88,15 @@ export function validateAction(
       if (state.currentBet > 0) {
         return { valid: false, error: 'Cannot bet, must call or raise' }
       }
-      if (amount < state.bigBlind) {
-        return { valid: false, error: `Minimum bet is ${state.bigBlind}` }
+      if (amount <= 0) {
+        return { valid: false, error: 'Bet amount must be greater than 0' }
       }
       if (amount > player.chips) {
         return { valid: false, error: 'Not enough chips' }
+      }
+      // A short-stacked player may still bet by going all-in below the minimum.
+      if (amount < state.bigBlind && amount < player.chips) {
+        return { valid: false, error: `Minimum bet is ${state.bigBlind}` }
       }
       return { valid: true }
 
@@ -178,7 +183,9 @@ export function processAction(
       player.totalBet = (player.totalBet || 0) + amount
       newPot += amount
       newCurrentBet = player.currentBet
-      newLastRaise = amount
+      // Even if this was a short all-in bet below the big blind, the minimum
+      // raise for subsequent players stays at the big blind.
+      newLastRaise = Math.max(amount, state.bigBlind)
       player.lastAction = ACTION_TYPE.BET
 
       if (player.chips === 0) {
@@ -196,7 +203,9 @@ export function processAction(
       player.totalBet = (player.totalBet || 0) + totalBet
       newPot += totalBet
       newCurrentBet = player.currentBet
-      newLastRaise = amount
+      // Even if this was a short all-in raise below the minimum increment,
+      // the minimum raise for subsequent players stays at the big blind.
+      newLastRaise = Math.max(amount, state.bigBlind)
       player.lastAction = ACTION_TYPE.RAISE
 
       if (player.chips === 0) {
@@ -362,7 +371,9 @@ export function getValidActions(state: GameState, playerPosition: number): Valid
   const callAmount = state.currentBet - player.currentBet
   const canCheck = callAmount === 0
   const canCall = callAmount > 0 && player.chips > 0
-  const canBet = state.currentBet === 0 && player.chips >= state.bigBlind
+  // A short-stacked player can still open the betting by going all-in,
+  // even if they don't have the full minimum bet.
+  const canBet = state.currentBet === 0 && player.chips > 0
 
   const otherAllInPlayers = state.players.filter(
     (p) => p.id !== player.id && p.status === PLAYER_STATUS.ALL_IN,
@@ -386,7 +397,8 @@ export function getValidActions(state: GameState, playerPosition: number): Valid
     canCall,
     callAmount: actualCallAmount,
     canBet,
-    minBet: state.bigBlind,
+    minBet: Math.min(state.bigBlind, player.chips),
+    maxBet: player.chips,
     canRaise,
     minRaise: state.lastRaise,
     maxRaise,

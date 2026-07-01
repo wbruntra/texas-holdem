@@ -38,15 +38,14 @@ export default function OpponentStrip({
   isShowdown = false,
   winnerPositions = [],
 }: Props) {
-  const opponents = players
-    .filter((p) => p.name !== myName)
-    .sort((a, b) => a.position - b.position)
+  const sortedPlayers = [...players].sort((a, b) => a.position - b.position)
 
-  if (opponents.length === 0) return null
+  if (sortedPlayers.length === 0) return null
 
   return (
     <div className="opponent-strip">
-      {opponents.map((p) => {
+      {sortedPlayers.map((p) => {
+        const isMe = p.name === myName
         const isActive = p.position === currentPlayerPosition
         const isDealer = p.position === dealerPosition
         const isFolded = p.status === 'folded'
@@ -57,6 +56,7 @@ export default function OpponentStrip({
 
         const cls = [
           'opponent-tile',
+          isMe ? 'me' : '',
           isActive ? 'active' : '',
           isFolded ? 'folded' : '',
           isAllIn ? 'allin' : '',
